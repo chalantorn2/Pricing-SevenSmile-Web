@@ -126,6 +126,25 @@ const AddPrice = () => {
     }
   };
 
+  const handleDelete = async () => {
+    if (
+      window.confirm(
+        `คุณต้องการลบทัวร์ "${formData.tour_name}" หรือไม่?\n\nการลบนี้ไม่สามารถกู้คืนได้!`
+      )
+    ) {
+      try {
+        setLoading(true);
+        await toursService.deleteTour(id);
+        alert("ลบข้อมูลเรียบร้อยแล้ว");
+        navigate("/");
+      } catch (error) {
+        console.error("Error deleting tour:", error);
+        alert("เกิดข้อผิดพลาดในการลบข้อมูล");
+        setLoading(false);
+      }
+    }
+  };
+
   const handleCancel = () => {
     navigate("/");
   };
@@ -436,6 +455,18 @@ const AddPrice = () => {
               ? "อัปเดตข้อมูล"
               : "บันทึกข้อมูล"}
           </button>
+
+          {isEditing && (
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={loading}
+              className="flex-1 bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            >
+              {loading ? "กำลังลบ..." : "ลบรายการนี้"}
+            </button>
+          )}
+
           <button
             type="button"
             onClick={handleCancel}
