@@ -93,7 +93,7 @@ const Login = () => {
 
           {/* Footer */}
           <div className="mt-8 text-center text-sm text-gray-500">
-            <p>สำหรับพนักงานเท่านั้น</p>
+            <p>Seven Smile Tour And Ticket</p>
           </div>
         </div>
       </div>
