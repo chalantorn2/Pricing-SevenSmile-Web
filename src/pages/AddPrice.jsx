@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { toursService } from "../services/supabase";
+import { toursService } from "../services/api-service";
 
 const AddPrice = () => {
   const navigate = useNavigate();

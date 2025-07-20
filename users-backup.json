@@ -1,0 +1,16 @@
+[
+  {
+    "id": "ce8bb630-9af1-401a-bc49-b5d18b22f0c7",
+    "username": "admin",
+    "password": "admin123",
+    "role": "admin",
+    "created_at": "2025-05-26T03:33:24.873756+00:00"
+  },
+  {
+    "id": "27905436-8e28-4fe2-a5e9-26dbdcb0b5de",
+    "username": "test",
+    "password": "test2025",
+    "role": "user",
+    "created_at": "2025-05-26T04:03:29.531862+00:00"
+  }
+]

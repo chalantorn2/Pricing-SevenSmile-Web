@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { toursService } from "../services/supabase";
+import { toursService } from "../services/api-service";
 import * as XLSX from "xlsx";
 
 const PriceList = () => {

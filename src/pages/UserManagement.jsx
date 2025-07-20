@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { usersService } from "../services/supabase";
+import { usersService } from "../services/api-service";
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
