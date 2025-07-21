@@ -9,6 +9,8 @@ import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import PriceList from "./pages/PriceList";
 import AddPrice from "./pages/AddPrice";
+import TransferList from "./pages/TransferList";
+import HotelList from "./pages/HotelList";
 import UserManagement from "./pages/UserManagement";
 import "./index.css";
 
@@ -62,9 +64,18 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       >
+        {/* Tours Routes */}
         <Route index element={<PriceList />} />
         <Route path="add" element={<AddPrice />} />
         <Route path="edit/:id" element={<AddPrice />} />
+
+        {/* Transfer Routes */}
+        <Route path="transfer" element={<TransferList />} />
+
+        {/* Hotel Routes */}
+        <Route path="hotel" element={<HotelList />} />
+
+        {/* User Management Routes */}
         <Route
           path="users"
           element={

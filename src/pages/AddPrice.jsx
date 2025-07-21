@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { toursService } from "../services/api-service";
+import { toursService, filesService } from "../services/api-service";
+import FileUpload from "../components/FileUpload";
 
 const AddPrice = () => {
   const navigate = useNavigate();
@@ -8,6 +9,7 @@ const AddPrice = () => {
   const isEditing = Boolean(id);
 
   const [loading, setLoading] = useState(false);
+  const [tourFiles, setTourFiles] = useState([]);
   const [formData, setFormData] = useState({
     sub_agent_name: "",
     address: "",
@@ -56,6 +58,14 @@ const AddPrice = () => {
           notes: tour.notes || "",
           park_fee_included: tour.park_fee_included || false,
         });
+
+        // Fetch tour files
+        try {
+          const files = await filesService.getTourFiles(id);
+          setTourFiles(files);
+        } catch (error) {
+          console.error("Error fetching tour files:", error);
+        }
       }
     } catch (error) {
       console.error("Error fetching tour:", error);
@@ -63,6 +73,29 @@ const AddPrice = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleFileUploaded = (newFile) => {
+    setTourFiles((prevFiles) => [newFile, ...prevFiles]);
+  };
+
+  const handleDeleteFile = async (fileId) => {
+    if (window.confirm("คุณต้องการลบไฟล์นี้หรือไม่?")) {
+      try {
+        await filesService.deleteFile(fileId);
+        setTourFiles((prevFiles) =>
+          prevFiles.filter((file) => file.id !== fileId)
+        );
+      } catch (error) {
+        console.error("Error deleting file:", error);
+        alert("เกิดข้อผิดพลาดในการลบไฟล์");
+      }
+    }
+  };
+
+  const handleViewFile = (file) => {
+    const fileUrl = filesService.getFileUrl(file);
+    window.open(fileUrl, "_blank");
   };
 
   const handleChange = (e) => {
@@ -441,6 +474,71 @@ const AddPrice = () => {
             </div>
           </div>
         </div>
+
+        {/* File Upload Section - แสดงเฉพาะเมื่อแก้ไข */}
+        {isEditing && (
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              เอกสารแนบ
+            </h2>
+            <div className="space-y-4">
+              {/* File Upload */}
+              <div>
+                <FileUpload tourId={id} onFileUploaded={handleFileUploaded} />
+              </div>
+
+              {/* Existing Files */}
+              {tourFiles.length > 0 && (
+                <div>
+                  <h3 className="text-md font-medium text-gray-900 mb-3">
+                    ไฟล์ที่อัพโหลดแล้ว ({tourFiles.length} ไฟล์)
+                  </h3>
+                  <div className="space-y-2">
+                    {tourFiles.map((file) => (
+                      <div
+                        key={file.id}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <span className="text-lg">
+                            {file.file_type === "pdf" ? "📄" : "🖼️"}
+                          </span>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              {file.original_name}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {file.file_size_formatted} •{" "}
+                              {new Date(file.uploaded_at).toLocaleDateString(
+                                "th-TH"
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <button
+                            type="button"
+                            onClick={() => handleViewFile(file)}
+                            className="px-2 py-1 text-blue-600 hover:bg-blue-50 rounded text-sm"
+                          >
+                            👁️ ดู
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteFile(file.id)}
+                            className="px-2 py-1 text-red-600 hover:bg-red-50 rounded text-sm"
+                          >
+                            🗑️ ลบ
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Submit Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t">

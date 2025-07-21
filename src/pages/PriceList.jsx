@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { toursService } from "../services/api-service";
+import DetailsModal from "../components/DetailsModal";
+import DocumentModal from "../components/DocumentModal";
+import ColumnToggle from "../components/ColumnToggle";
 import * as XLSX from "xlsx";
 
 const PriceList = () => {
@@ -9,23 +12,27 @@ const PriceList = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
-  const [visibleColumns, setVisibleColumns] = useState({
-    id: true,
-    tour_name: true,
-    sub_agent_name: true,
-    departure_from: true,
-    pier: true,
-    adult_price: true,
-    child_price: true,
-    notes: true,
-    updated_at: true,
-    updated_by: false,
-  });
 
-  const columns = [
+  // Modal states
+  const [selectedTour, setSelectedTour] = useState(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showDocumentModal, setShowDocumentModal] = useState(false);
+
+  // Main table columns (updated structure)
+  const mainColumns = [
     { key: "id", label: "ลำดับ", sortable: false },
     { key: "tour_name", label: "ชื่อทัวร์", sortable: true },
-    { key: "sub_agent_name", label: "Sub Agent", sortable: true },
+    { key: "departure_from", label: "ออกจาก", sortable: true },
+    { key: "adult_price", label: "ราคาผู้ใหญ่", sortable: true },
+    { key: "child_price", label: "ราคาเด็ก", sortable: true },
+    { key: "details", label: "รายละเอียดเพิ่มเติม", sortable: false },
+    { key: "documents", label: "ดูเอกสาร", sortable: false },
+  ];
+
+  // All columns for column toggle (removed sub_agent_name, added back other fields)
+  const allColumns = [
+    { key: "id", label: "ลำดับ", sortable: false },
+    { key: "tour_name", label: "ชื่อทัวร์", sortable: true },
     { key: "departure_from", label: "ออกจาก", sortable: true },
     { key: "pier", label: "ท่าเรือ", sortable: true },
     { key: "adult_price", label: "ราคาผู้ใหญ่", sortable: true },
@@ -34,6 +41,20 @@ const PriceList = () => {
     { key: "updated_at", label: "อัพเดทเมื่อ", sortable: true },
     { key: "updated_by", label: "อัพเดทโดย", sortable: true },
   ];
+
+  const [visibleColumns, setVisibleColumns] = useState({
+    id: true,
+    tour_name: true,
+    departure_from: true,
+    pier: false,
+    adult_price: true,
+    child_price: true,
+    notes: false,
+    updated_at: false,
+    updated_by: false,
+  });
+
+  const [useMainTable, setUseMainTable] = useState(true);
 
   useEffect(() => {
     fetchTours();
@@ -73,7 +94,6 @@ const PriceList = () => {
         let aValue = a[sortConfig.key];
         let bValue = b[sortConfig.key];
 
-        // Handle different data types
         if (sortConfig.key.includes("price")) {
           aValue = parseFloat(aValue) || 0;
           bValue = parseFloat(bValue) || 0;
@@ -166,6 +186,22 @@ const PriceList = () => {
     }));
   };
 
+  const openDetailsModal = (tour) => {
+    setSelectedTour(tour);
+    setShowDetailsModal(true);
+  };
+
+  const openDocumentModal = (tour) => {
+    setSelectedTour(tour);
+    setShowDocumentModal(true);
+  };
+
+  const closeModals = () => {
+    setShowDetailsModal(false);
+    setShowDocumentModal(false);
+    setSelectedTour(null);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -173,6 +209,11 @@ const PriceList = () => {
       </div>
     );
   }
+
+  const currentColumns = useMainTable ? mainColumns : allColumns;
+  const showColumn = useMainTable
+    ? (key) => mainColumns.some((col) => col.key === key)
+    : (key) => visibleColumns[key];
 
   return (
     <div className="space-y-6">
@@ -182,13 +223,13 @@ const PriceList = () => {
         <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={handleExportExcel}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer"
           >
             📊 Export Excel
           </button>
           <Link
             to="/add"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-center"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-center cursor-pointer"
           >
             ➕ เพิ่มราคาใหม่
           </Link>
@@ -212,25 +253,29 @@ const PriceList = () => {
           </div>
         </div>
 
-        {/* Column Visibility Controls */}
-        <div>
-          <p className="text-sm font-medium text-gray-700 mb-2">
-            แสดง/ซ่อนคอลัม:
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {columns.map((column) => (
-              <label key={column.key} className="inline-flex items-center">
-                <input
-                  type="checkbox"
-                  checked={visibleColumns[column.key]}
-                  onChange={() => toggleColumn(column.key)}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span className="ml-2 text-sm text-gray-700">
-                  {column.label}
-                </span>
-              </label>
-            ))}
+        {/* Table View Toggle & Column Controls */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => setUseMainTable(!useMainTable)}
+              className={`px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer ${
+                useMainTable
+                  ? "bg-blue-100 text-blue-700"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              {useMainTable ? "📋 ตารางย่อ" : "📊 ตารางเต็ม"}
+            </button>
+            {!useMainTable && (
+              <ColumnToggle
+                columns={allColumns}
+                visibleColumns={visibleColumns}
+                onToggleColumn={toggleColumn}
+              />
+            )}
+          </div>
+          <div className="text-xs text-gray-500">
+            {useMainTable ? "แสดงคอลัมน์หลัก 7 คอลัมน์" : "แสดงตารางแบบเต็ม"}
           </div>
         </div>
       </div>
@@ -241,12 +286,16 @@ const PriceList = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                {columns.map((column) => {
-                  if (!visibleColumns[column.key]) return null;
+                {currentColumns.map((column) => {
+                  if (!showColumn(column.key)) return null;
                   return (
                     <th
                       key={column.key}
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                      className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${
+                        column.sortable
+                          ? "cursor-pointer hover:bg-gray-100"
+                          : ""
+                      }`}
                       onClick={() => column.sortable && handleSort(column.key)}
                     >
                       <div className="flex items-center space-x-1">
@@ -264,9 +313,6 @@ const PriceList = () => {
                     </th>
                   );
                 })}
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  การจัดการ
-                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -275,81 +321,110 @@ const PriceList = () => {
                 return (
                   <tr
                     key={tour.id}
-                    className={`hover:bg-gray-50 ${
+                    className={`price-hover hover:bg-gray-50 ${
                       expired ? "row-expired" : ""
                     }`}
                   >
-                    {visibleColumns.id && (
+                    {/* ID Column */}
+                    {showColumn("id") && (
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {index + 1}
                       </td>
                     )}
-                    {visibleColumns.tour_name && (
+
+                    {/* Tour Name + Sub Agent Column */}
+                    {showColumn("tour_name") && (
                       <td className="px-6 py-4 text-sm text-gray-900 max-w-xs">
                         <div className="font-medium leading-5 mb-1">
                           {tour.tour_name}
                         </div>
-                        <div className="text-xs text-gray-500">
-                          {new Date(tour.start_date).toLocaleDateString(
-                            "th-TH"
-                          )}{" "}
-                          -{" "}
-                          {new Date(tour.end_date).toLocaleDateString("th-TH")}
+                        <div className="sub-agent-name">
+                          <span>🏢</span>
+                          <span>{tour.sub_agent_name}</span>
                         </div>
                       </td>
                     )}
-                    {visibleColumns.sub_agent_name && (
-                      <td className="px-6 py-4 text-sm text-gray-900 max-w-24">
-                        <div className="leading-4 text-sm break-words">
-                          {tour.sub_agent_name}
-                        </div>
-                      </td>
-                    )}
-                    {visibleColumns.departure_from && (
+
+                    {/* Departure From */}
+                    {showColumn("departure_from") && (
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {tour.departure_from}
                       </td>
                     )}
-                    {visibleColumns.pier && (
+
+                    {/* Pier */}
+                    {showColumn("pier") && (
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {tour.pier}
                       </td>
                     )}
-                    {visibleColumns.adult_price && (
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        ฿{formatPrice(tour.adult_price)}
+
+                    {/* Adult Price */}
+                    {showColumn("adult_price") && (
+                      <td className="px-6 py-4 whitespace-nowrap price-cell">
+                        <div className="price-container">
+                          <div className="price-adult">
+                            <span>฿{formatPrice(tour.adult_price)}</span>
+                          </div>
+                        </div>
                       </td>
                     )}
-                    {visibleColumns.child_price && (
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        ฿{formatPrice(tour.child_price)}
+
+                    {/* Child Price */}
+                    {showColumn("child_price") && (
+                      <td className="px-6 py-4 whitespace-nowrap price-cell">
+                        <div className="price-container">
+                          <div className="price-child">
+                            <span>฿{formatPrice(tour.child_price)}</span>
+                          </div>
+                        </div>
                       </td>
                     )}
-                    {visibleColumns.notes && (
+
+                    {/* Notes */}
+                    {showColumn("notes") && (
                       <td className="px-6 py-4 text-sm text-gray-900 max-w-sm">
                         <div className="whitespace-pre-wrap leading-4">
                           {getNotesWithExpiry(tour)}
                         </div>
                       </td>
                     )}
-                    {visibleColumns.updated_at && (
+
+                    {/* Updated At */}
+                    {showColumn("updated_at") && (
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {formatDate(tour.updated_at)}
                       </td>
                     )}
-                    {visibleColumns.updated_by && (
+
+                    {/* Updated By */}
+                    {showColumn("updated_by") && (
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {tour.updated_by}
                       </td>
                     )}
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Link
-                        to={`/edit/${tour.id}`}
-                        className="text-blue-600 hover:text-blue-900 transition-colors"
-                      >
-                        แก้ไข
-                      </Link>
-                    </td>
+
+                    {/* Main Table Action Buttons */}
+                    {useMainTable && (
+                      <>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <button
+                            onClick={() => openDetailsModal(tour)}
+                            className="px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm cursor-pointer"
+                          >
+                            📋 ดูรายละเอียด
+                          </button>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <button
+                            onClick={() => openDocumentModal(tour)}
+                            className="px-3 py-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors text-sm cursor-pointer"
+                          >
+                            📎 ดูเอกสาร
+                          </button>
+                        </td>
+                      </>
+                    )}
                   </tr>
                 );
               })}
@@ -363,6 +438,19 @@ const PriceList = () => {
           </div>
         )}
       </div>
+
+      {/* Modals */}
+      <DetailsModal
+        isOpen={showDetailsModal}
+        onClose={closeModals}
+        tour={selectedTour}
+      />
+
+      <DocumentModal
+        isOpen={showDocumentModal}
+        onClose={closeModals}
+        tour={selectedTour}
+      />
     </div>
   );
 };
