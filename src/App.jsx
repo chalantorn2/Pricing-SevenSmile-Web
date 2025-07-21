@@ -12,6 +12,7 @@ import AddPrice from "./pages/AddPrice";
 import TransferList from "./pages/TransferList";
 import HotelList from "./pages/HotelList";
 import UserManagement from "./pages/UserManagement";
+import SharedTour from "./pages/SharedTour";
 import "./index.css";
 
 // Protected Route Component
@@ -51,6 +52,7 @@ const AppRoutes = () => {
 
   return (
     <Routes>
+      <Route path="/share/tour/:id" element={<SharedTour />} />
       <Route
         path="/login"
         element={user ? <Navigate to="/" replace /> : <Login />}

@@ -1,6 +1,9 @@
 import { Link } from "react-router-dom";
+import { useState } from "react"; // ถ้ายังไม่มี
+import Toast from "../components/Toast"; // เพิ่มใหม่
 
 const DetailsModal = ({ isOpen, onClose, tour }) => {
+  const [showToast, setShowToast] = useState(false);
   if (!isOpen || !tour) return null;
 
   const formatDate = (dateString) => {
@@ -34,6 +37,26 @@ const DetailsModal = ({ isOpen, onClose, tour }) => {
     return notes;
   };
 
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/share/tour/${tour.id}`;
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
+    } catch (err) {
+      // Fallback สำหรับ browser เก่า
+      const textArea = document.createElement("textarea");
+      textArea.value = shareUrl;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
+    }
+  };
+
   return (
     <div className="modal-backdrop">
       <div className="modal-overlay">
@@ -44,13 +67,12 @@ const DetailsModal = ({ isOpen, onClose, tour }) => {
               รายละเอียดทัวร์
             </h2>
             <div className="flex items-center space-x-3">
-              <Link
-                to={`/edit/${tour.id}`}
-                className="px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
-                onClick={onClose}
+              <button
+                onClick={handleShare}
+                className="px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors cursor-pointer"
               >
-                ✏️ แก้ไข
-              </Link>
+                📤 แชร์
+              </button>
               <button
                 onClick={onClose}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -326,11 +348,12 @@ const DetailsModal = ({ isOpen, onClose, tour }) => {
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
               onClick={onClose}
             >
-              แก้ไขข้อมูล
+              ✏️ แก้ไขข้อมูล
             </Link>
           </div>
         </div>
       </div>
+      {showToast && <Toast message="✅ คัดลอกลิงค์แชร์แล้ว!" />}
     </div>
   );
 };
