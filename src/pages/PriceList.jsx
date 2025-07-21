@@ -327,14 +327,14 @@ const PriceList = () => {
                   >
                     {/* ID Column */}
                     {showColumn("id") && (
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-base text-gray-900">
                         {index + 1}
                       </td>
                     )}
 
                     {/* Tour Name + Sub Agent Column */}
                     {showColumn("tour_name") && (
-                      <td className="px-6 py-4 text-sm text-gray-900 max-w-xs">
+                      <td className="px-6 py-4 text-base text-gray-900 max-w-xs">
                         <div className="font-medium leading-5 mb-1">
                           {tour.tour_name}
                         </div>
@@ -347,14 +347,14 @@ const PriceList = () => {
 
                     {/* Departure From */}
                     {showColumn("departure_from") && (
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-base text-gray-900">
                         {tour.departure_from}
                       </td>
                     )}
 
                     {/* Pier */}
                     {showColumn("pier") && (
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-base text-gray-900">
                         {tour.pier}
                       </td>
                     )}
@@ -383,7 +383,7 @@ const PriceList = () => {
 
                     {/* Notes */}
                     {showColumn("notes") && (
-                      <td className="px-6 py-4 text-sm text-gray-900 max-w-sm">
+                      <td className="px-6 py-4 text-base text-gray-900 max-w-sm">
                         <div className="whitespace-pre-wrap leading-4">
                           {getNotesWithExpiry(tour)}
                         </div>
@@ -392,14 +392,14 @@ const PriceList = () => {
 
                     {/* Updated At */}
                     {showColumn("updated_at") && (
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-base text-gray-500">
                         {formatDate(tour.updated_at)}
                       </td>
                     )}
 
                     {/* Updated By */}
                     {showColumn("updated_by") && (
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-base text-gray-500">
                         {tour.updated_by}
                       </td>
                     )}

@@ -494,7 +494,7 @@ select:focus {
 /* Sub agent styling */
 .sub-agent-name {
   color: #2563eb;
-  font-size: 0.75rem;
+  font-size: 1rem;
   font-weight: 500;
   margin-top: 0.25rem;
   display: flex;
