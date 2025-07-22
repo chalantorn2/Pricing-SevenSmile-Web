@@ -161,7 +161,7 @@ const UserManagement = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {users.map((user) => (
+              {(users || []).map((user) => (
                 <tr key={user.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="font-medium text-gray-900">
@@ -204,7 +204,7 @@ const UserManagement = () => {
           </table>
         </div>
 
-        {users.length === 0 && (
+        {(!users || users.length === 0) && (
           <div className="text-center py-12">
             <p className="text-gray-500">ไม่มีข้อมูลผู้ใช้</p>
           </div>
@@ -213,7 +213,7 @@ const UserManagement = () => {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 modal-backdrop flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
             <div className="p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
