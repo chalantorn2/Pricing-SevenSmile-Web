@@ -6,7 +6,7 @@ import DocumentModal from "../components/DocumentModal";
 import ColumnToggle from "../components/ColumnToggle";
 import * as XLSX from "xlsx";
 
-const PriceList = () => {
+const TourList = () => {
   const [tours, setTours] = useState([]);
   const [filteredTours, setFilteredTours] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -219,7 +219,7 @@ const PriceList = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold text-gray-900">รายการราคาทัวร์</h1>
+        <h1 className="text-2xl font-bold text-gray-900">รายการ Tour</h1>
         <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={handleExportExcel}
@@ -455,4 +455,4 @@ const PriceList = () => {
   );
 };
 
-export default PriceList;
+export default TourList;

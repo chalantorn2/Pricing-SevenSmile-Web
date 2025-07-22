@@ -1,6 +1,4 @@
-// API Service for MariaDB via PHP
-// แทนที่ supabase.js
-
+// API Service for MariaDB via PHP - Updated for Sub Agents
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 // Helper function for API calls
@@ -53,7 +51,7 @@ async function apiCall(endpoint, options = {}) {
   }
 }
 
-// Authentication functions
+// Authentication functions (unchanged)
 export const authService = {
   // Login
   async login(username, password) {
@@ -103,9 +101,142 @@ export const authService = {
   },
 };
 
-// Tours CRUD functions
+// ✨ NEW: Sub Agents CRUD functions
+export const subAgentsService = {
+  // Get all sub agents
+  async getAllSubAgents() {
+    try {
+      console.log("🏢 Fetching all sub agents...");
+      const response = await apiCall("/sub-agents.php");
+      console.log(
+        "✅ Sub Agents fetched successfully:",
+        response.data?.length,
+        "items"
+      );
+      return response.data;
+    } catch (error) {
+      console.error("❌ Failed to fetch sub agents:", error);
+      throw new Error(
+        "เกิดข้อผิดพลาดในการโหลดข้อมูล Sub Agents: " + error.message
+      );
+    }
+  },
+
+  // Search sub agents (for AutoComplete)
+  async searchSubAgents(query) {
+    try {
+      console.log("🔍 Searching sub agents:", query);
+      const response = await apiCall(
+        `/sub-agents.php?search=${encodeURIComponent(query)}`
+      );
+      console.log(
+        "✅ Sub Agents search results:",
+        response.data?.length,
+        "items"
+      );
+      return response.data || [];
+    } catch (error) {
+      console.error("❌ Failed to search sub agents:", error);
+      throw new Error("เกิดข้อผิดพลาดในการค้นหา Sub Agents: " + error.message);
+    }
+  },
+
+  // Add new sub agent
+  async addSubAgent(subAgentData) {
+    try {
+      console.log("➕ Adding new sub agent:", subAgentData);
+      const response = await apiCall("/sub-agents.php", {
+        method: "POST",
+        body: JSON.stringify(subAgentData),
+      });
+      console.log("✅ Sub Agent added successfully:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("❌ Failed to add sub agent:", error);
+      throw new Error("เกิดข้อผิดพลาดในการเพิ่ม Sub Agent: " + error.message);
+    }
+  },
+
+  // Update sub agent
+  async updateSubAgent(id, subAgentData) {
+    try {
+      console.log("🔄 Updating sub agent:", id, subAgentData);
+      const response = await apiCall(`/sub-agents.php?id=${id}`, {
+        method: "PUT",
+        body: JSON.stringify(subAgentData),
+      });
+      console.log("✅ Sub Agent updated successfully:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("❌ Failed to update sub agent:", error);
+      throw new Error("เกิดข้อผิดพลาดในการอัพเดท Sub Agent: " + error.message);
+    }
+  },
+
+  // Delete sub agent
+  async deleteSubAgent(id) {
+    try {
+      console.log("🗑️ Deleting sub agent:", id);
+      await apiCall(`/sub-agents.php?id=${id}`, {
+        method: "DELETE",
+      });
+      console.log("✅ Sub Agent deleted successfully");
+    } catch (error) {
+      console.error("❌ Failed to delete sub agent:", error);
+      throw new Error("เกิดข้อผิดพลาดในการลบ Sub Agent: " + error.message);
+    }
+  },
+};
+
+// ✨ NEW: Sub Agent Files functions
+export const subAgentFilesService = {
+  // Get files for a sub agent
+  async getSubAgentFiles(subAgentId) {
+    try {
+      console.log("📂 Fetching files for sub agent:", subAgentId);
+      const response = await apiCall(
+        `/sub-agent-files.php?sub_agent_id=${subAgentId}`
+      );
+      console.log(
+        "✅ Sub Agent files fetched successfully:",
+        response.data?.length,
+        "items"
+      );
+      return response.data || [];
+    } catch (error) {
+      console.error("❌ Failed to fetch sub agent files:", error);
+      throw new Error(
+        "เกิดข้อผิดพลาดในการโหลดไฟล์ Sub Agent: " + error.message
+      );
+    }
+  },
+
+  // Delete a sub agent file
+  async deleteSubAgentFile(fileId) {
+    try {
+      console.log("🗑️ Deleting sub agent file:", fileId);
+      await apiCall(`/sub-agent-files.php?id=${fileId}`, {
+        method: "DELETE",
+      });
+      console.log("✅ Sub Agent file deleted successfully");
+    } catch (error) {
+      console.error("❌ Failed to delete sub agent file:", error);
+      throw new Error("เกิดข้อผิดพลาดในการลบไฟล์: " + error.message);
+    }
+  },
+
+  // Get file URL
+  getSubAgentFileUrl(file) {
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || "/api";
+    return `${baseUrl}/uploads/sub-agents/${
+      file.file_type === "pdf" ? "pdfs" : "images"
+    }/${file.file_name}`;
+  },
+};
+
+// Updated Tours CRUD functions
 export const toursService = {
-  // Get all tours
+  // Get all tours (now includes sub agent info)
   async getAllTours() {
     try {
       console.log("🏝️ Fetching all tours...");
@@ -115,15 +246,27 @@ export const toursService = {
         response.data?.length,
         "items"
       );
-      return response.data; // Return เฉพาะ data array
+      return response.data;
     } catch (error) {
       console.error("❌ Failed to fetch tours:", error);
       throw new Error("เกิดข้อผิดพลาดในการโหลดข้อมูลทัวร์: " + error.message);
     }
   },
 
-  // Add new tour
-  async addTour(tourData) {
+  async getTourById(id) {
+    try {
+      console.log("🏝️ Fetching tour by ID:", id);
+      const response = await apiCall(`/tours.php?id=${id}`);
+      console.log("✅ Tour fetched successfully:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("❌ Failed to fetch tour:", error);
+      throw new Error("เกิดข้อผิดพลาดในการโหลดข้อมูลทัวร์: " + error.message);
+    }
+  },
+
+  // Add new tour(s) - supports both single and multiple tours
+  async addTours(tourData) {
     try {
       const user = authService.getCurrentUser();
       const dataWithUser = {
@@ -131,18 +274,23 @@ export const toursService = {
         updated_by: user?.username || "Unknown",
       };
 
-      console.log("➕ Adding new tour:", dataWithUser);
+      console.log("➕ Adding new tour(s):", dataWithUser);
       const response = await apiCall("/tours.php", {
         method: "POST",
         body: JSON.stringify(dataWithUser),
       });
 
-      console.log("✅ Tour added successfully:", response.data);
-      return response.data; // Return เฉพาะ data object
+      console.log("✅ Tour(s) added successfully:", response.data);
+      return response.data;
     } catch (error) {
-      console.error("❌ Failed to add tour:", error);
+      console.error("❌ Failed to add tour(s):", error);
       throw new Error("เกิดข้อผิดพลาดในการเพิ่มทัวร์: " + error.message);
     }
+  },
+
+  // Add single tour (backward compatibility)
+  async addTour(tourData) {
+    return this.addTours(tourData);
   },
 
   // Update tour
@@ -161,7 +309,7 @@ export const toursService = {
       });
 
       console.log("✅ Tour updated successfully:", response.data);
-      return response.data; // Return เฉพาะ data object
+      return response.data;
     } catch (error) {
       console.error("❌ Failed to update tour:", error);
       throw new Error("เกิดข้อผิดพลาดในการอัพเดททัวร์: " + error.message);
@@ -183,7 +331,7 @@ export const toursService = {
   },
 };
 
-// Users management functions (Admin only)
+// Users management functions (unchanged)
 export const usersService = {
   // Get all users
   async getAllUsers() {
@@ -195,7 +343,7 @@ export const usersService = {
         response.data?.length,
         "items"
       );
-      return response.data; // Return เฉพาะ data array
+      return response.data;
     } catch (error) {
       console.error("❌ Failed to fetch users:", error);
       throw new Error("เกิดข้อผิดพลาดในการโหลดข้อมูลผู้ใช้: " + error.message);
@@ -211,7 +359,7 @@ export const usersService = {
         body: JSON.stringify(userData),
       });
       console.log("✅ User added successfully:", response.data);
-      return response.data; // Return เฉพาะ data object
+      return response.data;
     } catch (error) {
       console.error("❌ Failed to add user:", error);
       throw error; // Pass through the original error message
@@ -227,7 +375,7 @@ export const usersService = {
         body: JSON.stringify(userData),
       });
       console.log("✅ User updated successfully:", response.data);
-      return response.data; // Return เฉพาะ data object
+      return response.data;
     } catch (error) {
       console.error("❌ Failed to update user:", error);
       throw error; // Pass through the original error message
@@ -249,21 +397,7 @@ export const usersService = {
   },
 };
 
-// Test API connection
-export const testConnection = async () => {
-  try {
-    console.log("🔍 Testing API connection...");
-    console.log("🌐 API Base URL:", API_BASE_URL);
-
-    await apiCall("/tours.php");
-    console.log("✅ เชื่อมต่อ API สำเร็จ");
-    return true;
-  } catch (error) {
-    console.error("❌ เชื่อมต่อ API ไม่สำเร็จ:", error.message);
-    return false;
-  }
-};
-
+// Tour Files functions (unchanged)
 export const filesService = {
   // Get files for a tour
   async getTourFiles(tourId) {
@@ -303,4 +437,19 @@ export const filesService = {
       file.file_type === "pdf" ? "pdfs" : "images"
     }/${file.file_name}`;
   },
+};
+
+// Test API connection
+export const testConnection = async () => {
+  try {
+    console.log("🔍 Testing API connection...");
+    console.log("🌐 API Base URL:", API_BASE_URL);
+
+    await apiCall("/tours.php");
+    console.log("✅ เชื่อมต่อ API สำเร็จ");
+    return true;
+  } catch (error) {
+    console.error("❌ เชื่อมต่อ API ไม่สำเร็จ:", error.message);
+    return false;
+  }
 };

@@ -7,12 +7,13 @@ import {
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
-import PriceList from "./pages/PriceList";
-import AddPrice from "./pages/AddPrice";
+import TourList from "./pages/TourList";
+import NewAddPrice from "./pages/NewAddPrice";
 import TransferList from "./pages/TransferList";
 import HotelList from "./pages/HotelList";
 import UserManagement from "./pages/UserManagement";
 import SharedTour from "./pages/SharedTour";
+import EditTour from "./pages/EditTour";
 import "./index.css";
 
 // Protected Route Component
@@ -67,9 +68,9 @@ const AppRoutes = () => {
         }
       >
         {/* Tours Routes */}
-        <Route index element={<PriceList />} />
-        <Route path="add" element={<AddPrice />} />
-        <Route path="edit/:id" element={<AddPrice />} />
+        <Route index element={<TourList />} />
+        <Route path="add" element={<NewAddPrice />} />
+        <Route path="edit/:id" element={<EditTour />} />
 
         {/* Transfer Routes */}
         <Route path="transfer" element={<TransferList />} />

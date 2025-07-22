@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { filesService } from "../services/api-service";
+import { filesService, subAgentFilesService } from "../services/api-service";
 
 const DocumentModal = ({ isOpen, onClose, tour }) => {
   const [files, setFiles] = useState([]);
@@ -15,8 +15,29 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
   const fetchFiles = async () => {
     try {
       setLoading(true);
-      const tourFiles = await filesService.getTourFiles(tour.id);
-      setFiles(tourFiles);
+
+      // Fetch both sub agent files and tour files
+      const promises = [];
+
+      // Tour files (existing)
+      promises.push(filesService.getTourFiles(tour.id));
+
+      // Sub agent files (new)
+      if (tour.sub_agent_id) {
+        promises.push(subAgentFilesService.getSubAgentFiles(tour.sub_agent_id));
+      } else {
+        promises.push(Promise.resolve([]));
+      }
+
+      const [tourFiles, subAgentFiles] = await Promise.all(promises);
+
+      // Combine and mark file sources
+      const allFiles = [
+        ...subAgentFiles.map((file) => ({ ...file, source: "sub_agent" })),
+        ...tourFiles.map((file) => ({ ...file, source: "tour" })),
+      ];
+
+      setFiles(allFiles);
     } catch (error) {
       console.error("Error fetching files:", error);
       alert("เกิดข้อผิดพลาดในการโหลดไฟล์");
@@ -130,9 +151,22 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
                             <div className="flex items-center space-x-3">
                               <span className="text-2xl">📄</span>
                               <div>
-                                <h4 className="font-medium text-gray-900">
-                                  {file.original_name}
-                                </h4>
+                                <div className="flex items-center space-x-2">
+                                  <h4 className="font-medium text-gray-900">
+                                    {file.label || file.original_name}
+                                  </h4>
+                                  <span
+                                    className={`px-2 py-1 text-xs rounded-full ${
+                                      file.source === "sub_agent"
+                                        ? "bg-blue-100 text-blue-700"
+                                        : "bg-green-100 text-green-700"
+                                    }`}
+                                  >
+                                    {file.source === "sub_agent"
+                                      ? "Sub Agent"
+                                      : "Tour"}
+                                  </span>
+                                </div>
                                 <div className="flex items-center space-x-4 text-sm text-gray-500">
                                   <span>{file.file_size_formatted}</span>
                                   <span>•</span>
@@ -284,11 +318,6 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
                 />
               </svg>
             </button>
-
-            {/* Close instruction */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-75 text-white px-4 py-2 rounded-lg text-sm">
-              คลิกที่พื้นหลังหรือปุ่ม ✕ เพื่อปิด
-            </div>
           </div>
         </div>
       )}

@@ -40,9 +40,7 @@ const Layout = () => {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-center h-16 border-b border-gray-200">
-            <h1 className="text-xl font-bold text-blue-600">
-              SevenSmile Pricing
-            </h1>
+            <h1 className="text-xl font-bold text-blue-600">Contact Rate</h1>
           </div>
 
           {/* Navigation */}

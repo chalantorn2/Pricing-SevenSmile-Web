@@ -1,5 +1,5 @@
 <?php
-// api/tours.php - ตามแบบที่ทำงาน
+// api/tours.php - Updated to work with Sub Agents
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
@@ -29,15 +29,24 @@ try {
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
     ));
     
-    // Test database connection first
-    $test = $pdo->query("SELECT 1")->fetch();
-    
     $method = $_SERVER['REQUEST_METHOD'];
     
     switch($method) {
         case 'GET':
-            // Get all tours
-            $sql = "SELECT * FROM tours ORDER BY updated_at DESC";
+            // Get all tours with sub agent information
+            $sql = "SELECT t.*, 
+                          sa.name as sub_agent_name,
+                          sa.address,
+                          sa.phone,
+                          sa.line,
+                          sa.facebook,
+                          sa.whatsapp,
+                          sa.created_at as sub_agent_created_at,
+                          sa.updated_at as sub_agent_updated_at
+                   FROM tours t
+                   LEFT JOIN sub_agents sa ON t.sub_agent_id = sa.id
+                   ORDER BY t.updated_at DESC";
+            
             $stmt = $pdo->prepare($sql);
             $stmt->execute();
             $tours = $stmt->fetchAll();
@@ -51,45 +60,88 @@ try {
             break;
             
         case 'POST':
-            // Add new tour
+            // Add new tour (single or multiple)
             $input = file_get_contents('php://input');
             $data = json_decode($input, true);
             
-            $sql = "INSERT INTO tours (sub_agent_name, address, phone, line, facebook, whatsapp, tour_name, departure_from, pier, adult_price, child_price, start_date, end_date, notes, park_fee_included, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            // Check if it's multiple tours (array) or single tour (object)
+            $tours = isset($data['tours']) ? $data['tours'] : array($data);
+            $sub_agent_id = isset($data['sub_agent_id']) ? $data['sub_agent_id'] : null;
+            $updated_by = isset($data['updated_by']) ? $data['updated_by'] : 'Unknown';
             
-            $stmt = $pdo->prepare($sql);
-            $result = $stmt->execute(array(
-                isset($data['sub_agent_name']) ? $data['sub_agent_name'] : null,
-                isset($data['address']) ? $data['address'] : null,
-                isset($data['phone']) ? $data['phone'] : null,
-                isset($data['line']) ? $data['line'] : null,
-                isset($data['facebook']) ? $data['facebook'] : null,
-                isset($data['whatsapp']) ? $data['whatsapp'] : null,
-                $data['tour_name'],
-                isset($data['departure_from']) ? $data['departure_from'] : null,
-                isset($data['pier']) ? $data['pier'] : null,
-                $data['adult_price'],
-                $data['child_price'],
-                $data['start_date'],
-                $data['end_date'],
-                isset($data['notes']) ? $data['notes'] : null,
-                isset($data['park_fee_included']) && $data['park_fee_included'] ? 1 : 0,
-                isset($data['updated_by']) ? $data['updated_by'] : 'Unknown'
-            ));
+            // Validate sub_agent_id if provided
+            if ($sub_agent_id) {
+                $stmt = $pdo->prepare("SELECT id FROM sub_agents WHERE id = ?");
+                $stmt->execute(array($sub_agent_id));
+                if (!$stmt->fetch()) {
+                    throw new Exception("Sub Agent ไม่พบในระบบ");
+                }
+            }
             
-            if ($result) {
-                $id = $pdo->lastInsertId();
-                $stmt = $pdo->prepare("SELECT * FROM tours WHERE id = ?");
-                $stmt->execute(array($id));
-                $tour = $stmt->fetch();
+            $created_tours = array();
+            
+            // Start transaction for multiple tours
+            $pdo->beginTransaction();
+            
+            try {
+                foreach ($tours as $tour) {
+                    // Validate required fields
+                    if (empty($tour['tour_name'])) {
+                        throw new Exception("กรุณากรอกชื่อทัวร์");
+                    }
+                    
+                    $sql = "INSERT INTO tours (sub_agent_id, tour_name, departure_from, pier, adult_price, child_price, start_date, end_date, notes, park_fee_included, updated_by) 
+                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    
+                    $stmt = $pdo->prepare($sql);
+                    $result = $stmt->execute(array(
+                        $sub_agent_id,
+                        $tour['tour_name'],
+                        isset($tour['departure_from']) ? $tour['departure_from'] : null,
+                        isset($tour['pier']) ? $tour['pier'] : null,
+                        isset($tour['adult_price']) ? $tour['adult_price'] : 0,
+                        isset($tour['child_price']) ? $tour['child_price'] : 0,
+                        isset($tour['start_date']) ? $tour['start_date'] : null,
+                        isset($tour['end_date']) ? $tour['end_date'] : null,
+                        isset($tour['notes']) ? $tour['notes'] : null,
+                        isset($tour['park_fee_included']) && $tour['park_fee_included'] ? 1 : 0,
+                        $updated_by
+                    ));
+                    
+                    if ($result) {
+                        $id = $pdo->lastInsertId();
+                        
+                        // Get the created tour with sub agent info
+                        $stmt = $pdo->prepare("
+                            SELECT t.*, 
+                                  sa.name as sub_agent_name,
+                                  sa.address, sa.phone, sa.line, sa.facebook, sa.whatsapp
+                            FROM tours t
+                            LEFT JOIN sub_agents sa ON t.sub_agent_id = sa.id
+                            WHERE t.id = ?
+                        ");
+                        $stmt->execute(array($id));
+                        $created_tour = $stmt->fetch();
+                        
+                        $created_tours[] = $created_tour;
+                    } else {
+                        throw new Exception("ไม่สามารถบันทึกทัวร์ได้");
+                    }
+                }
+                
+                // Commit transaction
+                $pdo->commit();
                 
                 echo json_encode(array(
                     'success' => true,
-                    'data' => $tour,
-                    'message' => 'เพิ่มทัวร์สำเร็จ'
+                    'data' => count($created_tours) === 1 ? $created_tours[0] : $created_tours,
+                    'message' => 'เพิ่มทัวร์สำเร็จ (' . count($created_tours) . ' รายการ)',
+                    'count' => count($created_tours)
                 ));
-            } else {
-                throw new Exception("ไม่สามารถบันทึกข้อมูลได้");
+                
+            } catch (Exception $e) {
+                $pdo->rollBack();
+                throw $e;
             }
             break;
             
@@ -103,23 +155,29 @@ try {
             $input = file_get_contents('php://input');
             $data = json_decode($input, true);
             
-            $sql = "UPDATE tours SET sub_agent_name=?, address=?, phone=?, line=?, facebook=?, whatsapp=?, tour_name=?, departure_from=?, pier=?, adult_price=?, child_price=?, start_date=?, end_date=?, notes=?, park_fee_included=?, updated_by=?, updated_at=NOW() WHERE id=?";
+            // Validate sub_agent_id if provided
+            if (isset($data['sub_agent_id']) && $data['sub_agent_id']) {
+                $stmt = $pdo->prepare("SELECT id FROM sub_agents WHERE id = ?");
+                $stmt->execute(array($data['sub_agent_id']));
+                if (!$stmt->fetch()) {
+                    throw new Exception("Sub Agent ไม่พบในระบบ");
+                }
+            }
+            
+            $sql = "UPDATE tours 
+                   SET sub_agent_id=?, tour_name=?, departure_from=?, pier=?, adult_price=?, child_price=?, start_date=?, end_date=?, notes=?, park_fee_included=?, updated_by=?, updated_at=NOW() 
+                   WHERE id=?";
             
             $stmt = $pdo->prepare($sql);
             $result = $stmt->execute(array(
-                isset($data['sub_agent_name']) ? $data['sub_agent_name'] : null,
-                isset($data['address']) ? $data['address'] : null,
-                isset($data['phone']) ? $data['phone'] : null,
-                isset($data['line']) ? $data['line'] : null,
-                isset($data['facebook']) ? $data['facebook'] : null,
-                isset($data['whatsapp']) ? $data['whatsapp'] : null,
+                isset($data['sub_agent_id']) ? $data['sub_agent_id'] : null,
                 $data['tour_name'],
                 isset($data['departure_from']) ? $data['departure_from'] : null,
                 isset($data['pier']) ? $data['pier'] : null,
-                $data['adult_price'],
-                $data['child_price'],
-                $data['start_date'],
-                $data['end_date'],
+                isset($data['adult_price']) ? $data['adult_price'] : 0,
+                isset($data['child_price']) ? $data['child_price'] : 0,
+                isset($data['start_date']) ? $data['start_date'] : null,
+                isset($data['end_date']) ? $data['end_date'] : null,
                 isset($data['notes']) ? $data['notes'] : null,
                 isset($data['park_fee_included']) && $data['park_fee_included'] ? 1 : 0,
                 isset($data['updated_by']) ? $data['updated_by'] : 'Unknown',
@@ -127,7 +185,15 @@ try {
             ));
             
             if ($result) {
-                $stmt = $pdo->prepare("SELECT * FROM tours WHERE id = ?");
+                // Get updated tour with sub agent info
+                $stmt = $pdo->prepare("
+                    SELECT t.*, 
+                          sa.name as sub_agent_name,
+                          sa.address, sa.phone, sa.line, sa.facebook, sa.whatsapp
+                    FROM tours t
+                    LEFT JOIN sub_agents sa ON t.sub_agent_id = sa.id
+                    WHERE t.id = ?
+                ");
                 $stmt->execute(array($id));
                 $tour = $stmt->fetch();
                 
