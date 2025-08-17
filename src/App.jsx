@@ -5,15 +5,15 @@ import {
   Navigate,
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
-import Layout from "./components/Layout";
-import Login from "./pages/Login";
-import TourList from "./pages/TourList";
-import NewAddPrice from "./pages/NewAddPrice";
-import TransferList from "./pages/TransferList";
-import HotelList from "./pages/HotelList";
-import UserManagement from "./pages/UserManagement";
-import SharedTour from "./pages/SharedTour";
-import EditTour from "./pages/EditTour";
+import { Layout } from "./components/core";
+import Login from "./pages/auth/Login";
+import TourList from "./pages/tours/TourList";
+import NewAddPrice from "./pages/tours/NewAddPrice";
+import TransferList from "./pages/management/TransferList";
+import HotelList from "./pages/management/HotelList";
+import UserManagement from "./pages/management/UserManagement";
+import SharedTour from "./pages/tours/SharedTour";
+import EditTour from "./pages/tours/EditTour";
 import "./index.css";
 
 // Protected Route Component

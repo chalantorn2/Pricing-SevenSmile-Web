@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { authService } from "../services/api-service";
+import { authService } from "../../services/api-service";
 
 const FileUpload = ({ tourId, onFileUploaded, disabled = false }) => {
   const [uploading, setUploading] = useState(false);

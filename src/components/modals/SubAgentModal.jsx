@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { subAgentsService } from "../services/api-service";
+import { subAgentsService } from "../../services/api-service";
 
 const SubAgentModal = ({ isOpen, onClose, onSuccess, initialName = "" }) => {
   const [loading, setLoading] = useState(false);

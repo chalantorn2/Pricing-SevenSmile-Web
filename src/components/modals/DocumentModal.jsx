@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { filesService, subAgentFilesService } from "../services/api-service";
+import { filesService, subAgentFilesService } from "../../services/api-service";
 
 const DocumentModal = ({ isOpen, onClose, tour }) => {
   const [files, setFiles] = useState([]);

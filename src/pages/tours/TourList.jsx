@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { toursService } from "../services/api-service";
-import DetailsModal from "../components/DetailsModal";
-import DocumentModal from "../components/DocumentModal";
-import ColumnToggle from "../components/ColumnToggle";
+import { toursService } from "../../services/api-service";
+import { DetailsModal, DocumentModal } from "../../components/modals";
+import { ColumnToggle } from "../../components/core";
 import * as XLSX from "xlsx";
 
 const TourList = () => {

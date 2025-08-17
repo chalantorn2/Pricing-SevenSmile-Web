@@ -1,15 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import SubAgentAutocomplete from "../components/SubAgentAutocomplete";
-import SubAgentModal from "../components/SubAgentModal";
-import SubAgentFileUpload from "../components/SubAgentFileUpload";
-import FileUpload from "../components/FileUpload";
+import { SubAgentAutocomplete } from "../../components/forms";
+import { SubAgentModal } from "../../components/modals";
+import { SubAgentFileUpload, FileUpload } from "../../components/uploads";
 import {
   toursService,
   subAgentsService,
   filesService,
   subAgentFilesService,
-} from "../services/api-service";
+} from "../../services/api-service";
 
 const EditTour = () => {
   const navigate = useNavigate();

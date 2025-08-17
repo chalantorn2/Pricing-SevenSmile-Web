@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import { useState } from "react"; // ถ้ายังไม่มี
-import Toast from "../components/Toast"; // เพิ่มใหม่
+import { useState } from "react";
+import { Toast } from "../core";
 
 const DetailsModal = ({ isOpen, onClose, tour }) => {
   const [showToast, setShowToast] = useState(false);

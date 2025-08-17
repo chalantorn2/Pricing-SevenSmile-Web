@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../../hooks/useAuth";
 import { Link, useLocation, Outlet } from "react-router-dom";
 
 const Layout = () => {

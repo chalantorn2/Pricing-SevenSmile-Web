@@ -10,7 +10,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 }
 
 // Database connection
-function getDB() {
+function getDB()
+{
     try {
         $pdo = new PDO(
             'mysql:host=localhost;dbname=sevensmile_contactrate;charset=utf8',
@@ -20,21 +21,22 @@ function getDB() {
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
         return $pdo;
-    } catch(PDOException $e) {
+    } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode(array('error' => 'Database connection failed: ' . $e->getMessage()));
         exit;
     }
 }
 
-function sendJSON($data, $status = 200) {
+function sendJSON($data, $status = 200)
+{
     http_response_code($status);
     echo json_encode($data);
     exit;
 }
 
-function getInput() {
+function getInput()
+{
     $input = file_get_contents('php://input');
     return json_decode($input, true);
 }
-?>

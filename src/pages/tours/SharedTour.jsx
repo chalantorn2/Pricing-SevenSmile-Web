@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { toursService } from "../services/api-service";
+import { toursService } from "../../services/api-service";
 
 const SharedTour = () => {
   const { id } = useParams();

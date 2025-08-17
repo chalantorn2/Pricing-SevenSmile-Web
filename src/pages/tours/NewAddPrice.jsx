@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import SubAgentAutocomplete from "../components/SubAgentAutocomplete";
-import SubAgentModal from "../components/SubAgentModal";
-import SubAgentFileUpload from "../components/SubAgentFileUpload";
-import MultiTourForm from "../components/MultiTourForm";
-import { toursService, subAgentFilesService } from "../services/api-service";
+import { SubAgentAutocomplete, MultiTourForm } from "../../components/forms";
+import { SubAgentModal } from "../../components/modals";
+import { SubAgentFileUpload } from "../../components/uploads";
+import { toursService, subAgentFilesService } from "../../services/api-service";
 
 const NewAddPrice = () => {
   const navigate = useNavigate();
