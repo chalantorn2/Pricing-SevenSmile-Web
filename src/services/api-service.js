@@ -453,3 +453,27 @@ export const testConnection = async () => {
     return false;
   }
 };
+
+// Autocomplete service
+export const autocompleteService = {
+  // Get autocomplete suggestions
+  async getSuggestions(type, query) {
+    if (!query || query.length < 2) {
+      return [];
+    }
+
+    try {
+      console.log(`🔍 Fetching autocomplete for ${type}:`, query);
+      const response = await apiCall(
+        `/autocomplete.php?type=${encodeURIComponent(
+          type
+        )}&query=${encodeURIComponent(query)}`
+      );
+      console.log("✅ Autocomplete results:", response.data?.length, "items");
+      return response.data || [];
+    } catch (error) {
+      console.error("❌ Failed to fetch autocomplete:", error);
+      return []; // Return empty array on error, don't throw
+    }
+  },
+};

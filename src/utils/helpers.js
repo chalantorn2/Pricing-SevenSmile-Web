@@ -2,6 +2,13 @@ export const isExpired = (endDate) => {
   return new Date(endDate) < new Date();
 };
 
+export const formatEndDate = (endDate) => {
+  if (!endDate) {
+    return "ไม่กำหนด";
+  }
+  return formatDate(endDate);
+};
+
 export const getNotesWithExpiry = (tour) => {
   let notes = tour.notes || "";
 
@@ -11,8 +18,11 @@ export const getNotesWithExpiry = (tour) => {
     notes = "ราคา Net นี้ ยังไม่รวมค่าอุทยาน" + (notes ? ` | ${notes}` : "");
   }
 
-  if (isExpired(tour.end_date)) {
+  // Only check expiry if end_date exists
+  if (tour.end_date && isExpired(tour.end_date)) {
     notes += " | ⚠️ หมดอายุแล้ว กรุณาต่ออายุ";
+  } else if (!tour.end_date) {
+    notes += " | ♾️ ใช้ได้ตลอด";
   }
 
   return notes;
