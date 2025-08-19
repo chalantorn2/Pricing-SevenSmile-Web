@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { SubAgentAutocomplete } from "../../components/forms";
-import { SubAgentModal } from "../../components/modals";
-import { SubAgentFileUpload, FileUpload } from "../../components/uploads";
+import { SupplierAutocomplete } from "../../components/forms";
+import { SupplierModal } from "../../components/modals";
+import { SupplierFileUpload, FileUpload } from "../../components/uploads";
 import {
   toursService,
-  subAgentsService,
+  suppliersService,
   filesService,
-  subAgentFilesService,
+  supplierFilesService,
 } from "../../services/api-service";
 
 const EditTour = () => {
@@ -20,12 +20,12 @@ const EditTour = () => {
 
   // Data states
   const [tour, setTour] = useState(null);
-  const [selectedSubAgent, setSelectedSubAgent] = useState(null);
-  const [subAgentFiles, setSubAgentFiles] = useState([]);
+  const [selectedSupplier, setSelectedSupplier] = useState(null);
+  const [supplierFiles, setSupplierFiles] = useState([]);
   const [tourFiles, setTourFiles] = useState([]);
 
   // Modal states
-  const [showSubAgentModal, setShowSubAgentModal] = useState(false);
+  const [showSupplierModal, setShowSupplierModal] = useState(false);
   const [modalInitialName, setModalInitialName] = useState("");
 
   // Form data
@@ -46,10 +46,10 @@ const EditTour = () => {
   }, [id]);
 
   useEffect(() => {
-    if (selectedSubAgent) {
-      loadSubAgentFiles();
+    if (selectedSupplier) {
+      loadSupplierFiles();
     }
-  }, [selectedSubAgent]);
+  }, [selectedSupplier]);
 
   const fetchTourData = async () => {
     try {
@@ -73,11 +73,11 @@ const EditTour = () => {
           park_fee_included: tourData.park_fee_included || false,
         });
 
-        // Set sub agent if exists
-        if (tourData.sub_agent_id && tourData.sub_agent_name) {
-          setSelectedSubAgent({
-            id: tourData.sub_agent_id,
-            name: tourData.sub_agent_name,
+        // Set supplier if exists
+        if (tourData.supplier_id && tourData.supplier_name) {
+          setSelectedSupplier({
+            id: tourData.supplier_id,
+            name: tourData.supplier_name,
             address: tourData.address,
             phone: tourData.phone,
             line: tourData.line,
@@ -106,34 +106,34 @@ const EditTour = () => {
     }
   };
 
-  const loadSubAgentFiles = async () => {
-    if (!selectedSubAgent) return;
+  const loadSupplierFiles = async () => {
+    if (!selectedSupplier) return;
 
     try {
-      const files = await subAgentFilesService.getSubAgentFiles(
-        selectedSubAgent.id
+      const files = await supplierFilesService.getSupplierFiles(
+        selectedSupplier.id
       );
-      setSubAgentFiles(files);
+      setSupplierFiles(files);
     } catch (error) {
-      console.error("Error loading sub agent files:", error);
+      console.error("Error loading supplier files:", error);
     }
   };
 
-  const handleSubAgentSelect = async (subAgent) => {
-    setSelectedSubAgent(subAgent);
+  const handleSupplierSelect = async (supplier) => {
+    setSelectedSupplier(supplier);
   };
 
-  const handleCreateNewSubAgent = (name) => {
+  const handleCreateNewSupplier = (name) => {
     setModalInitialName(name);
-    setShowSubAgentModal(true);
+    setShowSupplierModal(true);
   };
 
-  const handleSubAgentCreated = (newSubAgent) => {
-    setSelectedSubAgent(newSubAgent);
+  const handleSupplierCreated = (newSupplier) => {
+    setSelectedSupplier(newSupplier);
   };
 
-  const handleSubAgentFileUploaded = (newFile) => {
-    setSubAgentFiles((prev) => [newFile, ...prev]);
+  const handleSupplierFileUploaded = (newFile) => {
+    setSupplierFiles((prev) => [newFile, ...prev]);
   };
 
   const handleTourFileUploaded = (newFile) => {
@@ -152,21 +152,21 @@ const EditTour = () => {
     }
   };
 
-  const handleDeleteSubAgentFile = async (fileId) => {
+  const handleDeleteSupplierFile = async (fileId) => {
     if (window.confirm("คุณต้องการลบไฟล์นี้หรือไม่?")) {
       try {
-        await subAgentFilesService.deleteSubAgentFile(fileId);
-        setSubAgentFiles((prev) => prev.filter((file) => file.id !== fileId));
+        await supplierFilesService.deleteSupplierFile(fileId);
+        setSupplierFiles((prev) => prev.filter((file) => file.id !== fileId));
       } catch (error) {
-        console.error("Error deleting sub agent file:", error);
+        console.error("Error deleting supplier file:", error);
         alert("เกิดข้อผิดพลาดในการลบไฟล์");
       }
     }
   };
 
-  const handleViewFile = (file, isSubAgentFile = false) => {
-    const fileUrl = isSubAgentFile
-      ? subAgentFilesService.getSubAgentFileUrl(file)
+  const handleViewFile = (file, isSupplierFile = false) => {
+    const fileUrl = isSupplierFile
+      ? supplierFilesService.getSupplierFileUrl(file)
       : filesService.getFileUrl(file);
     window.open(fileUrl, "_blank");
   };
@@ -194,7 +194,7 @@ const EditTour = () => {
       // Prepare data for submission
       const submitData = {
         ...formData,
-        sub_agent_id: selectedSubAgent?.id || null,
+        supplier_id: selectedSupplier?.id || null,
         adult_price: parseFloat(formData.adult_price) || 0,
         child_price: parseFloat(formData.child_price) || 0,
       };
@@ -252,16 +252,16 @@ const EditTour = () => {
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Sub Agent Section */}
+        {/* Supplier Section */}
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            🏢 Sub Agent
+            🏢 Supplier
           </h2>
-          <SubAgentAutocomplete
-            onSelect={handleSubAgentSelect}
-            onCreateNew={handleCreateNewSubAgent}
-            value={selectedSubAgent}
-            placeholder="เลือกหรือเปลี่ยน Sub Agent..."
+          <SupplierAutocomplete
+            onSelect={handleSupplierSelect}
+            onCreateNew={handleCreateNewSupplier}
+            value={selectedSupplier}
+            placeholder="เลือกหรือเปลี่ยน Supplier..."
           />
         </div>
 
@@ -401,25 +401,25 @@ const EditTour = () => {
 
         {/* Files Section */}
         <div className="space-y-6">
-          {/* Sub Agent Files */}
-          {selectedSubAgent && (
+          {/* Supplier Files */}
+          {selectedSupplier && (
             <div className="bg-white rounded-lg shadow-sm border p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                📎 ไฟล์ Sub Agent ({selectedSubAgent.name})
+                📎 ไฟล์ Supplier ({selectedSupplier.name})
               </h2>
 
-              <SubAgentFileUpload
-                subAgentId={selectedSubAgent.id}
-                onFileUploaded={handleSubAgentFileUploaded}
+              <SupplierFileUpload
+                supplierId={selectedSupplier.id}
+                onFileUploaded={handleSupplierFileUploaded}
               />
 
-              {subAgentFiles.length > 0 && (
+              {supplierFiles.length > 0 && (
                 <div className="mt-6">
                   <h3 className="font-medium text-gray-900 mb-3">
-                    ไฟล์ที่อัพโหลดแล้ว ({subAgentFiles.length} ไฟล์)
+                    ไฟล์ที่อัพโหลดแล้ว ({supplierFiles.length} ไฟล์)
                   </h3>
                   <div className="space-y-2">
-                    {subAgentFiles.map((file) => (
+                    {supplierFiles.map((file) => (
                       <div
                         key={file.id}
                         className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200"
@@ -433,7 +433,7 @@ const EditTour = () => {
                               {file.label || file.original_name}
                             </p>
                             <p className="text-xs text-gray-500">
-                              {file.file_size_formatted} • Sub Agent File
+                              {file.file_size_formatted} • Supplier File
                             </p>
                           </div>
                         </div>
@@ -447,7 +447,7 @@ const EditTour = () => {
                           </button>
                           <button
                             type="button"
-                            onClick={() => handleDeleteSubAgentFile(file.id)}
+                            onClick={() => handleDeleteSupplierFile(file.id)}
                             className="px-2 py-1 text-red-600 hover:bg-red-50 rounded text-sm"
                           >
                             🗑️ ลบ
@@ -547,10 +547,10 @@ const EditTour = () => {
       </form>
 
       {/* Modals */}
-      <SubAgentModal
-        isOpen={showSubAgentModal}
-        onClose={() => setShowSubAgentModal(false)}
-        onSuccess={handleSubAgentCreated}
+      <SupplierModal
+        isOpen={showSupplierModal}
+        onClose={() => setShowSupplierModal(false)}
+        onSuccess={handleSupplierCreated}
         initialName={modalInitialName}
       />
     </div>

@@ -113,9 +113,9 @@ const SharedTour = () => {
                 {tour.tour_name || "รายละเอียดทัวร์"}
               </h1>
               <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
-                {!!tour.sub_agent_name && (
+                {!!tour.supplier_name && (
                   <span className="inline-flex items-center rounded-full bg-gray-50 px-3 py-1 text-gray-700 ring-1 ring-inset ring-gray-200">
-                    Sub Agent: {tour.sub_agent_name}
+                    Supplier: {tour.supplier_name}
                   </span>
                 )}
                 {!!tour.departure_from && (
@@ -289,12 +289,12 @@ const SharedTour = () => {
               </div>
 
               <div className="rounded-xl border border-gray-200">
-                <SectionHeader icon="🤝">ข้อมูล Sub Agent</SectionHeader>
+                <SectionHeader icon="🤝">ข้อมูล Supplier</SectionHeader>
                 <dl className="divide-y divide-gray-100">
                   <div className="grid grid-cols-3 gap-3 px-4 py-3">
                     <dt className="text-xs font-medium text-gray-500">ชื่อ</dt>
                     <dd className="col-span-2 text-sm text-gray-900">
-                      {tour.sub_agent_name || "-"}
+                      {tour.supplier_name || "-"}
                     </dd>
                   </div>
                   {tour.address && (

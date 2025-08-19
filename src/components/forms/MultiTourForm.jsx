@@ -4,7 +4,7 @@ import AutocompleteInput from "./AutocompleteInput";
 const MultiTourForm = ({
   onSubmit,
   loading = false,
-  subAgentId = null,
+  supplierId = null,
   initialTours = null,
 }) => {
   const [tours, setTours] = useState([]);
@@ -178,7 +178,7 @@ const MultiTourForm = ({
     });
 
     onSubmit({
-      sub_agent_id: subAgentId,
+      supplier_id: supplierId,
       tours: toursData,
     });
   };

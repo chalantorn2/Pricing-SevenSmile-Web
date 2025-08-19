@@ -11,9 +11,9 @@ export const USER_ROLES = {
 export const API_ENDPOINTS = {
   AUTH: "/auth.php",
   TOURS: "/tours.php",
-  SUB_AGENTS: "/sub-agents.php",
+  SUB_AGENTS: "/suppliers.php",
   FILES: "/files.php",
-  SUB_AGENT_FILES: "/sub-agent-files.php",
+  SUB_AGENT_FILES: "/supplier-files.php",
   USERS: "/users.php",
 };
 

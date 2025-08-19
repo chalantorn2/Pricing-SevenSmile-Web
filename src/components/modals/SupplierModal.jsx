@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { subAgentsService } from "../../services/api-service";
+import { suppliersService } from "../../services/api-service";
 
-const SubAgentModal = ({ isOpen, onClose, onSuccess, initialName = "" }) => {
+const SupplierModal = ({ isOpen, onClose, onSuccess, initialName = "" }) => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: initialName,
@@ -27,15 +27,15 @@ const SubAgentModal = ({ isOpen, onClose, onSuccess, initialName = "" }) => {
     try {
       // Validate required fields
       if (!formData.name.trim()) {
-        throw new Error("กรุณากรอกชื่อ Sub Agent");
+        throw new Error("กรุณากรอกชื่อ Supplier");
       }
 
-      const newSubAgent = await subAgentsService.addSubAgent(formData);
-      onSuccess(newSubAgent);
+      const newSupplier = await suppliersService.addSupplier(formData);
+      onSuccess(newSupplier);
       handleClose();
     } catch (error) {
-      console.error("Error creating sub agent:", error);
-      alert(error.message || "เกิดข้อผิดพลาดในการสร้าง Sub Agent");
+      console.error("Error creating supplier:", error);
+      alert(error.message || "เกิดข้อผิดพลาดในการสร้าง Supplier");
     } finally {
       setLoading(false);
     }
@@ -62,7 +62,7 @@ const SubAgentModal = ({ isOpen, onClose, onSuccess, initialName = "" }) => {
           {/* Header */}
           <div className="modal-header border-b border-gray-200 px-6 py-4 flex items-center justify-between">
             <h2 className="text-xl font-semibold text-gray-900">
-              เพิ่ม Sub Agent ใหม่
+              เพิ่ม Supplier ใหม่
             </h2>
             <button
               onClick={handleClose}
@@ -96,7 +96,7 @@ const SubAgentModal = ({ isOpen, onClose, onSuccess, initialName = "" }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ชื่อ Sub Agent <span className="text-red-500">*</span>
+                      ชื่อ Supplier <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -105,7 +105,7 @@ const SubAgentModal = ({ isOpen, onClose, onSuccess, initialName = "" }) => {
                       onChange={handleChange}
                       required
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="กรอกชื่อ Sub Agent"
+                      placeholder="กรอกชื่อ Supplier"
                     />
                   </div>
 
@@ -211,7 +211,7 @@ const SubAgentModal = ({ isOpen, onClose, onSuccess, initialName = "" }) => {
                     <span>กำลังสร้าง...</span>
                   </div>
                 ) : (
-                  "สร้าง Sub Agent"
+                  "สร้าง Supplier"
                 )}
               </button>
             </div>
@@ -222,4 +222,4 @@ const SubAgentModal = ({ isOpen, onClose, onSuccess, initialName = "" }) => {
   );
 };
 
-export default SubAgentModal;
+export default SupplierModal;

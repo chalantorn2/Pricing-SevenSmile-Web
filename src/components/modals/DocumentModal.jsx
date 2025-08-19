@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { filesService, subAgentFilesService } from "../../services/api-service";
+import { filesService, supplierFilesService } from "../../services/api-service";
 
 const DocumentModal = ({ isOpen, onClose, tour }) => {
   const [files, setFiles] = useState([]);
@@ -16,24 +16,24 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
     try {
       setLoading(true);
 
-      // Fetch both sub agent files and tour files
+      // Fetch both supplier files and tour files
       const promises = [];
 
       // Tour files (existing)
       promises.push(filesService.getTourFiles(tour.id));
 
       // Sub agent files (new)
-      if (tour.sub_agent_id) {
-        promises.push(subAgentFilesService.getSubAgentFiles(tour.sub_agent_id));
+      if (tour.supplier_id) {
+        promises.push(supplierFilesService.getSupplierFiles(tour.supplier_id));
       } else {
         promises.push(Promise.resolve([]));
       }
 
-      const [tourFiles, subAgentFiles] = await Promise.all(promises);
+      const [tourFiles, supplierFiles] = await Promise.all(promises);
 
       // Combine and mark file sources
       const allFiles = [
-        ...subAgentFiles.map((file) => ({ ...file, source: "sub_agent" })),
+        ...supplierFiles.map((file) => ({ ...file, source: "sub_agent" })),
         ...tourFiles.map((file) => ({ ...file, source: "tour" })),
       ];
 
@@ -52,7 +52,7 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
 
     // ใช้ service ที่เหมาะสมตาม source
     if (file.source === "sub_agent") {
-      fileUrl = subAgentFilesService.getSubAgentFileUrl(file);
+      fileUrl = supplierFilesService.getSupplierFileUrl(file);
     } else {
       fileUrl = filesService.getFileUrl(file);
     }
@@ -71,7 +71,7 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
     let fileUrl;
 
     if (file.source === "sub_agent") {
-      fileUrl = subAgentFilesService.getSubAgentFileUrl(file);
+      fileUrl = supplierFilesService.getSupplierFileUrl(file);
     } else {
       fileUrl = filesService.getFileUrl(file);
     }
@@ -84,7 +84,7 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
 
   // ✨ ปรับปรุง getDisplayName ให้แสดงชื่อไฟล์ที่ถูกต้อง
   const getDisplayName = (file) => {
-    // สำหรับ Sub Agent files: แสดง label ก่อน fallback เป็น original_name
+    // สำหรับ Supplier files: แสดง label ก่อน fallback เป็น original_name
     if (file.source === "sub_agent" && file.label && file.label.trim()) {
       return file.label;
     }
@@ -190,7 +190,7 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
                                     }`}
                                   >
                                     {file.source === "sub_agent"
-                                      ? "Sub Agent"
+                                      ? "Supplier"
                                       : "Tour"}
                                   </span>
                                 </div>

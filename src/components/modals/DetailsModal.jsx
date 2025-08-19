@@ -312,12 +312,12 @@ const DetailsModal = ({ isOpen, onClose, tour }) => {
               </div>
 
               <div className="rounded-xl border border-gray-200">
-                <SectionHeader icon="🤝">ข้อมูล Sub Agent</SectionHeader>
+                <SectionHeader icon="🤝">ข้อมูล Supplier</SectionHeader>
                 <dl className="divide-y divide-gray-100">
                   <div className="grid grid-cols-3 gap-3 px-4 py-3">
                     <dt className="text-xs font-medium text-gray-500">ชื่อ</dt>
                     <dd className="col-span-2 text-sm text-gray-900">
-                      {tour.sub_agent_name || "-"}
+                      {tour.supplier_name || "-"}
                     </dd>
                   </div>
                   {tour.address && (

@@ -27,11 +27,11 @@ export const validateFile = (file) => {
   return null;
 };
 
-export const validateSubAgent = (subAgent) => {
+export const validateSupplier = (supplier) => {
   const errors = {};
 
-  if (!subAgent.name?.trim()) {
-    errors.name = "กรุณากรอกชื่อ Sub Agent";
+  if (!supplier.name?.trim()) {
+    errors.name = "กรุณากรอกชื่อ Supplier";
   }
 
   return errors;

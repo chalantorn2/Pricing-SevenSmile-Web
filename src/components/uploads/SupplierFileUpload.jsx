@@ -1,8 +1,8 @@
 import { useState, useRef } from "react";
 import { authService } from "../../services/api-service";
 
-const SubAgentFileUpload = ({
-  subAgentId,
+const SupplierFileUpload = ({
+  supplierId,
   onFileUploaded,
   disabled = false,
   allowedTypes = ["pdf", "image"],
@@ -49,7 +49,7 @@ const SubAgentFileUpload = ({
     try {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("sub_agent_id", subAgentId);
+      formData.append("supplier_id", supplierId);
       formData.append("label", label || "");
       formData.append(
         "uploaded_by",
@@ -57,7 +57,7 @@ const SubAgentFileUpload = ({
       );
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/sub-agent-files.php`,
+        `${import.meta.env.VITE_API_BASE_URL}/supplier-files.php`,
         {
           method: "POST",
           body: formData,
@@ -154,13 +154,13 @@ const SubAgentFileUpload = ({
     return types.join(",");
   };
 
-  if (!subAgentId) {
+  if (!supplierId) {
     return (
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
         <div className="flex items-center space-x-2">
           <span className="text-yellow-600">⚠️</span>
           <p className="text-yellow-800 text-sm">
-            กรุณาเลือก Sub Agent ก่อนอัพโหลดไฟล์
+            กรุณาเลือก Supplier ก่อนอัพโหลดไฟล์
           </p>
         </div>
       </div>
@@ -241,7 +241,7 @@ const SubAgentFileUpload = ({
                 ตัวอย่างไฟล์ที่ควรอัพโหลด:
               </p>
               <ul className="text-xs text-gray-600 space-y-1">
-                <li>• 📄 Contact Rate PDF (ใบราคาจาก Sub Agent)</li>
+                <li>• 📄 Contact Rate PDF (ใบราคาจาก Supplier)</li>
                 <li>• 📄 Terms & Conditions</li>
                 <li>• 🖼️ รูปภาพแผนที่ พื้นที่ท่องเที่ยว</li>
                 <li>• 📄 เอกสารข้อตกลง/สัญญา</li>
@@ -254,4 +254,4 @@ const SubAgentFileUpload = ({
   );
 };
 
-export default SubAgentFileUpload;
+export default SupplierFileUpload;

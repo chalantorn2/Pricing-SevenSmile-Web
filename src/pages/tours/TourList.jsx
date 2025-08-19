@@ -28,7 +28,7 @@ const TourList = () => {
     { key: "documents", label: "ดูเอกสาร", sortable: false },
   ];
 
-  // All columns for column toggle (removed sub_agent_name, added back other fields)
+  // All columns for column toggle (removed supplier_name, added back other fields)
   const allColumns = [
     { key: "id", label: "ลำดับ", sortable: false },
     { key: "tour_name", label: "ชื่อทัวร์", sortable: true },
@@ -80,7 +80,7 @@ const TourList = () => {
       const searchLower = searchTerm.toLowerCase();
       return (
         tour.tour_name?.toLowerCase().includes(searchLower) ||
-        tour.sub_agent_name?.toLowerCase().includes(searchLower) ||
+        tour.supplier_name?.toLowerCase().includes(searchLower) ||
         tour.departure_from?.toLowerCase().includes(searchLower) ||
         tour.pier?.toLowerCase().includes(searchLower) ||
         tour.notes?.toLowerCase().includes(searchLower) ||
@@ -161,7 +161,7 @@ const TourList = () => {
     const exportData = filteredTours.map((tour, index) => ({
       ลำดับ: index + 1,
       ชื่อทัวร์: tour.tour_name,
-      "Sub Agent": tour.sub_agent_name,
+      Supplier: tour.supplier_name,
       ออกจาก: tour.departure_from,
       ท่าเรือ: tour.pier,
       ราคาผู้ใหญ่: tour.adult_price,
@@ -245,7 +245,7 @@ const TourList = () => {
           <div className="flex-1">
             <input
               type="text"
-              placeholder="ค้นหาทัวร์, Sub Agent, ออกจาก, ท่าเรือ, หมายเหตุ..."
+              placeholder="ค้นหาทัวร์, Supplier, ออกจาก, ท่าเรือ, หมายเหตุ..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -336,7 +336,7 @@ const TourList = () => {
                       </td>
                     )}
 
-                    {/* Tour Name + Sub Agent Column */}
+                    {/* Tour Name + Supplier Column */}
                     {showColumn("tour_name") && (
                       <td className="px-6 py-4 text-base text-gray-900 max-w-xs">
                         <div className="font-medium leading-5 mb-1">
@@ -344,7 +344,7 @@ const TourList = () => {
                         </div>
                         <div className="sub-agent-name">
                           <span>🏢</span>
-                          <span>{tour.sub_agent_name}</span>
+                          <span>{tour.supplier_name}</span>
                         </div>
                       </td>
                     )}

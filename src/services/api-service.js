@@ -1,4 +1,4 @@
-// API Service for MariaDB via PHP - Updated for Sub Agents
+// API Service for MariaDB via PHP - Updated for Suppliers
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 // Helper function for API calls
@@ -101,145 +101,143 @@ export const authService = {
   },
 };
 
-// ✨ NEW: Sub Agents CRUD functions
-export const subAgentsService = {
-  // Get all sub agents
-  async getAllSubAgents() {
+// ✨ NEW: Suppliers CRUD functions
+export const suppliersService = {
+  // Get all suppliers
+  async getAllSuppliers() {
     try {
-      console.log("🏢 Fetching all sub agents...");
-      const response = await apiCall("/sub-agents.php");
+      console.log("🏢 Fetching all suppliers...");
+      const response = await apiCall("/suppliers.php");
       console.log(
-        "✅ Sub Agents fetched successfully:",
+        "✅ Suppliers fetched successfully:",
         response.data?.length,
         "items"
       );
       return response.data;
     } catch (error) {
-      console.error("❌ Failed to fetch sub agents:", error);
+      console.error("❌ Failed to fetch suppliers:", error);
       throw new Error(
-        "เกิดข้อผิดพลาดในการโหลดข้อมูล Sub Agents: " + error.message
+        "เกิดข้อผิดพลาดในการโหลดข้อมูล Suppliers: " + error.message
       );
     }
   },
 
-  // Search sub agents (for AutoComplete)
-  async searchSubAgents(query) {
+  // Search suppliers (for AutoComplete)
+  async searchSuppliers(query) {
     try {
-      console.log("🔍 Searching sub agents:", query);
+      console.log("🔍 Searching suppliers:", query);
       const response = await apiCall(
-        `/sub-agents.php?search=${encodeURIComponent(query)}`
+        `/suppliers.php?search=${encodeURIComponent(query)}`
       );
       console.log(
-        "✅ Sub Agents search results:",
+        "✅ Suppliers search results:",
         response.data?.length,
         "items"
       );
       return response.data || [];
     } catch (error) {
-      console.error("❌ Failed to search sub agents:", error);
-      throw new Error("เกิดข้อผิดพลาดในการค้นหา Sub Agents: " + error.message);
+      console.error("❌ Failed to search suppliers:", error);
+      throw new Error("เกิดข้อผิดพลาดในการค้นหา Suppliers: " + error.message);
     }
   },
 
-  // Add new sub agent
-  async addSubAgent(subAgentData) {
+  // Add new supplier
+  async addSupplier(supplierData) {
     try {
-      console.log("➕ Adding new sub agent:", subAgentData);
-      const response = await apiCall("/sub-agents.php", {
+      console.log("➕ Adding new supplier:", supplierData);
+      const response = await apiCall("/suppliers.php", {
         method: "POST",
-        body: JSON.stringify(subAgentData),
+        body: JSON.stringify(supplierData),
       });
-      console.log("✅ Sub Agent added successfully:", response.data);
+      console.log("✅ Supplier added successfully:", response.data);
       return response.data;
     } catch (error) {
-      console.error("❌ Failed to add sub agent:", error);
-      throw new Error("เกิดข้อผิดพลาดในการเพิ่ม Sub Agent: " + error.message);
+      console.error("❌ Failed to add supplier:", error);
+      throw new Error("เกิดข้อผิดพลาดในการเพิ่ม Supplier: " + error.message);
     }
   },
 
-  // Update sub agent
-  async updateSubAgent(id, subAgentData) {
+  // Update supplier
+  async updateSupplier(id, supplierData) {
     try {
-      console.log("🔄 Updating sub agent:", id, subAgentData);
-      const response = await apiCall(`/sub-agents.php?id=${id}`, {
+      console.log("🔄 Updating supplier:", id, supplierData);
+      const response = await apiCall(`/suppliers.php?id=${id}`, {
         method: "PUT",
-        body: JSON.stringify(subAgentData),
+        body: JSON.stringify(supplierData),
       });
-      console.log("✅ Sub Agent updated successfully:", response.data);
+      console.log("✅ Supplier updated successfully:", response.data);
       return response.data;
     } catch (error) {
-      console.error("❌ Failed to update sub agent:", error);
-      throw new Error("เกิดข้อผิดพลาดในการอัพเดท Sub Agent: " + error.message);
+      console.error("❌ Failed to update supplier:", error);
+      throw new Error("เกิดข้อผิดพลาดในการอัพเดท Supplier: " + error.message);
     }
   },
 
-  // Delete sub agent
-  async deleteSubAgent(id) {
+  // Delete supplier
+  async deleteSupplier(id) {
     try {
-      console.log("🗑️ Deleting sub agent:", id);
-      await apiCall(`/sub-agents.php?id=${id}`, {
+      console.log("🗑️ Deleting supplier:", id);
+      await apiCall(`/suppliers.php?id=${id}`, {
         method: "DELETE",
       });
-      console.log("✅ Sub Agent deleted successfully");
+      console.log("✅ Supplier deleted successfully");
     } catch (error) {
-      console.error("❌ Failed to delete sub agent:", error);
-      throw new Error("เกิดข้อผิดพลาดในการลบ Sub Agent: " + error.message);
+      console.error("❌ Failed to delete supplier:", error);
+      throw new Error("เกิดข้อผิดพลาดในการลบ Supplier: " + error.message);
     }
   },
 };
 
-// ✨ NEW: Sub Agent Files functions
-export const subAgentFilesService = {
-  // Get files for a sub agent
-  async getSubAgentFiles(subAgentId) {
+// ✨ NEW: Supplier Files functions
+export const supplierFilesService = {
+  // Get files for a supplier
+  async getSupplierFiles(supplierId) {
     try {
-      console.log("📂 Fetching files for sub agent:", subAgentId);
+      console.log("📂 Fetching files for supplier:", supplierId);
       const response = await apiCall(
-        `/sub-agent-files.php?sub_agent_id=${subAgentId}`
+        `/supplier-files.php?supplier_id=${supplierId}`
       );
       console.log(
-        "✅ Sub Agent files fetched successfully:",
+        "✅ Supplier files fetched successfully:",
         response.data?.length,
         "items"
       );
       return response.data || [];
     } catch (error) {
-      console.error("❌ Failed to fetch sub agent files:", error);
-      throw new Error(
-        "เกิดข้อผิดพลาดในการโหลดไฟล์ Sub Agent: " + error.message
-      );
+      console.error("❌ Failed to fetch supplier files:", error);
+      throw new Error("เกิดข้อผิดพลาดในการโหลดไฟล์ Supplier: " + error.message);
     }
   },
 
-  // Delete a sub agent file
-  async deleteSubAgentFile(fileId) {
+  // Delete a supplier file
+  async deleteSupplierFile(fileId) {
     try {
-      console.log("🗑️ Deleting sub agent file:", fileId);
-      await apiCall(`/sub-agent-files.php?id=${fileId}`, {
+      console.log("🗑️ Deleting supplier file:", fileId);
+      await apiCall(`/supplier-files.php?id=${fileId}`, {
         method: "DELETE",
       });
-      console.log("✅ Sub Agent file deleted successfully");
+      console.log("✅ Supplier file deleted successfully");
     } catch (error) {
-      console.error("❌ Failed to delete sub agent file:", error);
+      console.error("❌ Failed to delete supplier file:", error);
       throw new Error("เกิดข้อผิดพลาดในการลบไฟล์: " + error.message);
     }
   },
 
   // Get file URL
-  getSubAgentFileUrl(file) {
+  getSupplierFileUrl(file) {
     const baseUrl = import.meta.env.VITE_API_BASE_URL || "/api";
     // เอา leading slash ออกจาก baseUrl ถ้ามี และรวม path ให้ถูกต้อง
     const cleanBaseUrl = baseUrl.replace(/\/$/, ""); // เอา trailing slash ออก
     const filePath = `${cleanBaseUrl}/${file.file_path}`;
 
-    console.log("🔗 Generated sub agent file URL:", filePath); // Debug log
+    console.log("🔗 Generated supplier file URL:", filePath); // Debug log
     return filePath;
   },
 };
 
 // Updated Tours CRUD functions
 export const toursService = {
-  // Get all tours (now includes sub agent info)
+  // Get all tours (now includes supplier info)
   async getAllTours() {
     try {
       console.log("🏝️ Fetching all tours...");

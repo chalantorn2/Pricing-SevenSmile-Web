@@ -1,5 +1,5 @@
 <?php
-// api/tours.php - Updated to work with Sub Agents
+// api/tours.php - Updated to work with Suppliers
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
@@ -33,9 +33,9 @@ try {
 
     switch ($method) {
         case 'GET':
-            // Get all tours with sub agent information
+            // Get all tours with supplier information
             $sql = "SELECT t.*, 
-                          sa.name as sub_agent_name,
+                          sa.name as supplier_name,
                           sa.address,
                           sa.phone,
                           sa.line,
@@ -44,7 +44,7 @@ try {
                           sa.created_at as sub_agent_created_at,
                           sa.updated_at as sub_agent_updated_at
                    FROM tours t
-                   LEFT JOIN sub_agents sa ON t.sub_agent_id = sa.id
+                   LEFT JOIN suppliers sa ON t.supplier_id = sa.id
                    ORDER BY t.updated_at DESC";
 
             $stmt = $pdo->prepare($sql);
@@ -66,15 +66,15 @@ try {
 
             // Check if it's multiple tours (array) or single tour (object)
             $tours = isset($data['tours']) ? $data['tours'] : array($data);
-            $sub_agent_id = isset($data['sub_agent_id']) ? $data['sub_agent_id'] : null;
+            $supplier_id = isset($data['supplier_id']) ? $data['supplier_id'] : null;
             $updated_by = isset($data['updated_by']) ? $data['updated_by'] : 'Unknown';
 
-            // Validate sub_agent_id if provided
-            if ($sub_agent_id) {
-                $stmt = $pdo->prepare("SELECT id FROM sub_agents WHERE id = ?");
-                $stmt->execute(array($sub_agent_id));
+            // Validate supplier_id if provided
+            if ($supplier_id) {
+                $stmt = $pdo->prepare("SELECT id FROM suppliers WHERE id = ?");
+                $stmt->execute(array($supplier_id));
                 if (!$stmt->fetch()) {
-                    throw new Exception("Sub Agent ไม่พบในระบบ");
+                    throw new Exception("Supplier ไม่พบในระบบ");
                 }
             }
 
@@ -90,12 +90,12 @@ try {
                         throw new Exception("กรุณากรอกชื่อทัวร์");
                     }
 
-                    $sql = "INSERT INTO tours (sub_agent_id, tour_name, departure_from, pier, adult_price, child_price, start_date, end_date, notes, park_fee_included, updated_by) 
+                    $sql = "INSERT INTO tours (supplier_id, tour_name, departure_from, pier, adult_price, child_price, start_date, end_date, notes, park_fee_included, updated_by) 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
                     $stmt = $pdo->prepare($sql);
                     $result = $stmt->execute(array(
-                        $sub_agent_id,
+                        $supplier_id,
                         $tour['tour_name'],
                         isset($tour['departure_from']) ? $tour['departure_from'] : null,
                         isset($tour['pier']) ? $tour['pier'] : null,
@@ -111,13 +111,13 @@ try {
                     if ($result) {
                         $id = $pdo->lastInsertId();
 
-                        // Get the created tour with sub agent info
+                        // Get the created tour with supplier info
                         $stmt = $pdo->prepare("
                             SELECT t.*, 
-                                  sa.name as sub_agent_name,
+                                  sa.name as supplier_name,
                                   sa.address, sa.phone, sa.line, sa.facebook, sa.whatsapp
                             FROM tours t
-                            LEFT JOIN sub_agents sa ON t.sub_agent_id = sa.id
+                            LEFT JOIN suppliers sa ON t.supplier_id = sa.id
                             WHERE t.id = ?
                         ");
                         $stmt->execute(array($id));
@@ -154,22 +154,22 @@ try {
             $input = file_get_contents('php://input');
             $data = json_decode($input, true);
 
-            // Validate sub_agent_id if provided
-            if (isset($data['sub_agent_id']) && $data['sub_agent_id']) {
-                $stmt = $pdo->prepare("SELECT id FROM sub_agents WHERE id = ?");
-                $stmt->execute(array($data['sub_agent_id']));
+            // Validate supplier_id if provided
+            if (isset($data['supplier_id']) && $data['supplier_id']) {
+                $stmt = $pdo->prepare("SELECT id FROM suppliers WHERE id = ?");
+                $stmt->execute(array($data['supplier_id']));
                 if (!$stmt->fetch()) {
-                    throw new Exception("Sub Agent ไม่พบในระบบ");
+                    throw new Exception("Supplier ไม่พบในระบบ");
                 }
             }
 
             $sql = "UPDATE tours 
-       SET sub_agent_id=?, tour_name=?, departure_from=?, pier=?, adult_price=?, child_price=?, start_date=?, end_date=?, notes=?, park_fee_included=?, updated_by=?, updated_at=NOW() 
+       SET supplier_id=?, tour_name=?, departure_from=?, pier=?, adult_price=?, child_price=?, start_date=?, end_date=?, notes=?, park_fee_included=?, updated_by=?, updated_at=NOW() 
        WHERE id=?";
 
             $stmt = $pdo->prepare($sql);
             $result = $stmt->execute(array(
-                isset($data['sub_agent_id']) ? $data['sub_agent_id'] : null,
+                isset($data['supplier_id']) ? $data['supplier_id'] : null,
                 $data['tour_name'],
                 isset($data['departure_from']) ? $data['departure_from'] : null,
                 isset($data['pier']) ? $data['pier'] : null,
@@ -184,13 +184,13 @@ try {
             ));
 
             if ($result) {
-                // Get updated tour with sub agent info
+                // Get updated tour with supplier info
                 $stmt = $pdo->prepare("
                     SELECT t.*, 
-                          sa.name as sub_agent_name,
+                          sa.name as supplier_name,
                           sa.address, sa.phone, sa.line, sa.facebook, sa.whatsapp
                     FROM tours t
-                    LEFT JOIN sub_agents sa ON t.sub_agent_id = sa.id
+                    LEFT JOIN suppliers sa ON t.supplier_id = sa.id
                     WHERE t.id = ?
                 ");
                 $stmt->execute(array($id));

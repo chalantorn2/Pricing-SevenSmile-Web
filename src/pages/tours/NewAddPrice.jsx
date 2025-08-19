@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { SubAgentAutocomplete, MultiTourForm } from "../../components/forms";
-import { SubAgentModal } from "../../components/modals";
-import { SubAgentFileUpload } from "../../components/uploads";
-import { toursService, subAgentFilesService } from "../../services/api-service";
+import { SupplierAutocomplete, MultiTourForm } from "../../components/forms";
+import { SupplierModal } from "../../components/modals";
+import { SupplierFileUpload } from "../../components/uploads";
+import { toursService, supplierFilesService } from "../../services/api-service";
 
 const NewAddPrice = () => {
   const navigate = useNavigate();
@@ -13,20 +13,20 @@ const NewAddPrice = () => {
   const [completedSteps, setCompletedSteps] = useState([]);
 
   // Data states
-  const [selectedSubAgent, setSelectedSubAgent] = useState(null);
+  const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [loading, setLoading] = useState(false);
 
   // Modal states
-  const [showSubAgentModal, setShowSubAgentModal] = useState(false);
+  const [showSupplierModal, setShowSupplierModal] = useState(false);
   const [modalInitialName, setModalInitialName] = useState("");
 
   const steps = [
     {
       id: 1,
-      name: "เลือก Sub Agent",
+      name: "เลือก Supplier",
       icon: "🏢",
-      description: "เลือกหรือสร้าง Sub Agent",
+      description: "เลือกหรือสร้าง Supplier",
     },
     {
       id: 2,
@@ -38,19 +38,19 @@ const NewAddPrice = () => {
     { id: 4, name: "สรุป", icon: "📋", description: "ตรวจสอบและบันทึก" },
   ];
 
-  // Step 1: Sub Agent Selection
-  const handleSubAgentSelect = (subAgent) => {
-    setSelectedSubAgent(subAgent);
+  // Step 1: Supplier Selection
+  const handleSupplierSelect = (supplier) => {
+    setSelectedSupplier(supplier);
     markStepCompleted(1);
   };
 
-  const handleCreateNewSubAgent = (name) => {
+  const handleCreateNewSupplier = (name) => {
     setModalInitialName(name);
-    setShowSubAgentModal(true);
+    setShowSupplierModal(true);
   };
 
-  const handleSubAgentCreated = (newSubAgent) => {
-    setSelectedSubAgent(newSubAgent);
+  const handleSupplierCreated = (newSupplier) => {
+    setSelectedSupplier(newSupplier);
     markStepCompleted(1);
   };
 
@@ -60,12 +60,12 @@ const NewAddPrice = () => {
     markStepCompleted(2);
   };
 
-  const loadSubAgentFiles = async () => {
-    if (!selectedSubAgent) return;
+  const loadSupplierFiles = async () => {
+    if (!selectedSupplier) return;
 
     try {
-      const files = await subAgentFilesService.getSubAgentFiles(
-        selectedSubAgent.id
+      const files = await supplierFilesService.getSupplierFiles(
+        selectedSupplier.id
       );
       setUploadedFiles(files);
       if (files.length > 0) {
@@ -129,12 +129,12 @@ const NewAddPrice = () => {
     return completedSteps.includes(stepId);
   };
 
-  // Load files when sub agent changes
+  // Load files when supplier changes
   useEffect(() => {
-    if (selectedSubAgent) {
-      loadSubAgentFiles();
+    if (selectedSupplier) {
+      loadSupplierFiles();
     }
-  }, [selectedSubAgent]);
+  }, [selectedSupplier]);
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -145,7 +145,7 @@ const NewAddPrice = () => {
             เพิ่มราคาทัวร์ใหม่
           </h1>
           <p className="text-gray-600 mt-1">
-            ระบบใหม่: เลือก Sub Agent → อัพโหลดไฟล์ → เพิ่มหลายทัวร์
+            ระบบใหม่: เลือก Supplier → อัพโหลดไฟล์ → เพิ่มหลายทัวร์
           </p>
         </div>
         <button
@@ -225,43 +225,43 @@ const NewAddPrice = () => {
       {/* Step Content */}
       <div className="bg-white rounded-lg shadow-sm border">
         <div className="p-6">
-          {/* Step 1: Sub Agent Selection */}
+          {/* Step 1: Supplier Selection */}
           {currentStep === 1 && (
             <div className="space-y-6">
               <div className="text-center pb-6 border-b">
                 <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                  🏢 เลือกหรือสร้าง Sub Agent
+                  🏢 เลือกหรือสร้าง Supplier
                 </h2>
                 <p className="text-gray-600">
-                  เริ่มต้นด้วยการเลือก Sub Agent ที่จะเพิ่มทัวร์
+                  เริ่มต้นด้วยการเลือก Supplier ที่จะเพิ่มทัวร์
                 </p>
               </div>
 
               <div className="max-w-2xl mx-auto">
-                <SubAgentAutocomplete
-                  onSelect={handleSubAgentSelect}
-                  onCreateNew={handleCreateNewSubAgent}
-                  value={selectedSubAgent}
-                  placeholder="ค้นหา Sub Agent หรือสร้างใหม่..."
+                <SupplierAutocomplete
+                  onSelect={handleSupplierSelect}
+                  onCreateNew={handleCreateNewSupplier}
+                  value={selectedSupplier}
+                  placeholder="ค้นหา Supplier หรือสร้างใหม่..."
                 />
 
-                {selectedSubAgent && (
+                {selectedSupplier && (
                   <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
                     <h3 className="font-semibold text-green-800 mb-2">
-                      ✅ Sub Agent ที่เลือก:
+                      ✅ Supplier ที่เลือก:
                     </h3>
                     <div className="text-sm space-y-1">
                       <p>
-                        <strong>ชื่อ:</strong> {selectedSubAgent.name}
+                        <strong>ชื่อ:</strong> {selectedSupplier.name}
                       </p>
-                      {selectedSubAgent.phone && (
+                      {selectedSupplier.phone && (
                         <p>
-                          <strong>โทร:</strong> {selectedSubAgent.phone}
+                          <strong>โทร:</strong> {selectedSupplier.phone}
                         </p>
                       )}
-                      {selectedSubAgent.line && (
+                      {selectedSupplier.line && (
                         <p>
-                          <strong>Line:</strong> {selectedSubAgent.line}
+                          <strong>Line:</strong> {selectedSupplier.line}
                         </p>
                       )}
                     </div>
@@ -289,8 +289,8 @@ const NewAddPrice = () => {
                 </p>
               </div>
 
-              <SubAgentFileUpload
-                subAgentId={selectedSubAgent?.id}
+              <SupplierFileUpload
+                supplierId={selectedSupplier?.id}
                 onFileUploaded={handleFileUploaded}
               />
 
@@ -366,14 +366,14 @@ const NewAddPrice = () => {
                   🏝️ เพิ่มรายการทัวร์
                 </h2>
                 <p className="text-gray-600">
-                  เพิ่มทัวร์หลายรายการสำหรับ {selectedSubAgent?.name}
+                  เพิ่มทัวร์หลายรายการสำหรับ {selectedSupplier?.name}
                 </p>
               </div>
 
               <MultiTourForm
                 onSubmit={handleToursSubmit}
                 loading={loading}
-                subAgentId={selectedSubAgent?.id}
+                supplierId={selectedSupplier?.id}
               />
 
               <div className="flex space-x-3 pt-4 border-t">
@@ -390,10 +390,10 @@ const NewAddPrice = () => {
       </div>
 
       {/* Modals */}
-      <SubAgentModal
-        isOpen={showSubAgentModal}
-        onClose={() => setShowSubAgentModal(false)}
-        onSuccess={handleSubAgentCreated}
+      <SupplierModal
+        isOpen={showSupplierModal}
+        onClose={() => setShowSupplierModal(false)}
+        onSuccess={handleSupplierCreated}
         initialName={modalInitialName}
       />
     </div>

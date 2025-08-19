@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from "react";
-import { subAgentsService } from "../../services/api-service";
+import { suppliersService } from "../../services/api-service";
 
-const SubAgentAutocomplete = ({
+const SupplierAutocomplete = ({
   onSelect,
   onCreateNew,
   value = null,
-  placeholder = "ค้นหาหรือเลือก Sub Agent...",
+  placeholder = "ค้นหาหรือเลือก Supplier...",
   disabled = false,
   required = false,
 }) => {
@@ -44,7 +44,7 @@ const SubAgentAutocomplete = ({
   }, []);
 
   // Search function with debouncing
-  const searchSubAgents = async (searchQuery) => {
+  const searchSuppliers = async (searchQuery) => {
     if (!searchQuery.trim() || searchQuery.length < 2) {
       setResults([]);
       return;
@@ -52,7 +52,7 @@ const SubAgentAutocomplete = ({
 
     setLoading(true);
     try {
-      const searchResults = await subAgentsService.searchSubAgents(searchQuery);
+      const searchResults = await suppliersService.searchSuppliers(searchQuery);
       setResults(searchResults);
     } catch (error) {
       console.error("Search error:", error);
@@ -79,7 +79,7 @@ const SubAgentAutocomplete = ({
 
     // Set new debounce
     debounceRef.current = setTimeout(() => {
-      searchSubAgents(newQuery);
+      searchSuppliers(newQuery);
     }, 300);
   };
 
@@ -115,7 +115,7 @@ const SubAgentAutocomplete = ({
   // Handle selection
   const handleSelect = (index) => {
     if (index < results.length) {
-      // Select existing sub agent
+      // Select existing supplier
       const selectedAgent = results[index];
       setQuery(selectedAgent.name);
       setIsOpen(false);
@@ -174,7 +174,7 @@ const SubAgentAutocomplete = ({
             type="button"
             onClick={handleCreateNew}
             className="absolute right-12 top-1/2 transform -translate-y-1/2 px-2 py-1 bg-green-100 text-green-700 text-xs rounded hover:bg-green-200 transition-colors"
-            title="สร้าง Sub Agent ใหม่"
+            title="สร้าง Supplier ใหม่"
           >
             ➕ ใหม่
           </button>
@@ -278,11 +278,11 @@ const SubAgentAutocomplete = ({
 
       {/* Helper Text */}
       <div className="mt-1 text-xs text-gray-500">
-        พิมพ์อย่างน้อย 2 ตัวอักษรเพื่อค้นหา Sub Agent
+        พิมพ์อย่างน้อย 2 ตัวอักษรเพื่อค้นหา Supplier
         {onCreateNew && " หรือคลิกปุ่ม ➕ ใหม่ เพื่อสร้าง"}
       </div>
     </div>
   );
 };
 
-export default SubAgentAutocomplete;
+export default SupplierAutocomplete;
