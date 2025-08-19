@@ -9,6 +9,7 @@ const Layout = () => {
 
   const navigation = [
     { name: "รายการ Tour", href: "/", icon: "🏝️" },
+    { name: "จัดการ Suppliers", href: "/suppliers", icon: "🏢" }, // ✨ เพิ่มเมนูใหม่
     { name: "รายการ Transfer", href: "/transfer", icon: "🚐" },
     { name: "รายการ Hotel", href: "/hotel", icon: "🏨" },
     { name: "เพิ่มราคาใหม่", href: "/add", icon: "➕" },

@@ -12,6 +12,8 @@ import NewAddPrice from "./pages/tours/NewAddPrice";
 import TransferList from "./pages/management/TransferList";
 import HotelList from "./pages/management/HotelList";
 import UserManagement from "./pages/management/UserManagement";
+import SupplierManagement from "./pages/management/SupplierManagement"; // ✨ เพิ่ม import
+import SupplierDetail from "./pages/management/SupplierDetail"; // ✨ เพิ่ม import ใหม่
 import SharedTour from "./pages/tours/SharedTour";
 import EditTour from "./pages/tours/EditTour";
 import "./index.css";
@@ -71,6 +73,10 @@ const AppRoutes = () => {
         <Route index element={<TourList />} />
         <Route path="add" element={<NewAddPrice />} />
         <Route path="edit/:id" element={<EditTour />} />
+
+        {/* ✨ Supplier Routes */}
+        <Route path="suppliers" element={<SupplierManagement />} />
+        <Route path="suppliers/:id" element={<SupplierDetail />} />
 
         {/* Transfer Routes */}
         <Route path="transfer" element={<TransferList />} />
