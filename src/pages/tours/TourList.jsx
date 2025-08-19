@@ -6,18 +6,19 @@ import { ColumnToggle } from "../../components/core";
 import * as XLSX from "xlsx";
 
 const TourList = () => {
+  // ========= State =========
   const [tours, setTours] = useState([]);
   const [filteredTours, setFilteredTours] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
 
-  // Modal states
+  // Modals (logic เดิม)
   const [selectedTour, setSelectedTour] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showDocumentModal, setShowDocumentModal] = useState(false);
 
-  // Main table columns (updated structure)
+  // Columns (logic เดิม)
   const mainColumns = [
     { key: "id", label: "ลำดับ", sortable: false },
     { key: "tour_name", label: "ชื่อทัวร์", sortable: true },
@@ -28,7 +29,6 @@ const TourList = () => {
     { key: "documents", label: "ดูเอกสาร", sortable: false },
   ];
 
-  // All columns for column toggle (removed supplier_name, added back other fields)
   const allColumns = [
     { key: "id", label: "ลำดับ", sortable: false },
     { key: "tour_name", label: "ชื่อทัวร์", sortable: true },
@@ -55,6 +55,7 @@ const TourList = () => {
 
   const [useMainTable, setUseMainTable] = useState(true);
 
+  // ========= Effects (logic เดิม) =========
   useEffect(() => {
     fetchTours();
   }, []);
@@ -63,8 +64,10 @@ const TourList = () => {
     filterAndSortTours();
   }, [tours, searchTerm, sortConfig]);
 
+  // ========= Data/Logic (เดิม) =========
   const fetchTours = async () => {
     try {
+      setLoading(true);
       const data = await toursService.getAllTours();
       setTours(data);
     } catch (error) {
@@ -76,8 +79,8 @@ const TourList = () => {
   };
 
   const filterAndSortTours = () => {
+    const searchLower = searchTerm.toLowerCase().trim();
     let filtered = tours.filter((tour) => {
-      const searchLower = searchTerm.toLowerCase();
       return (
         tour.tour_name?.toLowerCase().includes(searchLower) ||
         tour.supplier_name?.toLowerCase().includes(searchLower) ||
@@ -121,39 +124,39 @@ const TourList = () => {
   };
 
   const isExpired = (endDate) => {
-    // ถ้าไม่มี end_date หรือเป็น null ให้ถือว่าไม่หมดอายุ
-    if (!endDate || endDate === "0000-00-00") {
-      return false;
-    }
+    if (!endDate || endDate === "0000-00-00") return false;
     return new Date(endDate) < new Date();
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("th-TH", {
+  const formatDate = (dateString) =>
+    new Date(dateString).toLocaleDateString("th-TH", {
       year: "numeric",
       month: "short",
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     });
-  };
 
   const formatPrice = (price) => {
-    return new Intl.NumberFormat("th-TH").format(price);
+    // รองรับทั้ง number และ string ที่เป็นตัวเลข
+    const n =
+      typeof price === "number"
+        ? price
+        : Number(String(price ?? "").replace(/[, ]/g, ""));
+    if (Number.isNaN(n)) return "-";
+    return new Intl.NumberFormat("th-TH").format(n);
   };
 
   const getNotesWithExpiry = (tour) => {
     let notes = tour.notes || "";
-    if (tour.park_fee_included) {
-      notes = "ราคา Net นี้ รวมค่าอุทยานแล้ว" + (notes ? ` | ${notes}` : "");
-    } else {
-      notes = "ราคา Net นี้ ยังไม่รวมค่าอุทยาน" + (notes ? ` | ${notes}` : "");
-    }
+    notes =
+      (tour.park_fee_included
+        ? "ราคา Net นี้ รวมค่าอุทยานแล้ว"
+        : "ราคา Net นี้ ยังไม่รวมค่าอุทยาน") + (notes ? ` | ${notes}` : "");
 
     if (isExpired(tour.end_date)) {
       notes += " | ⚠️ หมดอายุแล้ว กรุณาต่ออายุ";
     }
-
     return notes;
   };
 
@@ -183,10 +186,7 @@ const TourList = () => {
   };
 
   const toggleColumn = (columnKey) => {
-    setVisibleColumns((prev) => ({
-      ...prev,
-      [columnKey]: !prev[columnKey],
-    }));
+    setVisibleColumns((prev) => ({ ...prev, [columnKey]: !prev[columnKey] }));
   };
 
   const openDetailsModal = (tour) => {
@@ -205,10 +205,14 @@ const TourList = () => {
     setSelectedTour(null);
   };
 
+  // ========= UI =========
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-3"></div>
+          <p className="text-gray-600">กำลังโหลดข้อมูล...</p>
+        </div>
       </div>
     );
   }
@@ -221,62 +225,99 @@ const TourList = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold text-gray-900">รายการ Tour</h1>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">รายการทัวร์</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            จัดการราคาและรายละเอียดทัวร์ทั้งหมดในระบบ
+          </p>
+        </div>
         <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={handleExportExcel}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white bg-green-600 hover:bg-green-700 active:scale-[.98] shadow-sm"
           >
-            📊 Export Excel
+            <span>📊</span>
+            <span>Export Excel</span>
           </button>
           <Link
             to="/add"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-center cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700 active:scale-[.98] shadow-sm"
           >
-            ➕ เพิ่มราคาใหม่
+            <span>➕</span>
+            <span>เพิ่มราคาใหม่</span>
           </Link>
         </div>
       </div>
 
-      {/* Search and Filters */}
-      <div className="bg-white p-4 rounded-lg shadow-sm border space-y-4">
+      {/* Search & View Controls */}
+      <div className="bg-white p-4 rounded-xl shadow-sm ring-1 ring-black/5 space-y-4">
         <div className="flex flex-col lg:flex-row gap-4">
+          {/* Search */}
           <div className="flex-1">
-            <input
-              type="text"
-              placeholder="ค้นหาทัวร์, Supplier, ออกจาก, ท่าเรือ, หมายเหตุ..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
+            <label htmlFor="tour-search" className="sr-only">
+              ค้นหารายการทัวร์
+            </label>
+            <div className="relative">
+              <input
+                id="tour-search"
+                type="text"
+                placeholder="ค้นหา: ชื่อทัวร์, Supplier, ออกจาก, ท่าเรือ, หมายเหตุ..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              />
+              <svg
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z"
+                />
+              </svg>
+            </div>
           </div>
+
+          {/* Result count */}
           <div className="text-sm text-gray-600 flex items-center">
-            แสดง {filteredTours.length} จาก {tours.length} รายการ
+            แสดง{" "}
+            <span className="mx-1 font-medium">{filteredTours.length}</span> จาก{" "}
+            <span className="mx-1 font-medium">{tours.length}</span> รายการ
           </div>
         </div>
 
-        {/* Table View Toggle & Column Controls */}
+        {/* Table toggle & Column controls */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setUseMainTable(!useMainTable)}
-              className={`px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer ${
+              className={`px-3 py-2 rounded-lg text-sm transition-colors border ${
                 useMainTable
-                  ? "bg-blue-100 text-blue-700"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  ? "bg-blue-50 text-blue-700 border-blue-200"
+                  : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
               }`}
+              title="สลับรูปแบบคอลัมน์"
             >
               {useMainTable ? "📋 ตารางย่อ" : "📊 ตารางเต็ม"}
             </button>
+
             {!useMainTable && (
-              <ColumnToggle
-                columns={allColumns}
-                visibleColumns={visibleColumns}
-                onToggleColumn={toggleColumn}
-              />
+              <div className="ml-1">
+                <ColumnToggle
+                  columns={allColumns}
+                  visibleColumns={visibleColumns}
+                  onToggleColumn={toggleColumn}
+                />
+              </div>
             )}
           </div>
+
           <div className="text-xs text-gray-500">
             {useMainTable ? "แสดงคอลัมน์หลัก 7 คอลัมน์" : "แสดงตารางแบบเต็ม"}
           </div>
@@ -284,28 +325,32 @@ const TourList = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm ring-1 ring-black/5 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
+          <table className="min-w-full text-sm">
+            <thead className="bg-gray-50 text-gray-600 sticky top-0 z-10">
+              <tr className="border-b border-gray-200">
                 {currentColumns.map((column) => {
                   if (!showColumn(column.key)) return null;
+                  const active = sortConfig.key === column.key;
                   return (
                     <th
                       key={column.key}
-                      className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${
-                        column.sortable
-                          ? "cursor-pointer hover:bg-gray-100"
-                          : ""
+                      scope="col"
+                      className={`px-6 py-3 text-left uppercase tracking-wider text-[11px] font-semibold ${
+                        column.sortable ? "cursor-pointer select-none" : ""
                       }`}
                       onClick={() => column.sortable && handleSort(column.key)}
                     >
-                      <div className="flex items-center space-x-1">
+                      <div className="inline-flex items-center gap-1">
                         <span>{column.label}</span>
                         {column.sortable && (
-                          <span className="text-gray-400">
-                            {sortConfig.key === column.key
+                          <span
+                            className={`${
+                              active ? "text-gray-800" : "text-gray-400"
+                            }`}
+                          >
+                            {active
                               ? sortConfig.direction === "asc"
                                 ? "↑"
                                 : "↓"
@@ -318,77 +363,92 @@ const TourList = () => {
                 })}
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+
+            <tbody className="divide-y divide-gray-100">
               {filteredTours.map((tour, index) => {
-                // ✨ ใช้ฟังก์ชัน isExpired ที่แก้ไขแล้ว
                 const expired = isExpired(tour.end_date);
+
                 return (
                   <tr
                     key={tour.id}
-                    className={`price-hover hover:bg-gray-50 ${
-                      expired ? "row-expired" : ""
+                    className={`group hover:bg-gray-50 transition ${
+                      expired ? "opacity-95" : ""
                     }`}
                   >
-                    {/* ID Column */}
+                    {/* Index */}
                     {showColumn("id") && (
-                      <td className="px-6 py-4 whitespace-nowrap text-base text-gray-900">
+                      <td className="px-6 py-3 whitespace-nowrap text-gray-900">
                         {index + 1}
                       </td>
                     )}
 
-                    {/* Tour Name + Supplier Column */}
+                    {/* Tour Name + Supplier */}
                     {showColumn("tour_name") && (
-                      <td className="px-6 py-4 text-base text-gray-900 max-w-xs">
-                        <div className="font-medium leading-5 mb-1">
+                      <td className="px-6 py-3 align-top">
+                        <div className="font-medium text-gray-900 leading-5">
                           {tour.tour_name}
                         </div>
-                        <div className="sub-agent-name">
-                          <span>🏢</span>
-                          <span>{tour.supplier_name}</span>
-                        </div>
+                        {tour.supplier_name && (
+                          <div className="mt-1 inline-flex items-center gap-1 text-xs text-gray-600">
+                            <span aria-hidden>🏢</span>
+                            <span className="truncate">
+                              {tour.supplier_name}
+                            </span>
+                          </div>
+                        )}
                       </td>
                     )}
 
                     {/* Departure From */}
                     {showColumn("departure_from") && (
-                      <td className="px-6 py-4 whitespace-nowrap text-base text-gray-900">
-                        {tour.departure_from}
+                      <td className="px-6 py-3 whitespace-nowrap text-gray-900">
+                        {tour.departure_from || "-"}
                       </td>
                     )}
 
                     {/* Pier */}
                     {showColumn("pier") && (
-                      <td className="px-6 py-4 whitespace-nowrap text-base text-gray-900">
-                        {tour.pier}
+                      <td className="px-6 py-3 whitespace-nowrap text-gray-900">
+                        {tour.pier || "-"}
                       </td>
                     )}
 
                     {/* Adult Price */}
                     {showColumn("adult_price") && (
-                      <td className="px-6 py-4 whitespace-nowrap price-cell">
-                        <div className="price-container">
-                          <div className="price-adult">
-                            <span>฿{formatPrice(tour.adult_price)}</span>
-                          </div>
+                      <td className="px-6 py-3 whitespace-nowrap">
+                        <div
+                          className="inline-flex items-baseline gap-1 rounded-md bg-emerald-50 px-2 py-1
+                   ring-1 ring-emerald-200 transition transform
+                   group-hover:scale-115 
+                   group-hover:bg-emerald-100 group-hover:ring-emerald-300"
+                        >
+                          <span className="font-semibold text-emerald-700">
+                            ฿{formatPrice(tour.adult_price)}
+                          </span>
                         </div>
                       </td>
                     )}
 
                     {/* Child Price */}
                     {showColumn("child_price") && (
-                      <td className="px-6 py-4 whitespace-nowrap price-cell">
-                        <div className="price-container">
-                          <div className="price-child">
-                            <span>฿{formatPrice(tour.child_price)}</span>
-                          </div>
+                      <td className="px-6 py-3 whitespace-nowrap">
+                        <div
+                          className="inline-flex items-baseline gap-1 rounded-md bg-cyan-50 px-2 py-1
+                   ring-1 ring-cyan-200 transition transform
+                   group-hover:scale-110
+                   group-hover:bg-cyan-100 group-hover:ring-cyan-300"
+                        >
+                          <span className="font-semibold text-cyan-700">
+                            ฿{formatPrice(tour.child_price)}
+                          </span>
                         </div>
                       </td>
                     )}
 
                     {/* Notes */}
                     {showColumn("notes") && (
-                      <td className="px-6 py-4 text-base text-gray-900 max-w-sm">
-                        <div className="whitespace-pre-wrap leading-4">
+                      <td className="px-6 py-3">
+                        <div className="whitespace-pre-wrap leading-5 text-gray-800">
                           {getNotesWithExpiry(tour)}
                         </div>
                       </td>
@@ -396,35 +456,39 @@ const TourList = () => {
 
                     {/* Updated At */}
                     {showColumn("updated_at") && (
-                      <td className="px-6 py-4 whitespace-nowrap text-base text-gray-500">
-                        {formatDate(tour.updated_at)}
+                      <td className="px-6 py-3 whitespace-nowrap text-gray-500">
+                        {tour.updated_at ? formatDate(tour.updated_at) : "-"}
                       </td>
                     )}
 
                     {/* Updated By */}
                     {showColumn("updated_by") && (
-                      <td className="px-6 py-4 whitespace-nowrap text-base text-gray-500">
-                        {tour.updated_by}
+                      <td className="px-6 py-3 whitespace-nowrap text-gray-500">
+                        {tour.updated_by || "-"}
                       </td>
                     )}
 
-                    {/* Main Table Action Buttons */}
+                    {/* Actions (main table only) */}
                     {useMainTable && (
                       <>
-                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <td className="px-6 py-3 whitespace-nowrap text-center">
                           <button
                             onClick={() => openDetailsModal(tour)}
-                            className="px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm cursor-pointer"
+                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200 hover:bg-blue-100 active:scale-[.98] text-xs"
+                            title="ดูรายละเอียด"
                           >
-                            📋 ดูรายละเอียด
+                            <span aria-hidden>📋</span>
+                            <span>ดูรายละเอียด</span>
                           </button>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <td className="px-6 py-3 whitespace-nowrap text-center">
                           <button
                             onClick={() => openDocumentModal(tour)}
-                            className="px-3 py-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors text-sm cursor-pointer"
+                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-200 hover:bg-gray-100 active:scale-[.98] text-xs"
+                            title="ดูเอกสาร"
                           >
-                            📎 ดูเอกสาร
+                            <span aria-hidden>📎</span>
+                            <span>ดูเอกสาร</span>
                           </button>
                         </td>
                       </>
@@ -443,13 +507,12 @@ const TourList = () => {
         )}
       </div>
 
-      {/* Modals */}
+      {/* Modals (logic เดิม) */}
       <DetailsModal
         isOpen={showDetailsModal}
         onClose={closeModals}
         tour={selectedTour}
       />
-
       <DocumentModal
         isOpen={showDocumentModal}
         onClose={closeModals}
