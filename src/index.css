@@ -81,7 +81,7 @@ button,
 .modal-content {
   animation: slideIn 0.3s ease-out;
   max-height: 90vh;
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 .modal-header,
@@ -308,7 +308,7 @@ button,
   transform: scale(1.1);
 }
 
-/* Supplier */
+/* Sub Agent */
 .sub-agent-name {
   color: var(--color-primary);
   font-size: 1rem;

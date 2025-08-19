@@ -498,7 +498,18 @@ const SupplierManagement = () => {
       <MobileOptimizedTable
         data={filteredSuppliers}
         columns={[
-          { key: "index", label: "ลำดับ", render: (item, index) => index + 1 },
+          {
+            key: "index",
+            label: "ลำดับ",
+            render: (item, index) => (
+              <div
+                className="text-center !important"
+                style={{ textAlign: "center !important" }}
+              >
+                {index + 1}
+              </div>
+            ),
+          },
           {
             key: "name",
             label: "ชื่อ Supplier",

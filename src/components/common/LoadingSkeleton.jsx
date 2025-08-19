@@ -174,7 +174,7 @@ export const MobileOptimizedTable = ({
           <thead className="bg-gray-50">
             <tr>
               {onSelectAll && (
-                <th className="px-6 py-3">
+                <th className="px-6 py-3 text-center">
                   <input
                     type="checkbox"
                     checked={
@@ -203,7 +203,7 @@ export const MobileOptimizedTable = ({
                 onClick={() => onRowClick?.(item)}
               >
                 {onSelectItem && (
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 text-center">
                     <input
                       type="checkbox"
                       checked={selectedItems.includes(item.id)}

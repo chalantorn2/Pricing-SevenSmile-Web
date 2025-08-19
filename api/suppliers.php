@@ -201,6 +201,40 @@ try {
             break;
 
         case 'DELETE':
+            $id = isset($_GET['id']) ? $_GET['id'] : null;
+            if (!$id) {
+                throw new Exception("ไม่พบ ID");
+            }
+
+            // เริ่ม transaction
+            $pdo->beginTransaction();
+
+            try {
+                // ลบไฟล์ Supplier ก่อน
+                $stmt = $pdo->prepare("DELETE FROM supplier_files WHERE supplier_id = ?");
+                $stmt->execute(array($id));
+
+                // ลบทัวร์ที่เกี่ยวข้องก่อน
+                $stmt = $pdo->prepare("DELETE FROM tours WHERE supplier_id = ?");
+                $stmt->execute(array($id));
+
+                // ลบ Supplier
+                $stmt = $pdo->prepare("DELETE FROM suppliers WHERE id = ?");
+                $result = $stmt->execute(array($id));
+
+                $pdo->commit();
+
+                if ($result) {
+                    echo json_encode(array(
+                        'success' => true,
+                        'message' => 'ลบ Supplier และทัวร์ที่เกี่ยวข้องสำเร็จ'
+                    ));
+                }
+            } catch (Exception $e) {
+                $pdo->rollBack();
+                throw $e;
+            }
+            break;
             // Delete supplier (unchanged)
             $id = isset($_GET['id']) ? $_GET['id'] : null;
             if (!$id) {

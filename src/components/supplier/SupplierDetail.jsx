@@ -38,6 +38,12 @@ const SupplierDetail = () => {
     totalFiles: 0,
   });
 
+  const handleSupplierDelete = (deletedSupplier) => {
+    console.log("Supplier deleted:", deletedSupplier);
+    // ✨ Navigate ไปหน้า Suppliers
+    navigate("/suppliers");
+  };
+
   useEffect(() => {
     if (id) {
       fetchSupplierData();
@@ -560,6 +566,7 @@ const SupplierDetail = () => {
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
         onSuccess={handleEditSuccess}
+        onDelete={handleSupplierDelete}
         supplier={supplier}
         isEdit={true}
       />
