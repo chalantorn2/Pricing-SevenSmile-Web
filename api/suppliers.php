@@ -1,5 +1,5 @@
 <?php
-// api/suppliers.php - Suppliers CRUD API
+// api/suppliers.php - Updated to support single supplier GET
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
@@ -31,7 +31,43 @@ try {
 
     switch ($method) {
         case 'GET':
-            // Get all suppliers or search
+            // ✨ NEW: Check if requesting single supplier
+            if (isset($_GET['id']) && $_GET['id']) {
+                // Get single supplier by ID
+                $id = intval($_GET['id']);
+                if ($id <= 0) {
+                    throw new Exception("Invalid supplier ID");
+                }
+
+                $sql = "SELECT sa.*, 
+                              COUNT(t.id) as tour_count,
+                              MAX(t.updated_at) as last_tour_update
+                       FROM suppliers sa
+                       LEFT JOIN tours t ON sa.id = t.supplier_id
+                       WHERE sa.id = ?
+                       GROUP BY sa.id";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute(array($id));
+                $supplier = $stmt->fetch();
+
+                if (!$supplier) {
+                    http_response_code(404);
+                    echo json_encode(array(
+                        'success' => false,
+                        'error' => 'ไม่พบข้อมูล Supplier'
+                    ));
+                    exit;
+                }
+
+                echo json_encode(array(
+                    'success' => true,
+                    'data' => $supplier,
+                    'timestamp' => date('c')
+                ));
+                break;
+            }
+
+            // Original logic for all suppliers or search
             $search = isset($_GET['search']) ? $_GET['search'] : '';
 
             if ($search) {
@@ -67,7 +103,7 @@ try {
             break;
 
         case 'POST':
-            // Add new supplier
+            // Add new supplier (unchanged)
             $input = file_get_contents('php://input');
             $data = json_decode($input, true);
 
@@ -113,7 +149,7 @@ try {
             break;
 
         case 'PUT':
-            // Update supplier
+            // Update supplier (unchanged)
             $id = isset($_GET['id']) ? $_GET['id'] : null;
             if (!$id) {
                 throw new Exception("ไม่พบ ID");
@@ -157,7 +193,7 @@ try {
                 echo json_encode(array(
                     'success' => true,
                     'data' => $supplier,
-                    'message' => 'อัพเดต Supplier สำเร็จ'
+                    'message' => 'อัพเดท Supplier สำเร็จ'
                 ));
             } else {
                 throw new Exception("ไม่สามารถอัพเดทข้อมูลได้");
@@ -165,7 +201,7 @@ try {
             break;
 
         case 'DELETE':
-            // Delete supplier
+            // Delete supplier (unchanged)
             $id = isset($_GET['id']) ? $_GET['id'] : null;
             if (!$id) {
                 throw new Exception("ไม่พบ ID");

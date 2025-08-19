@@ -12,8 +12,8 @@ import NewAddPrice from "./pages/tours/NewAddPrice";
 import TransferList from "./pages/management/TransferList";
 import HotelList from "./pages/management/HotelList";
 import UserManagement from "./pages/management/UserManagement";
-import SupplierManagement from "./pages/management/SupplierManagement"; // ✨ เพิ่ม import
-import SupplierDetail from "./pages/management/SupplierDetail"; // ✨ เพิ่ม import ใหม่
+import SupplierManagement from "./pages/management/SupplierManagement";
+import { SupplierDetail } from "./components/supplier";
 import SharedTour from "./pages/tours/SharedTour";
 import EditTour from "./pages/tours/EditTour";
 import "./index.css";

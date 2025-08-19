@@ -186,6 +186,20 @@ export const suppliersService = {
       throw new Error("เกิดข้อผิดพลาดในการลบ Supplier: " + error.message);
     }
   },
+
+  async getSupplierById(id) {
+    try {
+      console.log("🏢 Fetching supplier by ID:", id);
+      const response = await apiCall(`/suppliers.php?id=${id}`);
+      console.log("✅ Supplier fetched successfully:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("❌ Failed to fetch supplier:", error);
+      throw new Error(
+        "เกิดข้อผิดพลาดในการโหลดข้อมูล Supplier: " + error.message
+      );
+    }
+  },
 };
 
 // ✨ NEW: Supplier Files functions

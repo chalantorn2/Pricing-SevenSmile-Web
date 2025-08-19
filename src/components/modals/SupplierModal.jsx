@@ -1,7 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { suppliersService } from "../../services/api-service";
 
-const SupplierModal = ({ isOpen, onClose, onSuccess, initialName = "" }) => {
+const SupplierModal = ({
+  isOpen,
+  onClose,
+  onSuccess,
+  initialName = "",
+  supplier = null,
+  isEdit = false,
+}) => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: initialName,
@@ -11,6 +18,29 @@ const SupplierModal = ({ isOpen, onClose, onSuccess, initialName = "" }) => {
     facebook: "",
     whatsapp: "",
   });
+
+  // ✨ Update form data when supplier prop changes (for edit mode)
+  useEffect(() => {
+    if (isEdit && supplier) {
+      setFormData({
+        name: supplier.name || "",
+        address: supplier.address || "",
+        phone: supplier.phone || "",
+        line: supplier.line || "",
+        facebook: supplier.facebook || "",
+        whatsapp: supplier.whatsapp || "",
+      });
+    } else {
+      setFormData({
+        name: initialName,
+        address: "",
+        phone: "",
+        line: "",
+        facebook: "",
+        whatsapp: "",
+      });
+    }
+  }, [isEdit, supplier, initialName]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -30,26 +60,39 @@ const SupplierModal = ({ isOpen, onClose, onSuccess, initialName = "" }) => {
         throw new Error("กรุณากรอกชื่อ Supplier");
       }
 
-      const newSupplier = await suppliersService.addSupplier(formData);
-      onSuccess(newSupplier);
+      let result;
+      if (isEdit && supplier) {
+        // Update existing supplier
+        result = await suppliersService.updateSupplier(supplier.id, formData);
+      } else {
+        // Create new supplier
+        result = await suppliersService.addSupplier(formData);
+      }
+
+      onSuccess(result);
       handleClose();
     } catch (error) {
-      console.error("Error creating supplier:", error);
-      alert(error.message || "เกิดข้อผิดพลาดในการสร้าง Supplier");
+      console.error("Error saving supplier:", error);
+      alert(
+        error.message ||
+          `เกิดข้อผิดพลาดในการ${isEdit ? "อัพเดท" : "สร้าง"} Supplier`
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const handleClose = () => {
-    setFormData({
-      name: "",
-      address: "",
-      phone: "",
-      line: "",
-      facebook: "",
-      whatsapp: "",
-    });
+    if (!isEdit) {
+      setFormData({
+        name: "",
+        address: "",
+        phone: "",
+        line: "",
+        facebook: "",
+        whatsapp: "",
+      });
+    }
     onClose();
   };
 
@@ -62,7 +105,7 @@ const SupplierModal = ({ isOpen, onClose, onSuccess, initialName = "" }) => {
           {/* Header */}
           <div className="modal-header border-b border-gray-200 px-6 py-4 flex items-center justify-between">
             <h2 className="text-xl font-semibold text-gray-900">
-              เพิ่ม Supplier ใหม่
+              {isEdit ? "แก้ไขข้อมูล Supplier" : "เพิ่ม Supplier ใหม่"}
             </h2>
             <button
               onClick={handleClose}
@@ -208,10 +251,10 @@ const SupplierModal = ({ isOpen, onClose, onSuccess, initialName = "" }) => {
                 {loading ? (
                   <div className="flex items-center space-x-2">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    <span>กำลังสร้าง...</span>
+                    <span>กำลัง{isEdit ? "อัพเดท" : "สร้าง"}...</span>
                   </div>
                 ) : (
-                  "สร้าง Supplier"
+                  `${isEdit ? "อัพเดท" : "สร้าง"} Supplier`
                 )}
               </button>
             </div>
