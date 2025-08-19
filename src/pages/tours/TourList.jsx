@@ -121,6 +121,10 @@ const TourList = () => {
   };
 
   const isExpired = (endDate) => {
+    // ถ้าไม่มี end_date หรือเป็น null ให้ถือว่าไม่หมดอายุ
+    if (!endDate || endDate === "0000-00-00") {
+      return false;
+    }
     return new Date(endDate) < new Date();
   };
 
@@ -316,6 +320,7 @@ const TourList = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredTours.map((tour, index) => {
+                // ✨ ใช้ฟังก์ชัน isExpired ที่แก้ไขแล้ว
                 const expired = isExpired(tour.end_date);
                 return (
                   <tr

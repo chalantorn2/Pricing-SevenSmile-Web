@@ -228,9 +228,12 @@ export const subAgentFilesService = {
   // Get file URL
   getSubAgentFileUrl(file) {
     const baseUrl = import.meta.env.VITE_API_BASE_URL || "/api";
-    return `${baseUrl}/uploads/sub-agents/${
-      file.file_type === "pdf" ? "pdfs" : "images"
-    }/${file.file_name}`;
+    // เอา leading slash ออกจาก baseUrl ถ้ามี และรวม path ให้ถูกต้อง
+    const cleanBaseUrl = baseUrl.replace(/\/$/, ""); // เอา trailing slash ออก
+    const filePath = `${cleanBaseUrl}/${file.file_path}`;
+
+    console.log("🔗 Generated sub agent file URL:", filePath); // Debug log
+    return filePath;
   },
 };
 
@@ -433,9 +436,12 @@ export const filesService = {
   // Get file URL
   getFileUrl(file) {
     const baseUrl = import.meta.env.VITE_API_BASE_URL || "/api";
-    return `${baseUrl}/uploads/tours/${
-      file.file_type === "pdf" ? "pdfs" : "images"
-    }/${file.file_name}`;
+    // เอา leading slash ออกจาก baseUrl ถ้ามี และรวม path ให้ถูกต้อง
+    const cleanBaseUrl = baseUrl.replace(/\/$/, ""); // เอา trailing slash ออก
+    const filePath = `${cleanBaseUrl}/${file.file_path}`;
+
+    console.log("🔗 Generated file URL:", filePath); // Debug log
+    return filePath;
   },
 };
 

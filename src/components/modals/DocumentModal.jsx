@@ -46,8 +46,19 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
     }
   };
 
+  // ✨ ปรับปรุง handleViewFile ให้ใช้ URL ที่ถูกต้อง
   const handleViewFile = (file) => {
-    const fileUrl = filesService.getFileUrl(file);
+    let fileUrl;
+
+    // ใช้ service ที่เหมาะสมตาม source
+    if (file.source === "sub_agent") {
+      fileUrl = subAgentFilesService.getSubAgentFileUrl(file);
+    } else {
+      fileUrl = filesService.getFileUrl(file);
+    }
+
+    console.log("Opening file URL:", fileUrl); // Debug log
+
     if (file.file_type === "image") {
       setSelectedImage(fileUrl);
     } else if (file.file_type === "pdf") {
@@ -57,13 +68,28 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
   };
 
   const handleDownloadFile = (file) => {
-    const fileUrl = filesService.getFileUrl(file);
-    const link = document.createElement("a");
-    link.href = fileUrl;
-    link.download = file.original_name;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    let fileUrl;
+
+    if (file.source === "sub_agent") {
+      fileUrl = subAgentFilesService.getSubAgentFileUrl(file);
+    } else {
+      fileUrl = filesService.getFileUrl(file);
+    }
+
+    console.log("Opening file in new tab:", fileUrl); // Debug log
+
+    // ✨ เปิดในแท็บใหม่แทนที่จะดาวน์โหลด
+    window.open(fileUrl, "_blank");
+  };
+
+  // ✨ ปรับปรุง getDisplayName ให้แสดงชื่อไฟล์ที่ถูกต้อง
+  const getDisplayName = (file) => {
+    // สำหรับ Sub Agent files: แสดง label ก่อน fallback เป็น original_name
+    if (file.source === "sub_agent" && file.label && file.label.trim()) {
+      return file.label;
+    }
+    // สำหรับ Tour files หรือไม่มี label: แสดง original_name
+    return file.original_name;
   };
 
   if (!isOpen || !tour) return null;
@@ -152,8 +178,9 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
                               <span className="text-2xl">📄</span>
                               <div>
                                 <div className="flex items-center space-x-2">
+                                  {/* ✨ ใช้ getDisplayName แทน */}
                                   <h4 className="font-medium text-gray-900">
-                                    {file.label || file.original_name}
+                                    {getDisplayName(file)}
                                   </h4>
                                   <span
                                     className={`px-2 py-1 text-xs rounded-full ${
@@ -216,8 +243,9 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
                             <div className="flex items-center space-x-3">
                               <span className="text-2xl">🖼️</span>
                               <div>
+                                {/* ✨ ใช้ getDisplayName แทน */}
                                 <h4 className="font-medium text-gray-900">
-                                  {file.original_name}
+                                  {getDisplayName(file)}
                                 </h4>
                                 <div className="flex items-center space-x-4 text-sm text-gray-500">
                                   <span>{file.file_size_formatted}</span>
@@ -254,7 +282,7 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
             ) : (
               <div className="text-center py-8">
                 <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                  <span className="text-2xl text-gray-400">📁</span>
+                  <span className="text-2xl text-gray-400">📂</span>
                 </div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
                   ยังไม่มีเอกสารแนบ
@@ -299,7 +327,7 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
               onClick={(e) => e.stopPropagation()}
             />
 
-            {/* Close button - ปรับใหม่ให้เห็นง่าย */}
+            {/* Close button */}
             <button
               onClick={() => setSelectedImage(null)}
               className="absolute top-4 right-4 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-800 rounded-full w-10 h-10 flex items-center justify-center cursor-pointer transition-all shadow-lg"

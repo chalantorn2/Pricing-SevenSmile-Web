@@ -7,6 +7,9 @@ const DetailsModal = ({ isOpen, onClose, tour }) => {
   if (!isOpen || !tour) return null;
 
   const formatDate = (dateString) => {
+    if (!dateString || dateString === "0000-00-00") {
+      return "ไม่กำหนด";
+    }
     return new Date(dateString).toLocaleDateString("th-TH", {
       year: "numeric",
       month: "long",
@@ -180,12 +183,26 @@ const DetailsModal = ({ isOpen, onClose, tour }) => {
                         {formatDate(tour.end_date)}
                       </span>
                     </div>
-                    {isExpired(tour.end_date) && (
-                      <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                    {/* ✨ ปรับปรุงเงื่อนไขการแสดงเตือนหมดอายุ */}
+                    {tour.end_date &&
+                      tour.end_date !== "0000-00-00" &&
+                      isExpired(tour.end_date) && (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-red-500">⚠️</span>
+                            <span className="text-red-700 text-sm font-medium">
+                              ราคานี้หมดอายุแล้ว กรุณาติดต่อสำหรับราคาล่าสุด
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    {/* ✨ เพิ่มการแสดงข้อความสำหรับทัวร์ที่ไม่มีวันสิ้นสุด */}
+                    {(!tour.end_date || tour.end_date === "0000-00-00") && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                         <div className="flex items-center space-x-2">
-                          <span className="text-red-500">⚠️</span>
-                          <span className="text-red-700 text-sm font-medium">
-                            ราคานี้หมดอายุแล้ว กรุณาต่ออายุ
+                          <span className="text-blue-500">💫</span>
+                          <span className="text-blue-700 text-sm font-medium">
+                            ราคานี้ใช้ได้ต่อเนื่อง (ไม่มีวันสิ้นสุด)
                           </span>
                         </div>
                       </div>
