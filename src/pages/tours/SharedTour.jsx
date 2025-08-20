@@ -31,7 +31,7 @@ const SharedTour = () => {
     }
   };
 
-  // === Helpers (ให้หน้าตา/ฟังก์ชันตรงกับ DetailsModal) ===
+  // === Helpers (ให้หน้าตา/ฟังก์ชันตรงกับ TourDetailsModal) ===
   const formatDate = (dateString) => {
     if (!dateString || dateString === "0000-00-00") return "ไม่กำหนด";
     return new Date(dateString).toLocaleDateString("th-TH", {
@@ -162,7 +162,7 @@ const SharedTour = () => {
             </div>
           </section>
 
-          {/* Two columns info (same look as DetailsModal) */}
+          {/* Two columns info (same look as TourDetailsModal) */}
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 px-6 pb-6">
             {/* Left */}
             <section className="space-y-6">

@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { SupplierAutocomplete } from "../../components/forms";
-import { SupplierModal } from "../../components/modals";
-import { SupplierFileUpload, FileUpload } from "../../components/uploads";
+import { SupplierAutocomplete } from "../../components/suppliers";
+import { SupplierModal } from "../../components/suppliers";
+import { TourFileUpload } from "../../components/tours";
+import SupplierFileUpload from "../../components/suppliers/SupplierFileUpload";
 import {
   toursService,
   suppliersService,

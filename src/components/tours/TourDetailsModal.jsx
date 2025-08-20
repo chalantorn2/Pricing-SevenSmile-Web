@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { Toast } from "../core";
 
-const DetailsModal = ({ isOpen, onClose, tour }) => {
+const TourDetailsModal = ({ isOpen, onClose, tour }) => {
   const [showToast, setShowToast] = useState(false);
   const dialogRef = useRef(null);
   const closeBtnRef = useRef(null);
@@ -410,4 +410,4 @@ const DetailsModal = ({ isOpen, onClose, tour }) => {
   );
 };
 
-export default DetailsModal;
+export default TourDetailsModal;

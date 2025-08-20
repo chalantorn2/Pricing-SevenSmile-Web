@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { suppliersService, toursService } from "../../services/api-service";
-import SupplierFilters from "../../components/supplier/SupplierFilters";
-import SupplierDashboard from "../../components/supplier/SupplierDashboard";
+import SupplierFilters from "../../components/suppliers/SupplierFilters";
+import SupplierDashboard from "../../components/suppliers/SupplierDashboard";
 import {
   TableSkeleton,
   CardSkeleton,
@@ -11,7 +11,7 @@ import {
 } from "../../components/common/LoadingSkeleton";
 import * as XLSX from "xlsx";
 
-const SupplierManagement = () => {
+const SupplierList = () => {
   const [suppliers, setSuppliers] = useState([]);
   const [tours, setTours] = useState([]);
   const [filteredSuppliers, setFilteredSuppliers] = useState([]);
@@ -599,4 +599,4 @@ const SupplierManagement = () => {
   );
 };
 
-export default SupplierManagement;
+export default SupplierList;

@@ -8,12 +8,12 @@ import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { Layout } from "./components/core";
 import Login from "./pages/auth/Login";
 import TourList from "./pages/tours/TourList";
-import NewAddPrice from "./pages/tours/NewAddPrice";
-import TransferList from "./pages/management/TransferList";
-import HotelList from "./pages/management/HotelList";
-import UserManagement from "./pages/management/UserManagement";
-import SupplierManagement from "./pages/management/SupplierManagement";
-import { SupplierDetail } from "./components/supplier";
+import AddTour from "./pages/tours/AddTour";
+import TransferList from "./pages/transfers/TransferList";
+import HotelList from "./pages/hotels/HotelList";
+import UserManagement from "./pages/users/UserManagement";
+import SupplierList from "./pages/suppliers/SupplierList";
+import SupplierDetail from "./pages/suppliers/SupplierDetail";
 import SharedTour from "./pages/tours/SharedTour";
 import EditTour from "./pages/tours/EditTour";
 import "./index.css";
@@ -71,11 +71,11 @@ const AppRoutes = () => {
       >
         {/* Tours Routes */}
         <Route index element={<TourList />} />
-        <Route path="add" element={<NewAddPrice />} />
+        <Route path="add" element={<AddTour />} />
         <Route path="edit/:id" element={<EditTour />} />
 
         {/* ✨ Supplier Routes */}
-        <Route path="suppliers" element={<SupplierManagement />} />
+        <Route path="suppliers" element={<SupplierList />} />
         <Route path="suppliers/:id" element={<SupplierDetail />} />
 
         {/* Transfer Routes */}

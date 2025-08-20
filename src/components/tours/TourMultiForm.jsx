@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import AutocompleteInput from "./AutocompleteInput";
+import { AutocompleteInput } from "../common";
 
-const MultiTourForm = ({
+const TourMultiForm = ({
   onSubmit,
   loading = false,
   supplierId = null,
@@ -491,4 +491,4 @@ const MultiTourForm = ({
   );
 };
 
-export default MultiTourForm;
+export default TourMultiForm;

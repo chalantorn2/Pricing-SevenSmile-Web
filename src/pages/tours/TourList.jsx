@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { toursService } from "../../services/api-service";
-import { DetailsModal, DocumentModal } from "../../components/modals";
+import { TourDetailsModal } from "../../components/tours";
+import { DocumentModal } from "../../components/common";
 import { ColumnToggle } from "../../components/core";
 import * as XLSX from "xlsx";
 
@@ -15,7 +16,7 @@ const TourList = () => {
 
   // Modals (logic เดิม)
   const [selectedTour, setSelectedTour] = useState(null);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showTourDetailsModal, setShowTourDetailsModal] = useState(false);
   const [showDocumentModal, setShowDocumentModal] = useState(false);
 
   // Columns (logic เดิม)
@@ -189,9 +190,9 @@ const TourList = () => {
     setVisibleColumns((prev) => ({ ...prev, [columnKey]: !prev[columnKey] }));
   };
 
-  const openDetailsModal = (tour) => {
+  const openTourDetailsModal = (tour) => {
     setSelectedTour(tour);
-    setShowDetailsModal(true);
+    setShowTourDetailsModal(true);
   };
 
   const openDocumentModal = (tour) => {
@@ -200,7 +201,7 @@ const TourList = () => {
   };
 
   const closeModals = () => {
-    setShowDetailsModal(false);
+    setShowTourDetailsModal(false);
     setShowDocumentModal(false);
     setSelectedTour(null);
   };
@@ -419,7 +420,7 @@ const TourList = () => {
                         <div
                           className="inline-flex items-baseline gap-1 rounded-md bg-emerald-50 px-2 py-1
                    ring-1 ring-emerald-200 transition transform
-                   group-hover:scale-115 
+                   group-hover:scale-125
                    group-hover:bg-emerald-100 group-hover:ring-emerald-300"
                         >
                           <span className="font-semibold text-emerald-700">
@@ -435,7 +436,7 @@ const TourList = () => {
                         <div
                           className="inline-flex items-baseline gap-1 rounded-md bg-cyan-50 px-2 py-1
                    ring-1 ring-cyan-200 transition transform
-                   group-hover:scale-110
+                   group-hover:scale-115
                    group-hover:bg-cyan-100 group-hover:ring-cyan-300"
                         >
                           <span className="font-semibold text-cyan-700">
@@ -473,7 +474,7 @@ const TourList = () => {
                       <>
                         <td className="px-6 py-3 whitespace-nowrap text-center">
                           <button
-                            onClick={() => openDetailsModal(tour)}
+                            onClick={() => openTourDetailsModal(tour)}
                             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200 hover:bg-blue-100 active:scale-[.98] text-xs"
                             title="ดูรายละเอียด"
                           >
@@ -508,8 +509,8 @@ const TourList = () => {
       </div>
 
       {/* Modals (logic เดิม) */}
-      <DetailsModal
-        isOpen={showDetailsModal}
+      <TourDetailsModal
+        isOpen={showTourDetailsModal}
         onClose={closeModals}
         tour={selectedTour}
       />

@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { SupplierAutocomplete, MultiTourForm } from "../../components/forms";
-import { SupplierModal } from "../../components/modals";
-import { SupplierFileUpload } from "../../components/uploads";
+import { TourMultiForm } from "../../components/tours";
+import { SupplierAutocomplete } from "../../components/suppliers";
+import { SupplierModal } from "../../components/suppliers";
+import SupplierFileUpload from "../../components/suppliers/SupplierFileUpload";
 import { toursService, supplierFilesService } from "../../services/api-service";
 
-const NewAddPrice = () => {
+const AddTour = () => {
   const navigate = useNavigate();
 
   // Step management
@@ -370,7 +371,7 @@ const NewAddPrice = () => {
                 </p>
               </div>
 
-              <MultiTourForm
+              <TourMultiForm
                 onSubmit={handleToursSubmit}
                 loading={loading}
                 supplierId={selectedSupplier?.id}
@@ -400,4 +401,4 @@ const NewAddPrice = () => {
   );
 };
 
-export default NewAddPrice;
+export default AddTour;

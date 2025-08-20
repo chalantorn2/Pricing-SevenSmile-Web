@@ -6,7 +6,8 @@ import {
   supplierFilesService,
   filesService,
 } from "../../services/api-service";
-import { DetailsModal, DocumentModal } from "../../components/modals";
+import { TourDetailsModal } from "../../components/tours";
+import { DocumentModal } from "../../components/common";
 
 const SupplierDetail = () => {
   const { id } = useParams();
@@ -21,7 +22,7 @@ const SupplierDetail = () => {
 
   // Modal states
   const [selectedTour, setSelectedTour] = useState(null);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showTourDetailsModal, setShowTourDetailsModal] = useState(false);
   const [showDocumentModal, setShowDocumentModal] = useState(false);
 
   useEffect(() => {
@@ -36,11 +37,22 @@ const SupplierDetail = () => {
     try {
       setLoading(true);
       const suppliers = await suppliersService.getAllSuppliers();
-      const foundSupplier = suppliers.find((s) => s.id === parseInt(id));
+
+      console.log("🔍 Looking for supplier ID:", id, "Type:", typeof id);
+      console.log(
+        "📋 Available suppliers:",
+        suppliers.map((s) => ({ id: s.id, name: s.name, idType: typeof s.id }))
+      );
+
+      // ✅ แก้ไขการเปรียบเทียบ ID
+      const foundSupplier = suppliers.find((s) => Number(s.id) === Number(id));
+
+      console.log("✅ Found supplier:", foundSupplier);
 
       if (foundSupplier) {
         setSupplier(foundSupplier);
       } else {
+        console.error("❌ Supplier not found for ID:", id);
         alert("ไม่พบข้อมูล Supplier");
         navigate("/suppliers");
       }
@@ -56,8 +68,18 @@ const SupplierDetail = () => {
     try {
       setToursLoading(true);
       const allTours = await toursService.getAllTours();
+
+      // ✅ แก้ไขการกรองทัวร์
       const filteredTours = allTours.filter(
-        (tour) => tour.supplier_id === parseInt(id)
+        (tour) => Number(tour.supplier_id) === Number(id)
+      );
+
+      console.log(
+        "🏝️ Filtered tours for supplier",
+        id,
+        ":",
+        filteredTours.length,
+        "tours"
       );
       setSupplierTours(filteredTours);
     } catch (error) {
@@ -71,7 +93,8 @@ const SupplierDetail = () => {
   const fetchSupplierFiles = async () => {
     try {
       setFilesLoading(true);
-      const files = await supplierFilesService.getSupplierFiles(parseInt(id));
+      const files = await supplierFilesService.getSupplierFiles(Number(id));
+      console.log("📁 Supplier files:", files.length, "files");
       setSupplierFiles(files);
     } catch (error) {
       console.error("Error fetching files:", error);
@@ -113,9 +136,9 @@ const SupplierDetail = () => {
     return notes;
   };
 
-  const openDetailsModal = (tour) => {
+  const openTourDetailsModal = (tour) => {
     setSelectedTour(tour);
-    setShowDetailsModal(true);
+    setShowTourDetailsModal(true);
   };
 
   const openDocumentModal = (tour) => {
@@ -124,7 +147,7 @@ const SupplierDetail = () => {
   };
 
   const closeModals = () => {
-    setShowDetailsModal(false);
+    setShowTourDetailsModal(false);
     setShowDocumentModal(false);
     setSelectedTour(null);
   };
@@ -472,7 +495,7 @@ const SupplierDetail = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => openDetailsModal(tour)}
+                          onClick={() => openTourDetailsModal(tour)}
                           className="px-2 py-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors text-xs"
                         >
                           📋 รายละเอียด
@@ -514,8 +537,8 @@ const SupplierDetail = () => {
       </div>
 
       {/* Modals */}
-      <DetailsModal
-        isOpen={showDetailsModal}
+      <TourDetailsModal
+        isOpen={showTourDetailsModal}
         onClose={closeModals}
         tour={selectedTour}
       />
