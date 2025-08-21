@@ -1,5 +1,5 @@
 <?php
-// api/tours.php - Updated to work with Suppliers
+// api/tours.php - Updated to support map_url field
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
@@ -41,6 +41,7 @@ try {
                           sa.line,
                           sa.facebook,
                           sa.whatsapp,
+                          sa.website,
                           sa.created_at as sub_agent_created_at,
                           sa.updated_at as sub_agent_updated_at
                    FROM tours t
@@ -60,7 +61,7 @@ try {
             break;
 
         case 'POST':
-            // Add new tour (single or multiple)
+            // Add new tour(s) - supports both single and multiple tours
             $input = file_get_contents('php://input');
             $data = json_decode($input, true);
 
@@ -90,8 +91,8 @@ try {
                         throw new Exception("กรุณากรอกชื่อทัวร์");
                     }
 
-                    $sql = "INSERT INTO tours (supplier_id, tour_name, departure_from, pier, adult_price, child_price, start_date, end_date, notes, park_fee_included, updated_by) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    $sql = "INSERT INTO tours (supplier_id, tour_name, departure_from, pier, adult_price, child_price, start_date, end_date, notes, park_fee_included, map_url, updated_by) 
+                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
                     $stmt = $pdo->prepare($sql);
                     $result = $stmt->execute(array(
@@ -102,9 +103,10 @@ try {
                         isset($tour['adult_price']) ? $tour['adult_price'] : 0,
                         isset($tour['child_price']) ? $tour['child_price'] : 0,
                         isset($tour['start_date']) && $tour['start_date'] ? $tour['start_date'] : null,
-                        isset($tour['end_date']) && $tour['end_date'] && !$tour['no_end_date'] ? $tour['end_date'] : null, // ← เปลี่ยนตรงนี้
+                        isset($tour['end_date']) && $tour['end_date'] && !$tour['no_end_date'] ? $tour['end_date'] : null,
                         isset($tour['notes']) ? $tour['notes'] : null,
                         isset($tour['park_fee_included']) && $tour['park_fee_included'] ? 1 : 0,
+                        isset($tour['map_url']) ? $tour['map_url'] : null, // New field
                         $updated_by
                     ));
 
@@ -115,7 +117,7 @@ try {
                         $stmt = $pdo->prepare("
                             SELECT t.*, 
                                   sa.name as supplier_name,
-                                  sa.address, sa.phone, sa.line, sa.facebook, sa.whatsapp
+                                  sa.address, sa.phone, sa.line, sa.facebook, sa.whatsapp, sa.website
                             FROM tours t
                             LEFT JOIN suppliers sa ON t.supplier_id = sa.id
                             WHERE t.id = ?
@@ -154,18 +156,10 @@ try {
             $input = file_get_contents('php://input');
             $data = json_decode($input, true);
 
-            // Validate supplier_id if provided
-            if (isset($data['supplier_id']) && $data['supplier_id']) {
-                $stmt = $pdo->prepare("SELECT id FROM suppliers WHERE id = ?");
-                $stmt->execute(array($data['supplier_id']));
-                if (!$stmt->fetch()) {
-                    throw new Exception("Supplier ไม่พบในระบบ");
-                }
-            }
-
+            // ✅ เพิ่มบรรทัดนี้ - รองรับ map_url
             $sql = "UPDATE tours 
-       SET supplier_id=?, tour_name=?, departure_from=?, pier=?, adult_price=?, child_price=?, start_date=?, end_date=?, notes=?, park_fee_included=?, updated_by=?, updated_at=NOW() 
-       WHERE id=?";
+           SET supplier_id=?, tour_name=?, departure_from=?, pier=?, adult_price=?, child_price=?, start_date=?, end_date=?, notes=?, park_fee_included=?, map_url=?, updated_by=?, updated_at=NOW() 
+           WHERE id=?";
 
             $stmt = $pdo->prepare($sql);
             $result = $stmt->execute(array(
@@ -176,9 +170,10 @@ try {
                 isset($data['adult_price']) ? $data['adult_price'] : 0,
                 isset($data['child_price']) ? $data['child_price'] : 0,
                 isset($data['start_date']) && $data['start_date'] ? $data['start_date'] : null,
-                isset($data['end_date']) && $data['end_date'] && !$data['no_end_date'] ? $data['end_date'] : null, // ← เปลี่ยนตรงนี้
+                isset($data['end_date']) && $data['end_date'] && !$data['no_end_date'] ? $data['end_date'] : null,
                 isset($data['notes']) ? $data['notes'] : null,
                 isset($data['park_fee_included']) && $data['park_fee_included'] ? 1 : 0,
+                isset($data['map_url']) ? $data['map_url'] : null, // ✅ เพิ่มบรรทัดนี้
                 isset($data['updated_by']) ? $data['updated_by'] : 'Unknown',
                 $id
             ));
@@ -188,7 +183,7 @@ try {
                 $stmt = $pdo->prepare("
                     SELECT t.*, 
                           sa.name as supplier_name,
-                          sa.address, sa.phone, sa.line, sa.facebook, sa.whatsapp
+                          sa.address, sa.phone, sa.line, sa.facebook, sa.whatsapp, sa.website
                     FROM tours t
                     LEFT JOIN suppliers sa ON t.supplier_id = sa.id
                     WHERE t.id = ?

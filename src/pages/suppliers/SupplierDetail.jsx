@@ -8,6 +8,7 @@ import {
 } from "../../services/api-service";
 import { TourDetailsModal } from "../../components/tours";
 import { DocumentModal } from "../../components/common";
+import { FileDownloads } from "../../components/common";
 
 const SupplierDetail = () => {
   const { id } = useParams();
@@ -333,6 +334,28 @@ const SupplierDetail = () => {
               </div>
             )}
 
+            {/* Website - เพิ่มส่วนนี้ */}
+            {supplier.website && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <span>🌐</span>
+                  <span className="truncate max-w-48">{supplier.website}</span>
+                </div>
+                <button
+                  onClick={() =>
+                    window.open(
+                      supplier.website,
+                      "_blank",
+                      "noopener,noreferrer"
+                    )
+                  }
+                  className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm"
+                >
+                  เยี่ยมชม
+                </button>
+              </div>
+            )}
+
             {!supplier.phone &&
               !supplier.line &&
               !supplier.facebook &&
@@ -368,7 +391,7 @@ const SupplierDetail = () => {
       {/* Files Section */}
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <span className="mr-2">📎</span>
+          <span className="mr-2">📁</span>
           ไฟล์เอกสาร ({supplierFiles.length} ไฟล์)
         </h2>
 
@@ -377,47 +400,14 @@ const SupplierDetail = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
             <p className="text-sm text-gray-600">กำลังโหลดไฟล์...</p>
           </div>
-        ) : supplierFiles.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {supplierFiles.map((file) => (
-              <div
-                key={file.id}
-                className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-3 flex-1">
-                    <span className="text-2xl">
-                      {file.file_type === "pdf" ? "📄" : "🖼️"}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-gray-900 truncate">
-                        {file.label || file.original_name}
-                      </p>
-                      <div className="flex items-center space-x-2 text-sm text-gray-500">
-                        <span>{file.file_size_formatted}</span>
-                        <span>•</span>
-                        <span>{formatDate(file.uploaded_at)}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleFileView(file)}
-                    className="px-2 py-1 text-blue-600 hover:bg-blue-50 rounded text-sm"
-                  >
-                    👁️ ดู
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
         ) : (
-          <div className="text-center py-8">
-            <div className="text-gray-400 text-4xl mb-4">📁</div>
-            <p className="text-gray-500 mb-2">ยังไม่มีไฟล์เอกสาร</p>
-            <p className="text-gray-400 text-sm">
-              สามารถอัพโหลดไฟล์ได้ในหน้าแก้ไขทัวร์
-            </p>
-          </div>
+          <FileDownloads
+            files={supplierFiles}
+            getFileUrl={supplierFilesService.getSupplierFileUrl}
+            title="เอกสาร Supplier"
+            isSupplier={true}
+            showCategory={true}
+          />
         )}
       </div>
 

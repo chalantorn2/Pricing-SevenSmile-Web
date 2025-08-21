@@ -237,6 +237,116 @@ export const supplierFilesService = {
     }
   },
 
+  async getTourFilesByCategory(tourId, category) {
+    try {
+      console.log(`📁 Fetching tour files for category: ${category}`);
+      const response = await apiCall(
+        `/files.php?tour_id=${tourId}&category=${encodeURIComponent(category)}`
+      );
+      console.log(`✅ Category files fetched: ${response.data?.length} items`);
+      return response.data || [];
+    } catch (error) {
+      console.error("❌ Failed to fetch category files:", error);
+      throw new Error(
+        "เกิดข้อผิดพลาดในการโหลดไฟล์ตามหมวดหมู่: " + error.message
+      );
+    }
+  },
+
+  async getSupplierFilesByCategory(supplierId, category) {
+    try {
+      console.log(`📁 Fetching supplier files for category: ${category}`);
+      const response = await apiCall(
+        `/supplier-files.php?supplier_id=${supplierId}&category=${encodeURIComponent(
+          category
+        )}`
+      );
+      console.log(
+        `✅ Supplier category files fetched: ${response.data?.length} items`
+      );
+      return response.data || [];
+    } catch (error) {
+      console.error("❌ Failed to fetch supplier category files:", error);
+      throw new Error(
+        "เกิดข้อผิดพลาดในการโหลดไฟล์ Supplier ตามหมวดหมู่: " + error.message
+      );
+    }
+  },
+
+  // Upload supplier file with category
+  async uploadSupplierFile(
+    supplierId,
+    file,
+    category = "general",
+    label = "",
+    uploadedBy = "Unknown"
+  ) {
+    try {
+      console.log(`📤 Uploading supplier file to category: ${category}`);
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("supplier_id", supplierId);
+      formData.append("file_category", category);
+      formData.append("label", label);
+      formData.append("uploaded_by", uploadedBy);
+
+      const response = await fetch(`${API_BASE_URL}/supplier-files.php`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Upload failed");
+      }
+
+      console.log("✅ Supplier file uploaded successfully");
+      return result.data;
+    } catch (error) {
+      console.error("❌ Failed to upload supplier file:", error);
+      throw new Error(
+        "เกิดข้อผิดพลาดในการอัพโหลดไฟล์ Supplier: " + error.message
+      );
+    }
+  },
+
+  // Upload file with category
+  async uploadTourFile(
+    tourId,
+    file,
+    category = "general",
+    uploadedBy = "Unknown"
+  ) {
+    try {
+      console.log(`📤 Uploading tour file to category: ${category}`);
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("tour_id", tourId);
+      formData.append("file_category", category);
+      formData.append("uploaded_by", uploadedBy);
+
+      const response = await fetch(`${API_BASE_URL}/files.php`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Upload failed");
+      }
+
+      console.log("✅ Tour file uploaded successfully");
+      return result.data;
+    } catch (error) {
+      console.error("❌ Failed to upload tour file:", error);
+      throw new Error("เกิดข้อผิดพลาดในการอัพโหลดไฟล์: " + error.message);
+    }
+  },
+
   // Get file URL
   getSupplierFileUrl(file) {
     const baseUrl = import.meta.env.VITE_API_BASE_URL || "/api";

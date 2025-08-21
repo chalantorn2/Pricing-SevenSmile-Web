@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { toursService } from "../../services/api-service";
+import TourDetails from "../../components/tours/TourDetails";
 
 const SharedTour = () => {
   const { id } = useParams();
@@ -30,45 +31,6 @@ const SharedTour = () => {
       setLoading(false);
     }
   };
-
-  // === Helpers (ให้หน้าตา/ฟังก์ชันตรงกับ TourDetailsModal) ===
-  const formatDate = (dateString) => {
-    if (!dateString || dateString === "0000-00-00") return "ไม่กำหนด";
-    return new Date(dateString).toLocaleDateString("th-TH", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
-  const formatPrice = (price) => {
-    const n =
-      typeof price === "number"
-        ? price
-        : Number(String(price).replace(/[, ]/g, ""));
-    if (Number.isNaN(n)) return "-";
-    return new Intl.NumberFormat("th-TH").format(n);
-  };
-
-  const getNotesWithExpiry = (tour) => {
-    let notes = tour.notes || "";
-    notes =
-      (tour.park_fee_included
-        ? "ราคา Net นี้ รวมค่าอุทยานแล้ว"
-        : "ราคา Net นี้ ยังไม่รวมค่าอุทยาน") + (notes ? ` | ${notes}` : "");
-    if (tour.end_date && tour.end_date !== "0000-00-00") {
-      const expired = new Date(tour.end_date) < new Date();
-      if (expired) notes += " | ⚠️ หมดอายุแล้ว กรุณาต่ออายุ";
-    }
-    return notes;
-  };
-
-  const SectionHeader = ({ icon = "⬤", children }) => (
-    <div className="flex items-center gap-2 rounded-t-xl bg-gray-50/80 px-4 py-3 border-b border-gray-200">
-      <span className="text-xs">{icon}</span>
-      <h3 className="text-sm font-semibold text-gray-900">{children}</h3>
-    </div>
-  );
 
   if (loading) {
     return (
@@ -143,224 +105,13 @@ const SharedTour = () => {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="bg-white rounded-2xl shadow-sm border overflow-hidden ring-1 ring-black/5">
-          {/* Pricing */}
-          <section className="mb-6 rounded-xl border border-gray-200 bg-gray-50/60 mx-6 mt-6">
-            <SectionHeader icon="฿">ราคา Net (บาท)</SectionHeader>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 md:gap-6">
-              <div className="rounded-lg bg-white p-4 ring-1 ring-gray-200">
-                <div className="text-xs text-gray-500">ผู้ใหญ่</div>
-                <div className="mt-1 text-2xl font-bold text-emerald-600">
-                  ฿{formatPrice(tour.adult_price)}
-                </div>
-              </div>
-              <div className="rounded-lg bg-white p-4 ring-1 ring-gray-200">
-                <div className="text-xs text-gray-500">เด็ก</div>
-                <div className="mt-1 text-2xl font-bold text-emerald-600">
-                  ฿{formatPrice(tour.child_price)}
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Two columns info (same look as TourDetailsModal) */}
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 px-6 pb-6">
-            {/* Left */}
-            <section className="space-y-6">
-              <div className="rounded-xl border border-gray-200">
-                <SectionHeader icon="ℹ️">ข้อมูลทัวร์</SectionHeader>
-                <dl className="divide-y divide-gray-100">
-                  <div className="grid grid-cols-3 gap-3 px-4 py-3">
-                    <dt className="text-xs font-medium text-gray-500">
-                      ชื่อทัวร์
-                    </dt>
-                    <dd className="col-span-2 text-sm text-gray-900">
-                      {tour.tour_name || "-"}
-                    </dd>
-                  </div>
-                  <div className="grid grid-cols-3 gap-3 px-4 py-3">
-                    <dt className="text-xs font-medium text-gray-500">
-                      ออกจาก
-                    </dt>
-                    <dd className="col-span-2 text-sm text-gray-900">
-                      {tour.departure_from || "-"}
-                    </dd>
-                  </div>
-                  <div className="grid grid-cols-3 gap-3 px-4 py-3">
-                    <dt className="text-xs font-medium text-gray-500">
-                      ท่าเรือ
-                    </dt>
-                    <dd className="col-span-2 text-sm text-gray-900">
-                      {tour.pier || "-"}
-                    </dd>
-                  </div>
-                </dl>
-              </div>
-
-              <div className="rounded-xl border border-gray-200">
-                <SectionHeader icon="🗓️">
-                  ช่วงเวลาที่ราคานี้ใช้ได้
-                </SectionHeader>
-                <div className="space-y-3 p-4">
-                  <div className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
-                    <span className="text-xs font-medium text-gray-500">
-                      วันที่เริ่มต้น
-                    </span>
-                    <span className="text-sm text-gray-900">
-                      {formatDate(tour.start_date)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
-                    <span className="text-xs font-medium text-gray-500">
-                      วันที่สิ้นสุด
-                    </span>
-                    <span className="text-sm text-gray-900">
-                      {formatDate(tour.end_date)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Right */}
-            <section className="space-y-6">
-              <div className="rounded-xl border border-gray-200">
-                <SectionHeader icon="☎️">ช่องทางการติดต่อ</SectionHeader>
-                <dl className="divide-y divide-gray-100">
-                  {tour.phone && (
-                    <div className="grid grid-cols-3 gap-3 px-4 py-3">
-                      <dt className="text-xs font-medium text-gray-500">
-                        เบอร์โทร
-                      </dt>
-                      <dd className="col-span-2 text-sm">
-                        <a
-                          href={`tel:${tour.phone}`}
-                          className="text-blue-600 hover:underline"
-                        >
-                          {tour.phone}
-                        </a>
-                      </dd>
-                    </div>
-                  )}
-                  {tour.line && (
-                    <div className="grid grid-cols-3 gap-3 px-4 py-3">
-                      <dt className="text-xs font-medium text-gray-500">
-                        Line
-                      </dt>
-                      <dd className="col-span-2 text-sm text-gray-900">
-                        {tour.line}
-                      </dd>
-                    </div>
-                  )}
-                  {tour.facebook && (
-                    <div className="grid grid-cols-3 gap-3 px-4 py-3">
-                      <dt className="text-xs font-medium text-gray-500">
-                        Facebook
-                      </dt>
-                      <dd className="col-span-2 text-sm">
-                        <a
-                          href={tour.facebook}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="break-all text-blue-600 hover:underline"
-                        >
-                          {tour.facebook}
-                        </a>
-                      </dd>
-                    </div>
-                  )}
-                  {tour.whatsapp && (
-                    <div className="grid grid-cols-3 gap-3 px-4 py-3">
-                      <dt className="text-xs font-medium text-gray-500">
-                        WhatsApp
-                      </dt>
-                      <dd className="col-span-2 text-sm">
-                        <a
-                          href={`https://wa.me/${tour.whatsapp}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-emerald-600 hover:underline"
-                        >
-                          {tour.whatsapp}
-                        </a>
-                      </dd>
-                    </div>
-                  )}
-                </dl>
-              </div>
-
-              <div className="rounded-xl border border-gray-200">
-                <SectionHeader icon="🤝">ข้อมูล Supplier</SectionHeader>
-                <dl className="divide-y divide-gray-100">
-                  <div className="grid grid-cols-3 gap-3 px-4 py-3">
-                    <dt className="text-xs font-medium text-gray-500">ชื่อ</dt>
-                    <dd className="col-span-2 text-sm text-gray-900">
-                      {tour.supplier_name || "-"}
-                    </dd>
-                  </div>
-                  {tour.address && (
-                    <div className="grid grid-cols-3 gap-3 px-4 py-3">
-                      <dt className="text-xs font-medium text-gray-500">
-                        ที่อยู่
-                      </dt>
-                      <dd className="col-span-2 text-sm text-gray-900">
-                        {tour.address}
-                      </dd>
-                    </div>
-                  )}
-                </dl>
-              </div>
-
-              <div className="rounded-xl border border-gray-200">
-                <SectionHeader icon="⚙️">ข้อมูลระบบ</SectionHeader>
-                <dl className="divide-y divide-gray-100">
-                  <div className="grid grid-cols-3 gap-3 px-4 py-3">
-                    <dt className="text-xs font-medium text-gray-500">
-                      อัพเดทเมื่อ
-                    </dt>
-                    <dd className="col-span-2 text-sm text-gray-900">
-                      {tour.updated_at
-                        ? new Date(tour.updated_at).toLocaleDateString(
-                            "th-TH",
-                            {
-                              year: "numeric",
-                              month: "short",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }
-                          )
-                        : "-"}
-                    </dd>
-                  </div>
-                  <div className="grid grid-cols-3 gap-3 px-4 py-3">
-                    <dt className="text-xs font-medium text-gray-500">
-                      อัพเดทโดย
-                    </dt>
-                    <dd className="col-span-2 text-sm text-gray-900">
-                      {tour.updated_by || "-"}
-                    </dd>
-                  </div>
-                </dl>
-              </div>
-            </section>
-          </div>
-
-          {/* Notes */}
-          <div className="px-6 pb-6">
-            <h3 className="mb-2 text-sm font-semibold text-gray-900">
-              หมายเหตุ
-            </h3>
-            <div
-              className={`rounded-xl p-4 ring-1 ${
-                tour.park_fee_included
-                  ? "bg-emerald-50 ring-emerald-200"
-                  : "bg-amber-50 ring-amber-200"
-              }`}
-            >
-              <p className="text-sm text-gray-800 whitespace-pre-wrap">
-                {getNotesWithExpiry(tour)}
-              </p>
-            </div>
+          <div className="p-6">
+            <TourDetails
+              tour={tour}
+              showActions={false}
+              showHeader={false}
+              className="shared-tour-details"
+            />
           </div>
 
           {/* Footer */}
@@ -374,7 +125,7 @@ const SharedTour = () => {
                 to="/"
                 className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
               >
-                🔑 เข้าสู่ระบบเพื่อจัดการ
+                🔒 เข้าสู่ระบบเพื่อจัดการ
               </Link>
             </div>
           </div>

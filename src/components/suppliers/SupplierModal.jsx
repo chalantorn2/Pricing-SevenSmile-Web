@@ -20,6 +20,7 @@ const SupplierModal = ({
     line: "",
     facebook: "",
     whatsapp: "",
+    website: "",
   });
 
   // ✨ Update form data when supplier prop changes (for edit mode)
@@ -32,6 +33,7 @@ const SupplierModal = ({
         line: supplier.line || "",
         facebook: supplier.facebook || "",
         whatsapp: supplier.whatsapp || "",
+        website: supplier.website || "",
       });
     } else {
       setFormData({
@@ -41,6 +43,7 @@ const SupplierModal = ({
         line: "",
         facebook: "",
         whatsapp: "",
+        website: "",
       });
     }
   }, [isEdit, supplier, initialName]);
@@ -217,7 +220,6 @@ const SupplierModal = ({
                           placeholder="0xx-xxx-xxxx"
                         />
                       </div>
-
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Line ID
@@ -231,7 +233,6 @@ const SupplierModal = ({
                           placeholder="Line ID"
                         />
                       </div>
-
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Facebook
@@ -245,7 +246,6 @@ const SupplierModal = ({
                           placeholder="Facebook URL หรือ Username"
                         />
                       </div>
-
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           WhatsApp
@@ -257,6 +257,20 @@ const SupplierModal = ({
                           onChange={handleChange}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           placeholder="เบอร์ WhatsApp"
+                        />
+                      </div>{" "}
+                      {/* Website - เพิ่มส่วนนี้ */}
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          🌐 เว็บไซต์
+                        </label>
+                        <input
+                          type="url"
+                          name="website"
+                          value={formData.website}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="https://example.com"
                         />
                       </div>
                     </div>

@@ -37,6 +37,7 @@ const TourMultiForm = ({
       no_end_date: false, // New field for optional end date
       notes: "",
       park_fee_included: false,
+      map_url: "",
     };
   };
 
@@ -323,6 +324,25 @@ const TourMultiForm = ({
                   min="0"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
+              </div>
+
+              {/* Map URL - เพิ่มส่วนนี้ */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  🗺️ Google Maps URL
+                </label>
+                <input
+                  type="url"
+                  value={tour.map_url}
+                  onChange={(e) =>
+                    updateTour(tour.id, "map_url", e.target.value)
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="https://maps.google.com/... หรือ https://goo.gl/maps/..."
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  คัดลอก URL จาก Google Maps แล้ววางที่นี่ (ไม่บังคับ)
+                </p>
               </div>
 
               {/* Start Date */}

@@ -1,15 +1,19 @@
 import { useState, useRef } from "react";
 import { authService } from "../../services/api-service";
+import {
+  SUPPLIER_FILE_CATEGORIES,
+  getCategoryHints,
+} from "../../utils/file-categories";
 
 const SupplierFileUpload = ({
   supplierId,
   onFileUploaded,
   disabled = false,
-  allowedTypes = ["pdf", "image"],
   maxFileSize = 10, // MB
 }) => {
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("contact_rate");
   const fileInputRef = useRef(null);
 
   const allowedMimeTypes = {
@@ -19,14 +23,18 @@ const SupplierFileUpload = ({
 
   const maxFileSizeBytes = maxFileSize * 1024 * 1024;
 
+  // Get current category info
+  const categoryInfo = SUPPLIER_FILE_CATEGORIES[selectedCategory];
+  const categoryHints = getCategoryHints(selectedCategory, true);
+
   const validateFile = (file) => {
     // Check file type
-    const isValidType = allowedTypes.some((type) =>
+    const isValidType = categoryInfo.allowedTypes.some((type) =>
       allowedMimeTypes[type]?.includes(file.type)
     );
 
     if (!isValidType) {
-      return `รองรับเฉพาะไฟล์ PDF และรูปภาพ (JPG, PNG, GIF, WebP)`;
+      return `หมวดหมู่ "${categoryInfo.label}" รองรับเฉพาะ ${categoryHints.allowedTypesText}`;
     }
 
     // Check file size
@@ -47,31 +55,17 @@ const SupplierFileUpload = ({
     setUploading(true);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("supplier_id", supplierId);
-      formData.append("label", label || "");
-      formData.append(
-        "uploaded_by",
-        authService.getCurrentUser()?.username || "Unknown"
+      const currentUser = authService.getCurrentUser();
+      const uploadedFile = await supplierFilesService.uploadSupplierFile(
+        supplierId,
+        file,
+        selectedCategory,
+        label,
+        currentUser?.username || "Unknown"
       );
-
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/supplier-files.php`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || "Upload failed");
-      }
 
       if (onFileUploaded) {
-        onFileUploaded(result.data);
+        onFileUploaded(uploadedFile);
       }
 
       // Reset file input
@@ -79,11 +73,10 @@ const SupplierFileUpload = ({
         fileInputRef.current.value = "";
       }
 
-      // Success message
-      alert(`อัพโหลดไฟล์ "${file.name}" สำเร็จ`);
+      alert(`อัพโหลดไฟล์ "${file.name}" ในหมวด "${categoryInfo.label}" สำเร็จ`);
     } catch (error) {
       console.error("Upload error:", error);
-      alert("เกิดข้อผิดพลาดในการอัพโหลด: " + error.message);
+      alert(error.message);
     } finally {
       setUploading(false);
     }
@@ -96,7 +89,7 @@ const SupplierFileUpload = ({
       // Single file - ask for label
       const file = files[0];
       const label = prompt(
-        `ป้ายชื่อไฟล์ "${file.name}":\n(เช่น "Contact Rate Jan 2025", "Price List Update")`,
+        `ป้ายชื่อไฟล์ "${file.name}" (หมวด: ${categoryInfo.label}):\n(เช่น "Contact Rate Jan 2025", "Price List Update")`,
         ""
       );
 
@@ -118,7 +111,7 @@ const SupplierFileUpload = ({
     if (files.length === 1) {
       const file = files[0];
       const label = prompt(
-        `ป้ายชื่อไฟล์ "${file.name}":\n(เช่น "Contact Rate Jan 2025")`,
+        `ป้ายชื่อไฟล์ "${file.name}" (หมวด: ${categoryInfo.label}):\n(เช่น "Contact Rate Jan 2025")`,
         ""
       );
 
@@ -148,8 +141,8 @@ const SupplierFileUpload = ({
 
   const getAcceptedTypes = () => {
     const types = [];
-    if (allowedTypes.includes("pdf")) types.push(".pdf");
-    if (allowedTypes.includes("image"))
+    if (categoryInfo.allowedTypes.includes("pdf")) types.push(".pdf");
+    if (categoryInfo.allowedTypes.includes("image"))
       types.push(".jpg,.jpeg,.png,.gif,.webp");
     return types.join(",");
   };
@@ -168,7 +161,35 @@ const SupplierFileUpload = ({
   }
 
   return (
-    <div className="sub-agent-file-upload">
+    <div className="supplier-file-upload">
+      {/* Category Selection */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          หมวดหมู่ไฟล์ <span className="text-red-500">*</span>
+        </label>
+        <select
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+          disabled={disabled || uploading}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+        >
+          {Object.values(SUPPLIER_FILE_CATEGORIES).map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.label}
+            </option>
+          ))}
+        </select>
+
+        {/* Category Description */}
+        <div className={`mt-2 p-3 rounded-lg ${categoryInfo.color} border`}>
+          <p className="text-sm font-medium mb-1">{categoryInfo.description}</p>
+          <p className="text-xs">
+            รองรับ: {categoryHints.allowedTypesText} | ตัวอย่าง:{" "}
+            {categoryHints.examples.slice(0, 2).join(", ")}
+          </p>
+        </div>
+      </div>
+
       {/* Hidden File Input */}
       <input
         ref={fileInputRef}
@@ -199,35 +220,40 @@ const SupplierFileUpload = ({
         {uploading ? (
           <div className="space-y-3">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="text-sm text-gray-600">กำลังอัพโหลด...</p>
+            <p className="text-sm text-gray-600">
+              กำลังอัพโหลดไปยัง "{categoryInfo.label}"...
+            </p>
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="mx-auto w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center">
-              <span className="text-3xl text-blue-400">📎</span>
+            {/* Category Icon */}
+            <div
+              className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center ${categoryInfo.color}`}
+            >
+              <span className="text-3xl">{categoryInfo.icon}</span>
             </div>
 
             <div>
               <p className="text-lg font-medium text-gray-900 mb-2">
-                อัพโหลด Contact Rate Files
+                อัพโหลดไฟล์ไปยัง "{categoryInfo.label}"
               </p>
               <p className="text-sm text-gray-600 mb-2">
                 คลิกเพื่อเลือกไฟล์ หรือลากไฟล์มาวางที่นี่
               </p>
               <p className="text-xs text-gray-500">
-                รองรับ PDF และรูปภาพ (สูงสุด {maxFileSize}MB)
+                รองรับ {categoryHints.allowedTypesText} (สูงสุด {maxFileSize}MB)
               </p>
             </div>
 
             {/* Supported File Types */}
             <div className="flex justify-center space-x-6 text-xs text-gray-400">
-              {allowedTypes.includes("pdf") && (
+              {categoryInfo.allowedTypes.includes("pdf") && (
                 <span className="flex items-center space-x-1">
                   <span className="text-lg">📄</span>
                   <span>PDF</span>
                 </span>
               )}
-              {allowedTypes.includes("image") && (
+              {categoryInfo.allowedTypes.includes("image") && (
                 <span className="flex items-center space-x-1">
                   <span className="text-lg">🖼️</span>
                   <span>JPG, PNG, GIF, WebP</span>
@@ -238,17 +264,23 @@ const SupplierFileUpload = ({
             {/* Usage Examples */}
             <div className="bg-gray-50 rounded-lg p-3 text-left">
               <p className="text-xs font-medium text-gray-700 mb-1">
-                ตัวอย่างไฟล์ที่ควรอัพโหลด:
+                ตัวอย่างไฟล์ในหมวด "{categoryInfo.label}":
               </p>
               <ul className="text-xs text-gray-600 space-y-1">
-                <li>• 📄 Contact Rate PDF (ใบราคาจาก Supplier)</li>
-                <li>• 📄 Terms & Conditions</li>
-                <li>• 🖼️ รูปภาพแผนที่ พื้นที่ท่องเที่ยว</li>
-                <li>• 📄 เอกสารข้อตกลง/สัญญา</li>
+                {categoryHints.examples.map((example, index) => (
+                  <li key={index}>• {example}</li>
+                ))}
               </ul>
             </div>
           </div>
         )}
+      </div>
+
+      {/* Instructions */}
+      <div className="mt-3 text-xs text-gray-500 space-y-1">
+        <p>• สามารถอัพโหลดหลายไฟล์พร้อมกันได้</p>
+        <p>• ไฟล์เดี่ยวจะถามป้ายชื่อ หลายไฟล์จะใช้ชื่อไฟล์เดิม</p>
+        <p>• ไฟล์จะถูกจัดเก็บในหมวด "{categoryInfo.label}"</p>
       </div>
     </div>
   );

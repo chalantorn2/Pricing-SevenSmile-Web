@@ -40,6 +40,7 @@ const EditTour = () => {
     end_date: "",
     notes: "",
     park_fee_included: false,
+    map_url: "",
   });
 
   useEffect(() => {
@@ -72,6 +73,7 @@ const EditTour = () => {
           end_date: tourData.end_date || "",
           notes: tourData.notes || "",
           park_fee_included: tourData.park_fee_included || false,
+          map_url: tourData.map_url || "",
         });
 
         // Set supplier if exists
@@ -286,7 +288,6 @@ const EditTour = () => {
                 placeholder="กรอกชื่อทัวร์"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 ออกจาก
@@ -300,7 +301,6 @@ const EditTour = () => {
                 placeholder="จังหวัด/สถานที่ออกเดินทาง"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 ท่าเรือ
@@ -314,7 +314,6 @@ const EditTour = () => {
                 placeholder="ชื่อท่าเรือ"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 ราคาผู้ใหญ่ (บาท)
@@ -328,7 +327,6 @@ const EditTour = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 ราคาเด็ก (บาท)
@@ -342,7 +340,6 @@ const EditTour = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 วันที่เริ่มต้น
@@ -355,7 +352,6 @@ const EditTour = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 วันที่สิ้นสุด
@@ -367,8 +363,23 @@ const EditTour = () => {
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
+            </div>{" "}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                🗺️ Google Maps URL
+              </label>
+              <input
+                type="url"
+                name="map_url"
+                value={formData.map_url}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="https://maps.google.com/... หรือ https://goo.gl/maps/..."
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                คัดลอก URL จาก Google Maps แล้ววางที่นี่ (ไม่บังคับ)
+              </p>
             </div>
-
             <div className="md:col-span-2">
               <label className="inline-flex items-center">
                 <input
@@ -383,7 +394,6 @@ const EditTour = () => {
                 </span>
               </label>
             </div>
-
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 หมายเหตุ
@@ -469,7 +479,7 @@ const EditTour = () => {
             📎 ไฟล์เฉพาะทัวร์นี้
           </h2>
 
-          <FileUpload tourId={id} onFileUploaded={handleTourFileUploaded} />
+          <TourFileUpload tourId={id} onFileUploaded={handleTourFileUploaded} />
 
           {tourFiles.length > 0 && (
             <div className="mt-6">

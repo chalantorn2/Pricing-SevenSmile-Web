@@ -1,5 +1,5 @@
 <?php
-// api/supplier-files.php - Supplier Files CRUD API
+// api/supplier-files.php - Updated for file categories support
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS');
@@ -15,7 +15,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Helper functions
+// Valid file categories for suppliers
+$validCategories = ['contact_rate', 'contract', 'qr_code', 'certificate', 'general'];
+
+// Helper functions (same as files.php)
 function formatFileSize($bytes)
 {
     if ($bytes >= 1048576) {
@@ -60,6 +63,19 @@ function validateFile($file)
     return null;
 }
 
+function validateCategory($category, $validCategories)
+{
+    if (!$category) {
+        return 'general'; // Default category
+    }
+
+    if (!in_array($category, $validCategories)) {
+        return 'general'; // Fallback to general
+    }
+
+    return $category;
+}
+
 try {
     // Database connection using same credentials as other files
     $host = 'localhost';
@@ -76,7 +92,7 @@ try {
 
     switch ($method) {
         case 'GET':
-            // Get files for supplier
+            // Get files for supplier (with optional category filter)
             if (!isset($_GET['supplier_id'])) {
                 http_response_code(400);
                 echo json_encode(array(
@@ -96,30 +112,44 @@ try {
                 exit;
             }
 
-            $stmt = $pdo->prepare("
-                SELECT id, supplier_id, file_name, original_name, file_path, 
-                       file_type, file_size, mime_type, label, uploaded_by, uploaded_at 
-                FROM supplier_files 
-                WHERE supplier_id = ? 
-                ORDER BY uploaded_at DESC
-            ");
-            $stmt->execute(array($supplier_id));
+            // Optional category filter
+            $category_filter = isset($_GET['category']) ? $_GET['category'] : null;
+
+            $sql = "SELECT id, supplier_id, file_name, original_name, file_path, 
+                           file_type, file_size, mime_type, label, uploaded_by, uploaded_at,
+                           COALESCE(file_category, 'general') as file_category
+                    FROM supplier_files 
+                    WHERE supplier_id = ?";
+
+            $params = array($supplier_id);
+
+            if ($category_filter && in_array($category_filter, $validCategories)) {
+                $sql .= " AND COALESCE(file_category, 'general') = ?";
+                $params[] = $category_filter;
+            }
+
+            $sql .= " ORDER BY file_category, uploaded_at DESC";
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
             $files = $stmt->fetchAll();
 
-            // Add formatted size
+            // Add formatted size and ensure category is set
             foreach ($files as $key => $file) {
                 $files[$key]['file_size_formatted'] = formatFileSize($file['file_size']);
+                $files[$key]['file_category'] = $file['file_category'] ?: 'general';
             }
 
             echo json_encode(array(
                 'success' => true,
                 'data' => $files,
+                'category_filter' => $category_filter,
                 'timestamp' => date('c')
             ));
             break;
 
         case 'POST':
-            // Upload file
+            // Upload file with category
             if (!isset($_POST['supplier_id']) || !isset($_FILES['file'])) {
                 http_response_code(400);
                 echo json_encode(array(
@@ -132,6 +162,10 @@ try {
             $supplier_id = intval($_POST['supplier_id']);
             $uploaded_by = isset($_POST['uploaded_by']) ? $_POST['uploaded_by'] : 'Unknown';
             $label = isset($_POST['label']) ? $_POST['label'] : '';
+            $file_category = validateCategory(
+                isset($_POST['file_category']) ? $_POST['file_category'] : null,
+                $validCategories
+            );
             $file = $_FILES['file'];
 
             // Validate file
@@ -184,11 +218,11 @@ try {
                 exit;
             }
 
-            // Save to database
+            // Save to database with category
             $stmt = $pdo->prepare("
                 INSERT INTO supplier_files 
-                (supplier_id, file_name, original_name, file_path, file_type, file_size, mime_type, label, uploaded_by) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (supplier_id, file_name, original_name, file_path, file_type, file_size, mime_type, label, uploaded_by, file_category) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
 
             $mime_type = isset($file['type']) && $file['type'] ? $file['type'] : 'application/octet-stream';
@@ -202,13 +236,17 @@ try {
                 $file['size'],
                 $mime_type,
                 $label,
-                $uploaded_by
+                $uploaded_by,
+                $file_category
             ));
 
             $file_id = $pdo->lastInsertId();
 
             // Get the newly created file record
-            $stmt = $pdo->prepare("SELECT * FROM supplier_files WHERE id = ?");
+            $stmt = $pdo->prepare("
+                SELECT *, COALESCE(file_category, 'general') as file_category 
+                FROM supplier_files WHERE id = ?
+            ");
             $stmt->execute(array($file_id));
             $new_file = $stmt->fetch();
 

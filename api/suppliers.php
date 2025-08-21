@@ -1,5 +1,5 @@
 <?php
-// api/suppliers.php - Updated to support single supplier GET
+// api/suppliers.php - Updated to support website field
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
@@ -31,7 +31,7 @@ try {
 
     switch ($method) {
         case 'GET':
-            // ✨ NEW: Check if requesting single supplier
+            // Check if requesting single supplier
             if (isset($_GET['id']) && $_GET['id']) {
                 // Get single supplier by ID
                 $id = intval($_GET['id']);
@@ -72,7 +72,7 @@ try {
 
             if ($search) {
                 // For AutoComplete - search by name
-                $sql = "SELECT id, name, phone, line 
+                $sql = "SELECT id, name, phone, line, website 
                        FROM suppliers 
                        WHERE name LIKE ? 
                        ORDER BY name ASC 
@@ -103,7 +103,7 @@ try {
             break;
 
         case 'POST':
-            // Add new supplier (unchanged)
+            // Add new supplier
             $input = file_get_contents('php://input');
             $data = json_decode($input, true);
 
@@ -119,8 +119,8 @@ try {
                 throw new Exception("ชื่อ Supplier นี้มีอยู่แล้ว");
             }
 
-            $sql = "INSERT INTO suppliers (name, address, phone, line, facebook, whatsapp) 
-                   VALUES (?, ?, ?, ?, ?, ?)";
+            $sql = "INSERT INTO suppliers (name, address, phone, line, facebook, whatsapp, website) 
+                   VALUES (?, ?, ?, ?, ?, ?, ?)";
 
             $stmt = $pdo->prepare($sql);
             $result = $stmt->execute(array(
@@ -129,7 +129,8 @@ try {
                 isset($data['phone']) ? $data['phone'] : null,
                 isset($data['line']) ? $data['line'] : null,
                 isset($data['facebook']) ? $data['facebook'] : null,
-                isset($data['whatsapp']) ? $data['whatsapp'] : null
+                isset($data['whatsapp']) ? $data['whatsapp'] : null,
+                isset($data['website']) ? $data['website'] : null // New field
             ));
 
             if ($result) {
@@ -149,7 +150,7 @@ try {
             break;
 
         case 'PUT':
-            // Update supplier (unchanged)
+            // Update supplier
             $id = isset($_GET['id']) ? $_GET['id'] : null;
             if (!$id) {
                 throw new Exception("ไม่พบ ID");
@@ -171,7 +172,7 @@ try {
             }
 
             $sql = "UPDATE suppliers 
-                   SET name=?, address=?, phone=?, line=?, facebook=?, whatsapp=?, updated_at=NOW() 
+                   SET name=?, address=?, phone=?, line=?, facebook=?, whatsapp=?, website=?, updated_at=NOW() 
                    WHERE id=?";
 
             $stmt = $pdo->prepare($sql);
@@ -182,6 +183,7 @@ try {
                 isset($data['line']) ? $data['line'] : null,
                 isset($data['facebook']) ? $data['facebook'] : null,
                 isset($data['whatsapp']) ? $data['whatsapp'] : null,
+                isset($data['website']) ? $data['website'] : null, // New field
                 $id
             ));
 
@@ -201,24 +203,25 @@ try {
             break;
 
         case 'DELETE':
+            // Delete supplier
             $id = isset($_GET['id']) ? $_GET['id'] : null;
             if (!$id) {
                 throw new Exception("ไม่พบ ID");
             }
 
-            // เริ่ม transaction
+            // Start transaction
             $pdo->beginTransaction();
 
             try {
-                // ลบไฟล์ Supplier ก่อน
+                // Delete supplier files first
                 $stmt = $pdo->prepare("DELETE FROM supplier_files WHERE supplier_id = ?");
                 $stmt->execute(array($id));
 
-                // ลบทัวร์ที่เกี่ยวข้องก่อน
+                // Delete related tours
                 $stmt = $pdo->prepare("DELETE FROM tours WHERE supplier_id = ?");
                 $stmt->execute(array($id));
 
-                // ลบ Supplier
+                // Delete supplier
                 $stmt = $pdo->prepare("DELETE FROM suppliers WHERE id = ?");
                 $result = $stmt->execute(array($id));
 
@@ -233,42 +236,6 @@ try {
             } catch (Exception $e) {
                 $pdo->rollBack();
                 throw $e;
-            }
-            break;
-            // Delete supplier (unchanged)
-            $id = isset($_GET['id']) ? $_GET['id'] : null;
-            if (!$id) {
-                throw new Exception("ไม่พบ ID");
-            }
-
-            // Check if supplier has tours
-            $stmt = $pdo->prepare("SELECT COUNT(*) as tour_count FROM tours WHERE supplier_id = ?");
-            $stmt->execute(array($id));
-            $result = $stmt->fetch();
-
-            if ($result['tour_count'] > 0) {
-                throw new Exception("ไม่สามารถลบ Supplier ที่มีทัวร์อยู่ได้ กรุณาลบทัวร์ก่อน");
-            }
-
-            // Check if supplier has files
-            $stmt = $pdo->prepare("SELECT COUNT(*) as file_count FROM supplier_files WHERE supplier_id = ?");
-            $stmt->execute(array($id));
-            $result = $stmt->fetch();
-
-            if ($result['file_count'] > 0) {
-                throw new Exception("ไม่สามารถลบ Supplier ที่มีไฟล์อยู่ได้ กรุณาลบไฟล์ก่อน");
-            }
-
-            $stmt = $pdo->prepare("DELETE FROM suppliers WHERE id = ?");
-            $result = $stmt->execute(array($id));
-
-            if ($result) {
-                echo json_encode(array(
-                    'success' => true,
-                    'message' => 'ลบ Supplier สำเร็จ'
-                ));
-            } else {
-                throw new Exception("ไม่สามารถลบข้อมูลได้");
             }
             break;
 
