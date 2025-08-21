@@ -1,5 +1,9 @@
 import { useState, useEffect } from "react";
 import { filesService, supplierFilesService } from "../../services/api-service";
+import {
+  getTourCategoryInfo,
+  getSupplierCategoryInfo,
+} from "../../utils/file-categories";
 
 const DocumentModal = ({ isOpen, onClose, tour }) => {
   const [files, setFiles] = useState([]);
@@ -16,13 +20,9 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
     try {
       setLoading(true);
 
-      // Fetch both supplier files and tour files
       const promises = [];
-
-      // Tour files (existing)
       promises.push(filesService.getTourFiles(tour.id));
 
-      // Sub agent files (new)
       if (tour.supplier_id) {
         promises.push(supplierFilesService.getSupplierFiles(tour.supplier_id));
       } else {
@@ -31,9 +31,8 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
 
       const [tourFiles, supplierFiles] = await Promise.all(promises);
 
-      // Combine and mark file sources
       const allFiles = [
-        ...supplierFiles.map((file) => ({ ...file, source: "sub_agent" })),
+        ...supplierFiles.map((file) => ({ ...file, source: "supplier" })),
         ...tourFiles.map((file) => ({ ...file, source: "tour" })),
       ];
 
@@ -46,63 +45,36 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
     }
   };
 
-  // ✨ ปรับปรุง handleViewFile ให้ใช้ URL ที่ถูกต้อง
   const handleViewFile = (file) => {
     let fileUrl;
-
-    // ใช้ service ที่เหมาะสมตาม source
-    if (file.source === "sub_agent") {
+    if (file.source === "supplier") {
       fileUrl = supplierFilesService.getSupplierFileUrl(file);
     } else {
       fileUrl = filesService.getFileUrl(file);
     }
 
-    console.log("Opening file URL:", fileUrl); // Debug log
-
     if (file.file_type === "image") {
       setSelectedImage(fileUrl);
-    } else if (file.file_type === "pdf") {
-      // Open PDF in new window/tab for better viewing
+    } else {
       window.open(fileUrl, "_blank");
     }
   };
 
   const handleDownloadFile = (file) => {
     let fileUrl;
-
-    if (file.source === "sub_agent") {
+    if (file.source === "supplier") {
       fileUrl = supplierFilesService.getSupplierFileUrl(file);
     } else {
       fileUrl = filesService.getFileUrl(file);
     }
-
-    console.log("Opening file in new tab:", fileUrl); // Debug log
-
-    // ✨ เปิดในแท็บใหม่แทนที่จะดาวน์โหลด
     window.open(fileUrl, "_blank");
   };
 
-  // ✨ ปรับปรุง getDisplayName ให้แสดงชื่อไฟล์ที่ถูกต้อง
   const getDisplayName = (file) => {
-    // สำหรับ Supplier files: แสดง label ก่อน fallback เป็น original_name
-    if (file.source === "sub_agent" && file.label && file.label.trim()) {
+    if (file.source === "supplier" && file.label && file.label.trim()) {
       return file.label;
     }
-    // สำหรับ Tour files หรือไม่มี label: แสดง original_name
     return file.original_name;
-  };
-
-  if (!isOpen || !tour) return null;
-
-  const getFileIcon = (type) => {
-    switch (type) {
-      case "pdf":
-        return "📄";
-      case "image":
-        return "🖼️";
-      default:
-        return "📎";
-    }
   };
 
   const formatDate = (dateString) => {
@@ -115,8 +87,35 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
     });
   };
 
-  const pdfFiles = files.filter((file) => file.file_type === "pdf");
-  const imageFiles = files.filter((file) => file.file_type === "image");
+  // Group files by category and source
+  const groupFilesByCategory = () => {
+    const groups = {};
+
+    files.forEach((file) => {
+      const category = file.file_category || "general";
+      const source = file.source;
+      const key = `${source}_${category}`;
+
+      if (!groups[key]) {
+        groups[key] = {
+          source,
+          category,
+          categoryInfo:
+            source === "supplier"
+              ? getSupplierCategoryInfo(category)
+              : getTourCategoryInfo(category),
+          files: [],
+        };
+      }
+      groups[key].files.push(file);
+    });
+
+    return groups;
+  };
+
+  if (!isOpen || !tour) return null;
+
+  const fileGroups = groupFilesByCategory();
 
   return (
     <div className="modal-backdrop">
@@ -159,125 +158,155 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
                 <p className="text-sm text-gray-600">กำลังโหลดไฟล์...</p>
               </div>
             ) : files.length > 0 ? (
-              <div className="space-y-6">
-                {/* PDF Files Section */}
-                {pdfFiles.length > 0 && (
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                      <span className="mr-2">📄</span>
-                      เอกสาร PDF ({pdfFiles.length} ไฟล์)
-                    </h3>
-                    <div className="space-y-3">
-                      {pdfFiles.map((file) => (
-                        <div
-                          key={file.id}
-                          className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                              <span className="text-2xl">📄</span>
-                              <div>
-                                <div className="flex items-center space-x-2">
-                                  {/* ✨ ใช้ getDisplayName แทน */}
-                                  <h4 className="font-medium text-gray-900">
-                                    {getDisplayName(file)}
-                                  </h4>
-                                  <span
-                                    className={`px-2 py-1 text-xs rounded-full ${
-                                      file.source === "sub_agent"
-                                        ? "bg-blue-100 text-blue-700"
-                                        : "bg-green-100 text-green-700"
-                                    }`}
-                                  >
-                                    {file.source === "sub_agent"
-                                      ? "Supplier"
-                                      : "Tour"}
-                                  </span>
-                                </div>
-                                <div className="flex items-center space-x-4 text-sm text-gray-500">
-                                  <span>{file.file_size_formatted}</span>
-                                  <span>•</span>
-                                  <span>
-                                    อัพโหลดเมื่อ {formatDate(file.uploaded_at)}
-                                  </span>
-                                  <span>•</span>
-                                  <span>โดย {file.uploaded_by}</span>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <button
-                                onClick={() => handleViewFile(file)}
-                                className="px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors text-sm cursor-pointer"
-                              >
-                                👁️ ดู
-                              </button>
-                              <button
-                                onClick={() => handleDownloadFile(file)}
-                                className="px-3 py-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors text-sm cursor-pointer"
-                              >
-                                📥 ดาวน์โหลด
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+              <div className="space-y-8">
+                {Object.entries(fileGroups).map(([groupKey, group]) => (
+                  <div key={groupKey}>
+                    {/* Category Header */}
+                    <div className="flex items-center mb-4">
+                      <div
+                        className={`inline-flex items-center px-3 py-2 rounded-lg ${group.categoryInfo.color} border`}
+                      >
+                        <span className="mr-2 text-lg">
+                          {group.categoryInfo.icon}
+                        </span>
+                        <span className="font-medium">
+                          {group.categoryInfo.label}
+                        </span>
+                        <span className="ml-2 text-xs opacity-75">
+                          ({group.source === "supplier" ? "Supplier" : "Tour"})
+                        </span>
+                      </div>
+                      <span className="ml-3 text-sm text-gray-500">
+                        {group.files.length} ไฟล์
+                      </span>
                     </div>
-                  </div>
-                )}
 
-                {/* Image Files Section */}
-                {imageFiles.length > 0 && (
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                      <span className="mr-2">🖼️</span>
-                      รูปภาพ ({imageFiles.length} ไฟล์)
-                    </h3>
-                    <div className="space-y-3">
-                      {imageFiles.map((file) => (
-                        <div
-                          key={file.id}
-                          className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                              <span className="text-2xl">🖼️</span>
-                              <div>
-                                {/* ✨ ใช้ getDisplayName แทน */}
-                                <h4 className="font-medium text-gray-900">
-                                  {getDisplayName(file)}
-                                </h4>
-                                <div className="flex items-center space-x-4 text-sm text-gray-500">
-                                  <span>{file.file_size_formatted}</span>
-                                  <span>•</span>
-                                  <span>
-                                    อัพโหลดเมื่อ {formatDate(file.uploaded_at)}
-                                  </span>
-                                  <span>•</span>
-                                  <span>โดย {file.uploaded_by}</span>
+                    {group.source === "tour" &&
+                    (group.category === "gallery" ||
+                      group.files.some(
+                        (file) => file.file_type === "image"
+                      )) ? (
+                      <div className="space-y-4">
+                        {/* Gallery Header */}
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm text-gray-600">
+                            คลิกรูปเพื่อดูขนาดใหญ่
+                          </p>
+                          <span className="text-xs text-gray-500">
+                            {/* ⭐ นับเฉพาะรูปภาพ */}
+                            {
+                              group.files.filter(
+                                (file) => file.file_type === "image"
+                              ).length
+                            }{" "}
+                            รูป
+                          </span>
+                        </div>
+
+                        {/* Grid Layout แบบ TourDetails */}
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                          {group.files
+                            .filter((file) => file.file_type === "image")
+                            .map((file) => (
+                              <div
+                                key={file.id}
+                                className="group relative aspect-square bg-gray-100 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
+                                onClick={() =>
+                                  setSelectedImage(
+                                    file.source === "supplier"
+                                      ? supplierFilesService.getSupplierFileUrl(
+                                          file
+                                        )
+                                      : filesService.getFileUrl(file)
+                                  )
+                                }
+                              >
+                                <img
+                                  src={
+                                    file.source === "supplier"
+                                      ? supplierFilesService.getSupplierFileUrl(
+                                          file
+                                        )
+                                      : filesService.getFileUrl(file)
+                                  }
+                                  alt={getDisplayName(file)}
+                                  className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-110"
+                                  loading="lazy"
+                                />
+                              </div>
+                            ))}
+                        </div>
+
+                        {/* Gallery Footer */}
+                        <div className="text-center pt-4 border-t border-gray-100">
+                          <p className="text-xs text-gray-500">
+                            💡 เคล็บลับ: คลิกรูปเพื่อดูขนาดเต็ม
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      /* Regular file list for other categories */
+                      <div className="space-y-3">
+                        {group.files.map((file) => (
+                          <div
+                            key={file.id}
+                            className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-3">
+                                <span className="text-2xl">
+                                  {file.file_type === "pdf" ? "📄" : "🖼️"}
+                                </span>
+                                <div>
+                                  <div className="flex items-center space-x-2">
+                                    <h4 className="font-medium text-gray-900">
+                                      {getDisplayName(file)}
+                                    </h4>
+                                    <span
+                                      className={`px-2 py-1 text-xs rounded-full ${
+                                        file.source === "supplier"
+                                          ? "bg-blue-100 text-blue-700"
+                                          : "bg-green-100 text-green-700"
+                                      }`}
+                                    >
+                                      {file.source === "supplier"
+                                        ? "Supplier"
+                                        : "Tour"}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center space-x-4 text-sm text-gray-500">
+                                    <span>{file.file_size_formatted}</span>
+                                    <span>•</span>
+                                    <span>
+                                      อัพโหลดเมื่อ{" "}
+                                      {formatDate(file.uploaded_at)}
+                                    </span>
+                                    <span>•</span>
+                                    <span>โดย {file.uploaded_by}</span>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <button
-                                onClick={() => handleViewFile(file)}
-                                className="px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors text-sm cursor-pointer"
-                              >
-                                👁️ ดู
-                              </button>
-                              <button
-                                onClick={() => handleDownloadFile(file)}
-                                className="px-3 py-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors text-sm cursor-pointer"
-                              >
-                                📥 ดาวน์โหลด
-                              </button>
+                              <div className="flex items-center space-x-2">
+                                <button
+                                  onClick={() => handleViewFile(file)}
+                                  className="px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors text-sm"
+                                >
+                                  👁️ ดู
+                                </button>
+                                <button
+                                  onClick={() => handleDownloadFile(file)}
+                                  className="px-3 py-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors text-sm"
+                                >
+                                  📥 ดาวน์โหลด
+                                </button>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
+                ))}
               </div>
             ) : (
               <div className="text-center py-8">
@@ -301,14 +330,12 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
                 ? `มีเอกสาร ${files.length} ไฟล์`
                 : "ไม่มีเอกสาร"}
             </div>
-            <div className="flex space-x-3">
-              <button
-                onClick={onClose}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors cursor-pointer"
-              >
-                ปิด
-              </button>
-            </div>
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+            >
+              ปิด
+            </button>
           </div>
         </div>
       </div>
@@ -326,11 +353,9 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
               className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-xl"
               onClick={(e) => e.stopPropagation()}
             />
-
-            {/* Close button */}
             <button
               onClick={() => setSelectedImage(null)}
-              className="absolute top-4 right-4 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-800 rounded-full w-10 h-10 flex items-center justify-center cursor-pointer transition-all shadow-lg"
+              className="absolute top-4 right-4 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-800 rounded-full w-10 h-10 flex items-center justify-center transition-all shadow-lg"
             >
               <svg
                 className="w-6 h-6"

@@ -11,26 +11,53 @@ async function apiCall(endpoint, options = {}) {
     ...options,
   };
 
-  // Debug logging
   console.log("🔗 API Call:", url);
   console.log("📝 Config:", config);
 
   try {
     const response = await fetch(url, config);
-
-    // Debug response
     console.log("📡 Response Status:", response.status);
     console.log("📡 Response OK:", response.ok);
 
-    const data = await response.json();
-    console.log("📊 Response Data:", data);
-
     if (!response.ok) {
+      const data = await response.json();
       console.error("❌ HTTP Error:", response.status, data);
       throw new Error(data.error || `HTTP error! status: ${response.status}`);
     }
 
-    // ตรวจสอบ response format ใหม่
+    // ✅ เพิ่ม fallback สำหรับ PHP Warning
+    const text = await response.text();
+
+    // ลองแยก JSON จาก PHP Warning
+    let jsonText = text;
+    if (text.includes('{"')) {
+      // หา JSON ส่วนแรกในข้อความ
+      const jsonStart = text.indexOf('{"');
+      if (jsonStart !== -1) {
+        jsonText = text.substring(jsonStart);
+      }
+    }
+
+    let data;
+    try {
+      data = JSON.parse(jsonText);
+    } catch (parseError) {
+      console.error(
+        "❌ JSON Parse Error. Raw response:",
+        text.substring(0, 500)
+      );
+
+      // ✅ ถ้า parse ไม่ได้แต่ status 200 = success
+      if (response.status === 200) {
+        console.log("⚠️ Assuming success despite parse error");
+        return { success: true, data: null };
+      }
+
+      throw new Error("Invalid JSON response from server");
+    }
+
+    console.log("📊 Response Data:", data);
+
     if (data.success === false) {
       console.error("❌ API Error:", data.error);
       throw new Error(data.error || "API Error");
@@ -39,14 +66,6 @@ async function apiCall(endpoint, options = {}) {
     return data;
   } catch (error) {
     console.error("💥 API Call Failed:", error);
-
-    // ถ้าเป็น network error ให้แสดงข้อความที่เป็นประโยชน์
-    if (error.name === "TypeError" && error.message.includes("fetch")) {
-      throw new Error(
-        `ไม่สามารถเชื่อมต่อกับ API ได้: ${url}\nกรุณาตรวจสอบ:\n1. URL ใน .env ถูกต้องหรือไม่\n2. API Server ทำงานอยู่หรือไม่\n3. CORS settings`
-      );
-    }
-
     throw error;
   }
 }
@@ -312,41 +331,6 @@ export const supplierFilesService = {
     }
   },
 
-  // Upload file with category
-  async uploadTourFile(
-    tourId,
-    file,
-    category = "general",
-    uploadedBy = "Unknown"
-  ) {
-    try {
-      console.log(`📤 Uploading tour file to category: ${category}`);
-
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("tour_id", tourId);
-      formData.append("file_category", category);
-      formData.append("uploaded_by", uploadedBy);
-
-      const response = await fetch(`${API_BASE_URL}/files.php`, {
-        method: "POST",
-        body: formData,
-      });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || "Upload failed");
-      }
-
-      console.log("✅ Tour file uploaded successfully");
-      return result.data;
-    } catch (error) {
-      console.error("❌ Failed to upload tour file:", error);
-      throw new Error("เกิดข้อผิดพลาดในการอัพโหลดไฟล์: " + error.message);
-    }
-  },
-
   // Get file URL
   getSupplierFileUrl(file) {
     const baseUrl = import.meta.env.VITE_API_BASE_URL || "/api";
@@ -541,6 +525,41 @@ export const filesService = {
     }
   },
 
+  // Upload tour file with category
+  async uploadTourFile(
+    tourId,
+    file,
+    category = "general",
+    uploadedBy = "Unknown"
+  ) {
+    try {
+      console.log(`📤 Uploading tour file to category: ${category}`);
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("tour_id", tourId);
+      formData.append("file_category", category);
+      formData.append("uploaded_by", uploadedBy);
+
+      const response = await fetch(`${API_BASE_URL}/files.php`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Upload failed");
+      }
+
+      console.log("✅ Tour file uploaded successfully");
+      return result.data;
+    } catch (error) {
+      console.error("❌ Failed to upload tour file:", error);
+      throw new Error("เกิดข้อผิดพลาดในการอัพโหลดไฟล์: " + error.message);
+    }
+  },
+
   // Delete a file
   async deleteFile(fileId) {
     try {
@@ -558,11 +577,9 @@ export const filesService = {
   // Get file URL
   getFileUrl(file) {
     const baseUrl = import.meta.env.VITE_API_BASE_URL || "/api";
-    // เอา leading slash ออกจาก baseUrl ถ้ามี และรวม path ให้ถูกต้อง
-    const cleanBaseUrl = baseUrl.replace(/\/$/, ""); // เอา trailing slash ออก
+    const cleanBaseUrl = baseUrl.replace(/\/$/, "");
     const filePath = `${cleanBaseUrl}/${file.file_path}`;
-
-    console.log("🔗 Generated file URL:", filePath); // Debug log
+    console.log("🔗 Generated file URL:", filePath);
     return filePath;
   },
 };

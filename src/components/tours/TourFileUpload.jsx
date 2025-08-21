@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { authService } from "../../services/api-service";
+import { authService, filesService } from "../../services/api-service";
 import {
   TOUR_FILE_CATEGORIES,
   getCategoryHints,

@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { authService } from "../../services/api-service";
+import { authService, supplierFilesService } from "../../services/api-service";
 import {
   SUPPLIER_FILE_CATEGORIES,
   getCategoryHints,

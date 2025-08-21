@@ -38,11 +38,15 @@ const useTourFiles = (tourId) => {
   }, [files]);
 
   const galleryFiles = useMemo(() => {
-    return files.filter((file) => file.file_category === "gallery");
+    const gallery = files.filter((file) => file.file_category === "gallery");
+    console.log("🖼️ Gallery files:", gallery.length, gallery); // Debug
+    return gallery;
   }, [files]);
 
   const documentFiles = useMemo(() => {
-    return files.filter((file) => file.file_category !== "gallery");
+    const docs = files.filter((file) => file.file_category !== "gallery");
+    console.log("📄 Document files:", docs.length, docs); // Debug
+    return docs;
   }, [files]);
 
   const refreshFiles = () => {

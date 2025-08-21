@@ -12,6 +12,7 @@ const TourDetails = ({
   showHeader = true,
   className = "",
 }) => {
+  const [selectedImage, setSelectedImage] = useState(null);
   const {
     galleryFiles,
     documentFiles,
@@ -19,6 +20,14 @@ const TourDetails = ({
     hasFiles,
     addFile,
   } = useTourFiles(tour?.id);
+
+  // ✨ Temporary fix: รวมรูปทั้งหมดเป็น gallery
+  const imageFiles = documentFiles.filter((file) => file.file_type === "image");
+  const actualDocuments = documentFiles.filter(
+    (file) => file.file_type !== "image"
+  );
+  const allGalleryFiles = [...galleryFiles, ...imageFiles];
+  const hasGallery = allGalleryFiles.length > 0;
 
   if (!tour) return null;
 
@@ -53,31 +62,6 @@ const TourDetails = ({
       if (expired) notes += " | ⚠️ หมดอายุแล้ว กรุณาต่ออายุ";
     }
     return notes;
-  };
-
-  // Load tour files
-  useEffect(() => {
-    if (tour?.id) {
-      loadTourFiles();
-    }
-  }, [tour?.id]);
-
-  const loadTourFiles = async () => {
-    try {
-      setFilesLoading(true);
-
-      // Load all files at once (more efficient than category by category)
-      const files = await filesService.getTourFiles(tour.id);
-      setTourFiles(files);
-
-      console.log(`📁 Loaded ${files.length} tour files`);
-    } catch (error) {
-      console.error("Error loading tour files:", error);
-      // Don't show alert, just log error
-      setTourFiles([]);
-    } finally {
-      setFilesLoading(false);
-    }
   };
 
   const SectionHeader = ({ icon = "⬤", children }) => (
@@ -388,19 +372,40 @@ const TourDetails = ({
         {/* Files Sections */}
         {hasFiles && (
           <section className="space-y-6">
-            {/* Gallery */}
-            {galleryFiles.length > 0 && (
-              <FileGallery
-                files={galleryFiles}
-                getFileUrl={filesService.getFileUrl}
-                title="Gallery ทัวร์"
-              />
+            {/* Gallery - Enhanced UI */}
+            {hasGallery && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <span className="mr-2">🖼️</span>
+                  Gallery ทัวร์ ({allGalleryFiles.length} รูป)
+                </h3>
+
+                {/* Grid Layout for Gallery Images */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                  {allGalleryFiles.map((file) => (
+                    <div
+                      key={file.id}
+                      className="group relative aspect-square bg-gray-100 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
+                      onClick={() =>
+                        setSelectedImage(filesService.getFileUrl(file))
+                      }
+                    >
+                      <img
+                        src={filesService.getFileUrl(file)}
+                        alt={file.original_name}
+                        className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-110"
+                        loading="lazy"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
 
             {/* Downloads */}
-            {documentFiles.length > 0 && (
+            {actualDocuments.length > 0 && (
               <FileDownloads
-                files={documentFiles}
+                files={actualDocuments}
                 getFileUrl={filesService.getFileUrl}
                 title="เอกสารและไฟล์ดาวน์โหลด"
                 isSupplier={false}
@@ -409,7 +414,6 @@ const TourDetails = ({
             )}
           </section>
         )}
-
         {filesLoading && (
           <section className="text-center py-4">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto mb-2"></div>
@@ -417,6 +421,40 @@ const TourDetails = ({
           </section>
         )}
       </div>
+      {/* Image Modal for Enlarged View */}
+      {selectedImage && (
+        <div
+          className="modal-backdrop flex items-center justify-center z-50 p-4"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div className="relative max-w-4xl max-h-[90vh] w-auto h-auto">
+            <img
+              src={selectedImage}
+              alt="Enlarged view"
+              className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
+              onClick={() => setSelectedImage(null)}
+              className="absolute top-4 right-4 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-800 rounded-full w-10 h-10 flex items-center justify-center transition-all shadow-lg"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
