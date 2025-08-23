@@ -232,13 +232,21 @@ const SupplierAutocomplete = ({
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium text-gray-900">{agent.name}</p>
-                  <div className="flex items-center space-x-4 mt-1 text-sm text-gray-500">
-                    {agent.phone && (
-                      <span className="flex items-center">
-                        <span className="mr-1">📞</span>
-                        {agent.phone}
-                      </span>
-                    )}
+                  <div className="flex flex-wrap items-center gap-2 mt-1 text-sm text-gray-500">
+                    {[
+                      agent.phone,
+                      agent.phone_2,
+                      agent.phone_3,
+                      agent.phone_4,
+                      agent.phone_5,
+                    ]
+                      .filter((phone) => phone) // เอาเฉพาะที่มีค่า
+                      .map((phone, index) => (
+                        <span key={index} className="flex items-center">
+                          <span className="mr-1">📞</span>
+                          {phone}
+                        </span>
+                      ))}
                     {agent.line && (
                       <span className="flex items-center">
                         <span className="mr-1">💬</span>

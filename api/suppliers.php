@@ -71,12 +71,16 @@ try {
             $search = isset($_GET['search']) ? $_GET['search'] : '';
 
             if ($search) {
-                // For AutoComplete - search by name
-                $sql = "SELECT id, name, phone, line, website 
-                       FROM suppliers 
-                       WHERE name LIKE ? 
-                       ORDER BY name ASC 
-                       LIMIT 10";
+                // For AutoComplete - search by name and all phone numbers
+                $sql = "SELECT id, name, phone, phone_2, phone_3, phone_4, phone_5, line, website 
+                        FROM suppliers 
+                        WHERE name LIKE ? 
+                        OR phone LIKE ? OR phone_2 LIKE ? OR phone_3 LIKE ? OR phone_4 LIKE ? OR phone_5 LIKE ?
+                        ORDER BY name ASC 
+                        LIMIT 10";
+                $stmt = $pdo->prepare($sql);
+                $searchParam = '%' . $search . '%';
+                $stmt->execute(array($searchParam, $searchParam, $searchParam, $searchParam, $searchParam, $searchParam));
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute(array('%' . $search . '%'));
             } else {
@@ -119,18 +123,22 @@ try {
                 throw new Exception("ชื่อ Supplier นี้มีอยู่แล้ว");
             }
 
-            $sql = "INSERT INTO suppliers (name, address, phone, line, facebook, whatsapp, website) 
-                   VALUES (?, ?, ?, ?, ?, ?, ?)";
+            $sql = "INSERT INTO suppliers (name, address, phone, phone_2, phone_3, phone_4, phone_5, line, facebook, whatsapp, website) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             $stmt = $pdo->prepare($sql);
             $result = $stmt->execute(array(
                 $data['name'],
                 isset($data['address']) ? $data['address'] : null,
                 isset($data['phone']) ? $data['phone'] : null,
+                isset($data['phone_2']) ? $data['phone_2'] : null,
+                isset($data['phone_3']) ? $data['phone_3'] : null,
+                isset($data['phone_4']) ? $data['phone_4'] : null,
+                isset($data['phone_5']) ? $data['phone_5'] : null,
                 isset($data['line']) ? $data['line'] : null,
                 isset($data['facebook']) ? $data['facebook'] : null,
                 isset($data['whatsapp']) ? $data['whatsapp'] : null,
-                isset($data['website']) ? $data['website'] : null // New field
+                isset($data['website']) ? $data['website'] : null
             ));
 
             if ($result) {
@@ -172,18 +180,22 @@ try {
             }
 
             $sql = "UPDATE suppliers 
-                   SET name=?, address=?, phone=?, line=?, facebook=?, whatsapp=?, website=?, updated_at=NOW() 
-                   WHERE id=?";
+                    SET name=?, address=?, phone=?, phone_2=?, phone_3=?, phone_4=?, phone_5=?, line=?, facebook=?, whatsapp=?, website=?, updated_at=NOW() 
+                    WHERE id=?";
 
             $stmt = $pdo->prepare($sql);
             $result = $stmt->execute(array(
                 $data['name'],
                 isset($data['address']) ? $data['address'] : null,
                 isset($data['phone']) ? $data['phone'] : null,
+                isset($data['phone_2']) ? $data['phone_2'] : null,
+                isset($data['phone_3']) ? $data['phone_3'] : null,
+                isset($data['phone_4']) ? $data['phone_4'] : null,
+                isset($data['phone_5']) ? $data['phone_5'] : null,
                 isset($data['line']) ? $data['line'] : null,
                 isset($data['facebook']) ? $data['facebook'] : null,
                 isset($data['whatsapp']) ? $data['whatsapp'] : null,
-                isset($data['website']) ? $data['website'] : null, // New field
+                isset($data['website']) ? $data['website'] : null,
                 $id
             ));
 

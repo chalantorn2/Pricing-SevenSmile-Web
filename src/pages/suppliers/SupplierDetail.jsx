@@ -9,6 +9,7 @@ import {
 import { TourDetailsModal } from "../../components/tours";
 import { DocumentModal } from "../../components/common";
 import { FileDownloads } from "../../components/common";
+import { SupplierModal } from "../../components/suppliers";
 
 const SupplierDetail = () => {
   const { id } = useParams();
@@ -25,6 +26,8 @@ const SupplierDetail = () => {
   const [selectedTour, setSelectedTour] = useState(null);
   const [showTourDetailsModal, setShowTourDetailsModal] = useState(false);
   const [showDocumentModal, setShowDocumentModal] = useState(false);
+
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -103,6 +106,22 @@ const SupplierDetail = () => {
     } finally {
       setFilesLoading(false);
     }
+  };
+
+  const handleEditSupplier = () => {
+    setShowEditModal(true);
+  };
+
+  const handleSupplierUpdate = (updatedSupplier) => {
+    setSupplier(updatedSupplier);
+    setShowEditModal(false);
+    // Refresh files ด้วยในกรณีที่มีการเปลี่ยนแปลง
+    fetchSupplierFiles();
+  };
+
+  const handleSupplierDelete = () => {
+    setShowEditModal(false);
+    navigate("/suppliers");
   };
 
   // Helper functions
@@ -248,8 +267,8 @@ const SupplierDetail = () => {
             ➕ เพิ่มทัวร์ใหม่
           </Link>
           <button
-            className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
-            title="แก้ไขข้อมูล Supplier (Coming Soon)"
+            onClick={handleEditSupplier}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             ✏️ แก้ไข Supplier
           </button>
@@ -537,6 +556,15 @@ const SupplierDetail = () => {
         isOpen={showDocumentModal}
         onClose={closeModals}
         tour={selectedTour}
+      />
+
+      <SupplierModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSuccess={handleSupplierUpdate}
+        onDelete={handleSupplierDelete}
+        supplier={supplier}
+        isEdit={true}
       />
     </div>
   );

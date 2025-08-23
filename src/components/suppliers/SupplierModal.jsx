@@ -1,18 +1,25 @@
 import { useState, useEffect } from "react";
-import { suppliersService } from "../../services/api-service";
+import {
+  suppliersService,
+  supplierFilesService,
+} from "../../services/api-service";
+import SupplierFileUpload from "./SupplierFileUpload";
+import { FileDownloads } from "../common";
 
 const SupplierModal = ({
   isOpen,
   onClose,
   onSuccess,
-  onDelete, // ✨ เพิ่ม prop สำหรับลบ
+  onDelete,
   initialName = "",
   supplier = null,
   isEdit = false,
 }) => {
   const [loading, setLoading] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(false); // ✨ เพิ่ม state สำหรับ delete loading
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false); // ✨ เพิ่ม state สำหรับ confirm
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Form data state
   const [formData, setFormData] = useState({
     name: initialName,
     address: "",
@@ -23,7 +30,12 @@ const SupplierModal = ({
     website: "",
   });
 
-  // ✨ Update form data when supplier prop changes (for edit mode)
+  // File management states
+  const [files, setFiles] = useState([]);
+  const [filesLoading, setFilesLoading] = useState(false);
+  const [filesSectionOpen, setFilesSectionOpen] = useState(false);
+
+  // Update form data when supplier prop changes
   useEffect(() => {
     if (isEdit && supplier) {
       setFormData({
@@ -35,6 +47,11 @@ const SupplierModal = ({
         whatsapp: supplier.whatsapp || "",
         website: supplier.website || "",
       });
+
+      // Load files for existing supplier
+      if (supplier.id) {
+        loadSupplierFiles(supplier.id);
+      }
     } else {
       setFormData({
         name: initialName,
@@ -45,8 +62,27 @@ const SupplierModal = ({
         whatsapp: "",
         website: "",
       });
+      setFiles([]);
     }
   }, [isEdit, supplier, initialName]);
+
+  // Load supplier files
+  const loadSupplierFiles = async (supplierId) => {
+    if (!supplierId) return;
+
+    try {
+      setFilesLoading(true);
+      const supplierFiles = await supplierFilesService.getSupplierFiles(
+        supplierId
+      );
+      setFiles(supplierFiles);
+    } catch (error) {
+      console.error("Error loading supplier files:", error);
+      setFiles([]);
+    } finally {
+      setFilesLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -88,7 +124,6 @@ const SupplierModal = ({
     }
   };
 
-  // ✨ Function สำหรับจัดการการลบ
   const handleDeleteClick = () => {
     setShowDeleteConfirm(true);
   };
@@ -97,7 +132,7 @@ const SupplierModal = ({
     setDeleteLoading(true);
     try {
       await suppliersService.deleteSupplier(supplier.id);
-      onDelete?.(supplier); // เรียก callback function
+      onDelete?.(supplier);
       handleClose();
     } catch (error) {
       console.error("Error deleting supplier:", error);
@@ -112,6 +147,24 @@ const SupplierModal = ({
     setShowDeleteConfirm(false);
   };
 
+  // Handle file upload success
+  const handleFileUploaded = (newFile) => {
+    setFiles((prev) => [newFile, ...prev]);
+  };
+
+  // Handle file deletion
+  const handleFileDelete = async (fileId) => {
+    if (!confirm("ต้องการลบไฟล์นี้หรือไม่?")) return;
+
+    try {
+      await supplierFilesService.deleteSupplierFile(fileId);
+      setFiles((prev) => prev.filter((file) => file.id !== fileId));
+    } catch (error) {
+      console.error("Error deleting file:", error);
+      alert("เกิดข้อผิดพลาดในการลบไฟล์");
+    }
+  };
+
   const handleClose = () => {
     if (!isEdit) {
       setFormData({
@@ -121,9 +174,12 @@ const SupplierModal = ({
         line: "",
         facebook: "",
         whatsapp: "",
+        website: "",
       });
     }
-    setShowDeleteConfirm(false); // ✨ รีเซ็ต delete confirm state
+    setShowDeleteConfirm(false);
+    setFilesSectionOpen(false);
+    setFiles([]);
     onClose();
   };
 
@@ -133,7 +189,7 @@ const SupplierModal = ({
     <>
       <div className="modal-backdrop">
         <div className="modal-overlay">
-          <div className="modal-content bg-white rounded-lg shadow-xl w-full max-w-2xl">
+          <div className="modal-content bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh]">
             {/* Header */}
             <div className="modal-header border-b border-gray-200 px-6 py-4 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-gray-900">
@@ -160,15 +216,17 @@ const SupplierModal = ({
               </button>
             </div>
 
-            {/* Content - ✨ เพิ่ม overflow-y-auto เพื่อให้ scroll ได้ */}
-            <div className="overflow-y-auto max-h-[60vh]">
+            {/* Content */}
+            <div className="overflow-y-auto flex-1">
               <form onSubmit={handleSubmit} className="p-6">
-                <div className="space-y-6">
-                  {/* Basic Info */}
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">
-                      ข้อมูลพื้นฐาน
-                    </h3>
+                {/* Section 1: Basic Info */}
+                <div className="mb-8">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                    <span className="mr-2">📝</span>
+                    ข้อมูลพื้นฐาน
+                  </h3>
+
+                  <div className="bg-gray-50 rounded-lg p-4 space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -200,12 +258,16 @@ const SupplierModal = ({
                       </div>
                     </div>
                   </div>
+                </div>
 
-                  {/* Contact Info */}
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">
-                      ช่องทางการติดต่อ
-                    </h3>
+                {/* Section 2: Contact Info */}
+                <div className="mb-8">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                    <span className="mr-2">📞</span>
+                    ช่องทางการติดต่อ
+                  </h3>
+
+                  <div className="bg-gray-50 rounded-lg p-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -258,8 +320,7 @@ const SupplierModal = ({
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           placeholder="เบอร์ WhatsApp"
                         />
-                      </div>{" "}
-                      {/* Website - เพิ่มส่วนนี้ */}
+                      </div>
                       <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           🌐 เว็บไซต์
@@ -276,12 +337,89 @@ const SupplierModal = ({
                     </div>
                   </div>
                 </div>
+
+                {/* Section 3: File Management (เฉพาะตอน Edit) */}
+                {isEdit && supplier && (
+                  <div className="mb-8">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-medium text-gray-900 flex items-center">
+                        <span className="mr-2">📁</span>
+                        จัดการไฟล์เอกสาร ({files.length} ไฟล์)
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => setFilesSectionOpen(!filesSectionOpen)}
+                        className="flex items-center space-x-2 px-3 py-1 text-blue-600 hover:text-blue-800 transition-colors"
+                      >
+                        <span>{filesSectionOpen ? "ซ่อน" : "แสดง"}</span>
+                        <svg
+                          className={`w-4 h-4 transition-transform ${
+                            filesSectionOpen ? "rotate-180" : ""
+                          }`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {filesSectionOpen && (
+                      <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+                        {/* File Upload */}
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-700 mb-3">
+                            อัพโหลดไฟล์ใหม่
+                          </h4>
+                          <SupplierFileUpload
+                            supplierId={supplier.id}
+                            onFileUploaded={handleFileUploaded}
+                            disabled={loading}
+                          />
+                        </div>
+
+                        {/* File List */}
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-700 mb-3">
+                            ไฟล์ที่มีอยู่
+                          </h4>
+                          {filesLoading ? (
+                            <div className="text-center py-4">
+                              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                              <p className="text-sm text-gray-600">
+                                กำลังโหลดไฟล์...
+                              </p>
+                            </div>
+                          ) : (
+                            <FileDownloads
+                              files={files}
+                              getFileUrl={
+                                supplierFilesService.getSupplierFileUrl
+                              }
+                              title="เอกสาร Supplier"
+                              isSupplier={true}
+                              showCategory={true}
+                              onDelete={handleFileDelete}
+                              allowDelete={true}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </form>
             </div>
 
             {/* Footer */}
             <div className="flex justify-between items-center space-x-3 border-t border-gray-200 px-6 py-4">
-              {/* ✨ ปุ่มลบ - แสดงเฉพาะตอน Edit */}
+              {/* Delete Button - แสดงเฉพาะตอน Edit */}
               <div>
                 {isEdit && supplier && (
                   <button
@@ -296,7 +434,7 @@ const SupplierModal = ({
                 )}
               </div>
 
-              {/* ปุ่มด้านขวา */}
+              {/* Action Buttons */}
               <div className="flex items-center space-x-3">
                 <button
                   type="button"
@@ -308,7 +446,6 @@ const SupplierModal = ({
                 </button>
                 <button
                   type="submit"
-                  form="supplier-form"
                   onClick={handleSubmit}
                   disabled={loading || deleteLoading || !formData.name.trim()}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -328,7 +465,7 @@ const SupplierModal = ({
         </div>
       </div>
 
-      {/* ✨ Delete Confirmation Modal */}
+      {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="mx-4 w-full max-w-md rounded-2xl bg-white shadow-2xl ring-1 ring-black/5">
