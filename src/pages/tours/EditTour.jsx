@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { SupplierAutocomplete } from "../../components/suppliers";
 import { SupplierModal } from "../../components/suppliers";
 import { TourFileUpload } from "../../components/tours";
+import { AutocompleteInput } from "../../components/common";
 import SupplierFileUpload from "../../components/suppliers/SupplierFileUpload";
 import {
   toursService,
@@ -38,10 +39,14 @@ const EditTour = () => {
     child_price: "",
     start_date: "",
     end_date: "",
+    no_end_date: false,
     notes: "",
     park_fee_included: false,
     map_url: "",
   });
+
+  // Validation errors
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     fetchTourData();
@@ -63,14 +68,24 @@ const EditTour = () => {
 
       if (tourData) {
         setTour(tourData);
+
+        // Check if tour has no end date
+        const hasNoEndDate =
+          !tourData.end_date || tourData.end_date === "0000-00-00";
+
         setFormData({
           tour_name: tourData.tour_name || "",
           departure_from: tourData.departure_from || "",
           pier: tourData.pier || "",
-          adult_price: tourData.adult_price || "",
-          child_price: tourData.child_price || "",
+          adult_price: tourData.adult_price
+            ? parseFloat(tourData.adult_price).toString()
+            : "",
+          child_price: tourData.child_price
+            ? parseFloat(tourData.child_price).toString()
+            : "",
           start_date: tourData.start_date || "",
-          end_date: tourData.end_date || "",
+          end_date: hasNoEndDate ? "" : tourData.end_date || "",
+          no_end_date: hasNoEndDate,
           notes: tourData.notes || "",
           park_fee_included: tourData.park_fee_included || false,
           map_url: tourData.map_url || "",
@@ -180,26 +195,109 @@ const EditTour = () => {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+
+    // Clear error for this field
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: null,
+      }));
+    }
+  };
+
+  const handleAutocompleteChange = (field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+
+    // Clear error for this field
+    if (errors[field]) {
+      setErrors((prev) => ({
+        ...prev,
+        [field]: null,
+      }));
+    }
+  };
+
+  const handleNoEndDateToggle = (checked) => {
+    setFormData((prev) => {
+      const updatedData = { ...prev, no_end_date: checked };
+
+      if (checked) {
+        // If enabling no_end_date, clear the end_date value
+        updatedData.end_date = "";
+      } else {
+        // If disabling, set default end date (1 year from start date or today)
+        const startDate = prev.start_date
+          ? new Date(prev.start_date)
+          : new Date();
+        const defaultEndDate = new Date(startDate);
+        defaultEndDate.setFullYear(startDate.getFullYear() + 1);
+        updatedData.end_date = defaultEndDate.toISOString().split("T")[0];
+      }
+
+      return updatedData;
+    });
+
+    // Clear end_date error
+    if (errors.end_date) {
+      setErrors((prev) => ({
+        ...prev,
+        end_date: null,
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Required fields
+    if (!formData.tour_name.trim()) {
+      newErrors.tour_name = "กรุณากรอกชื่อทัวร์";
+    }
+
+    // Date validation
+    if (!formData.no_end_date && formData.start_date && formData.end_date) {
+      const startDate = new Date(formData.start_date);
+      const endDate = new Date(formData.end_date);
+
+      if (endDate <= startDate) {
+        newErrors.end_date = "วันสิ้นสุดต้องมากกว่าวันเริ่มต้น";
+      }
+    }
+
+    // Number validation
+    if (formData.adult_price && isNaN(parseFloat(formData.adult_price))) {
+      newErrors.adult_price = "กรุณากรอกตัวเลขที่ถูกต้อง";
+    }
+
+    if (formData.child_price && isNaN(parseFloat(formData.child_price))) {
+      newErrors.child_price = "กรุณากรอกตัวเลขที่ถูกต้อง";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      alert("กรุณาตรวจสอบข้อมูลให้ครบถ้วนและถูกต้อง");
+      return;
+    }
+
     setSaving(true);
 
     try {
-      // Validate required fields
-      if (!formData.tour_name.trim()) {
-        alert("กรุณากรอกชื่อทัวร์");
-        setSaving(false);
-        return;
-      }
-
       // Prepare data for submission
       const submitData = {
         ...formData,
         supplier_id: selectedSupplier?.id || null,
         adult_price: parseFloat(formData.adult_price) || 0,
         child_price: parseFloat(formData.child_price) || 0,
+        end_date: formData.no_end_date ? null : formData.end_date,
       };
 
       await toursService.updateTour(id, submitData);
@@ -274,6 +372,7 @@ const EditTour = () => {
             🏝️ ข้อมูลทัวร์
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Tour Name */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 ชื่อทัวร์ <span className="text-red-500">*</span>
@@ -284,36 +383,55 @@ const EditTour = () => {
                 value={formData.tour_name}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.tour_name ? "border-red-500" : "border-gray-300"
+                }`}
                 placeholder="กรอกชื่อทัวร์"
               />
+              {errors.tour_name && (
+                <p className="text-red-500 text-xs mt-1">{errors.tour_name}</p>
+              )}
             </div>
+
+            {/* Departure From - with Autocomplete */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 ออกจาก
               </label>
-              <input
-                type="text"
-                name="departure_from"
+              <AutocompleteInput
+                type="departure_from"
                 value={formData.departure_from}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                onChange={(value) =>
+                  handleAutocompleteChange("departure_from", value)
+                }
                 placeholder="จังหวัด/สถานที่ออกเดินทาง"
+                className={errors.departure_from ? "border-red-500" : ""}
               />
+              {errors.departure_from && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.departure_from}
+                </p>
+              )}
             </div>
+
+            {/* Pier - with Autocomplete */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 ท่าเรือ
               </label>
-              <input
-                type="text"
-                name="pier"
+              <AutocompleteInput
+                type="pier"
                 value={formData.pier}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                onChange={(value) => handleAutocompleteChange("pier", value)}
                 placeholder="ชื่อท่าเรือ"
+                className={errors.pier ? "border-red-500" : ""}
               />
+              {errors.pier && (
+                <p className="text-red-500 text-xs mt-1">{errors.pier}</p>
+              )}
             </div>
+
+            {/* Adult Price */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 ราคาผู้ใหญ่ (บาท)
@@ -324,9 +442,19 @@ const EditTour = () => {
                 value={formData.adult_price}
                 onChange={handleChange}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                step="1"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.adult_price ? "border-red-500" : "border-gray-300"
+                }`}
               />
+              {errors.adult_price && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.adult_price}
+                </p>
+              )}
             </div>
+
+            {/* Child Price */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 ราคาเด็ก (บาท)
@@ -337,9 +465,19 @@ const EditTour = () => {
                 value={formData.child_price}
                 onChange={handleChange}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                step="1"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.child_price ? "border-red-500" : "border-gray-300"
+                }`}
               />
+              {errors.child_price && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.child_price}
+                </p>
+              )}
             </div>
+
+            {/* Start Date */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 วันที่เริ่มต้น
@@ -352,18 +490,57 @@ const EditTour = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
+
+            {/* End Date - with Optional Toggle */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 วันที่สิ้นสุด
               </label>
-              <input
-                type="date"
-                name="end_date"
-                value={formData.end_date}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>{" "}
+
+              {/* End Date Input - conditionally shown */}
+              {!formData.no_end_date && (
+                <input
+                  type="date"
+                  name="end_date"
+                  value={formData.end_date}
+                  onChange={handleChange}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    errors.end_date ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+              )}
+
+              {/* End Date in Disabled State */}
+              {formData.no_end_date && (
+                <input
+                  type="text"
+                  value="ไม่กำหนด"
+                  disabled
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-orange-50 text-orange-700 cursor-not-allowed"
+                />
+              )}
+
+              {/* No End Date Checkbox */}
+              <div className="mt-2">
+                <label className="inline-flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={formData.no_end_date}
+                    onChange={(e) => handleNoEndDateToggle(e.target.checked)}
+                    className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                  />
+                  <span className="ml-2 text-sm text-orange-700">
+                    ไม่กำหนดวันสิ้นสุด (ใช้ไปจนกว่าจะมีการเปลี่ยนแปลง)
+                  </span>
+                </label>
+              </div>
+
+              {errors.end_date && (
+                <p className="text-red-500 text-xs mt-1">{errors.end_date}</p>
+              )}
+            </div>
+
+            {/* Map URL */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 🗺️ Google Maps URL
@@ -380,6 +557,8 @@ const EditTour = () => {
                 คัดลอก URL จาก Google Maps แล้ววางที่นี่ (ไม่บังคับ)
               </p>
             </div>
+
+            {/* Park Fee Included */}
             <div className="md:col-span-2">
               <label className="inline-flex items-center">
                 <input
@@ -394,6 +573,8 @@ const EditTour = () => {
                 </span>
               </label>
             </div>
+
+            {/* Notes */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 หมายเหตุ
@@ -471,61 +652,64 @@ const EditTour = () => {
               )}
             </div>
           )}
-        </div>
 
-        {/* Tour Files */}
-        <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            📎 ไฟล์เฉพาะทัวร์นี้
-          </h2>
+          {/* Tour Files */}
+          <div className="bg-white rounded-lg shadow-sm border p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              📎 ไฟล์เฉพาะทัวร์นี้
+            </h2>
 
-          <TourFileUpload tourId={id} onFileUploaded={handleTourFileUploaded} />
+            <TourFileUpload
+              tourId={id}
+              onFileUploaded={handleTourFileUploaded}
+            />
 
-          {tourFiles.length > 0 && (
-            <div className="mt-6">
-              <h3 className="font-medium text-gray-900 mb-3">
-                ไฟล์ที่อัพโหลดแล้ว ({tourFiles.length} ไฟล์)
-              </h3>
-              <div className="space-y-2">
-                {tourFiles.map((file) => (
-                  <div
-                    key={file.id}
-                    className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <span className="text-lg">
-                        {file.file_type === "pdf" ? "📄" : "🖼️"}
-                      </span>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {file.original_name}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {file.file_size_formatted} • Tour File
-                        </p>
+            {tourFiles.length > 0 && (
+              <div className="mt-6">
+                <h3 className="font-medium text-gray-900 mb-3">
+                  ไฟล์ที่อัพโหลดแล้ว ({tourFiles.length} ไฟล์)
+                </h3>
+                <div className="space-y-2">
+                  {tourFiles.map((file) => (
+                    <div
+                      key={file.id}
+                      className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <span className="text-lg">
+                          {file.file_type === "pdf" ? "📄" : "🖼️"}
+                        </span>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            {file.original_name}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {file.file_size_formatted} • Tour File
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          type="button"
+                          onClick={() => handleViewFile(file, false)}
+                          className="px-2 py-1 text-blue-600 hover:bg-blue-100 rounded text-sm"
+                        >
+                          👁️ ดู
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteTourFile(file.id)}
+                          className="px-2 py-1 text-red-600 hover:bg-red-50 rounded text-sm"
+                        >
+                          🗑️ ลบ
+                        </button>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <button
-                        type="button"
-                        onClick={() => handleViewFile(file, false)}
-                        className="px-2 py-1 text-blue-600 hover:bg-blue-100 rounded text-sm"
-                      >
-                        👁️ ดู
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteTourFile(file.id)}
-                        className="px-2 py-1 text-red-600 hover:bg-red-50 rounded text-sm"
-                      >
-                        🗑️ ลบ
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Submit Buttons */}
