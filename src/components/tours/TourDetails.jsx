@@ -71,6 +71,42 @@ const TourDetails = ({
     </div>
   );
 
+  // เพิ่มใน Helper functions section
+  const renderPhoneNumbers = () => {
+    const phones = [
+      tour.phone,
+      tour.phone_2,
+      tour.phone_3,
+      tour.phone_4,
+      tour.phone_5,
+    ].filter((phone) => phone?.trim());
+
+    if (phones.length === 0) return null;
+
+    return (
+      <div className="grid grid-cols-3 gap-3 px-4 py-3">
+        <dt className="text-xs font-medium text-gray-500">
+          เบอร์โทร{phones.length > 1 && ` (${phones.length} เบอร์)`}
+        </dt>
+        <dd className="col-span-2 text-sm">
+          {phones.map((phone, index) => (
+            <span key={index}>
+              <a
+                href={`tel:${phone}`}
+                className="text-blue-600 hover:underline"
+              >
+                {phone}
+              </a>
+              {index < phones.length - 1 && (
+                <span className="text-gray-400">, </span>
+              )}
+            </span>
+          ))}
+        </dd>
+      </div>
+    );
+  };
+
   return (
     <div className={`tour-details ${className}`}>
       {/* Header */}
@@ -223,18 +259,12 @@ const TourDetails = ({
             <div className="rounded-xl border border-gray-200">
               <SectionHeader icon="☎️">ช่องทางการติดต่อ</SectionHeader>
               <dl className="divide-y divide-gray-100">
-                {tour.phone && (
+                {renderPhoneNumbers()}
+                {tour.line && (
                   <div className="grid grid-cols-3 gap-3 px-4 py-3">
-                    <dt className="text-xs font-medium text-gray-500">
-                      เบอร์โทร
-                    </dt>
-                    <dd className="col-span-2 text-sm">
-                      <a
-                        href={`tel:${tour.phone}`}
-                        className="text-blue-600 hover:underline"
-                      >
-                        {tour.phone}
-                      </a>
+                    <dt className="text-xs font-medium text-gray-500">Line</dt>
+                    <dd className="col-span-2 text-sm text-gray-900">
+                      {tour.line}
                     </dd>
                   </div>
                 )}

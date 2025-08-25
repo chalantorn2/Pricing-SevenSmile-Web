@@ -84,13 +84,17 @@ const SupplierList = () => {
       };
     });
 
-    // Apply search filter
+    // Apply search filter - รวมการค้นหาในเบอร์ทุกเบอร์
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(
         (supplier) =>
           supplier.name?.toLowerCase().includes(searchLower) ||
           supplier.phone?.toLowerCase().includes(searchLower) ||
+          supplier.phone_2?.toLowerCase().includes(searchLower) ||
+          supplier.phone_3?.toLowerCase().includes(searchLower) ||
+          supplier.phone_4?.toLowerCase().includes(searchLower) ||
+          supplier.phone_5?.toLowerCase().includes(searchLower) ||
           supplier.line?.toLowerCase().includes(searchLower) ||
           supplier.address?.toLowerCase().includes(searchLower)
       );
@@ -181,6 +185,88 @@ const SupplierList = () => {
     });
   };
 
+  // 🎨 Helper function สำหรับแสดงเบอร์โทรหลายเบอร์
+  const renderPhoneNumbers = (supplier, maxShow = 2) => {
+    const phones = [
+      supplier.phone,
+      supplier.phone_2,
+      supplier.phone_3,
+      supplier.phone_4,
+      supplier.phone_5,
+    ].filter((phone) => phone?.trim());
+
+    if (phones.length === 0) {
+      return <span className="text-gray-400 text-xs">ไม่มีเบอร์</span>;
+    }
+
+    const visiblePhones = phones.slice(0, maxShow);
+    const hiddenCount = phones.length - maxShow;
+
+    return (
+      <div className="space-y-1">
+        {visiblePhones.map((phone, index) => (
+          <div key={index} className="flex items-center space-x-1">
+            <span className="text-blue-600">📞</span>
+            <a
+              href={`tel:${phone}`}
+              className="text-blue-600 hover:text-blue-800 text-sm hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {phone}
+            </a>
+            {index === 0 && (
+              <span className="text-xs bg-blue-100 text-blue-700 px-1 rounded">
+                หลัก
+              </span>
+            )}
+          </div>
+        ))}
+
+        {hiddenCount > 0 && (
+          <div className="text-xs text-gray-500">
+            +{hiddenCount} เบอร์เพิ่มเติม
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // 🎨 Compact phone display for mobile
+  const renderPhoneCompact = (supplier) => {
+    const phones = [
+      supplier.phone,
+      supplier.phone_2,
+      supplier.phone_3,
+      supplier.phone_4,
+      supplier.phone_5,
+    ].filter((phone) => phone?.trim());
+
+    if (phones.length === 0) {
+      return <span className="text-gray-400 text-xs">ไม่มีเบอร์</span>;
+    }
+
+    return (
+      <div className="flex flex-wrap gap-1">
+        {phones.slice(0, 2).map((phone, index) => (
+          <a
+            key={index}
+            href={`tel:${phone}`}
+            className="inline-flex items-center space-x-1 bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs hover:bg-blue-100"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span>📞</span>
+            <span>{phone.length > 8 ? `${phone.slice(0, 8)}...` : phone}</span>
+          </a>
+        ))}
+        {phones.length > 2 && (
+          <span className="text-xs text-gray-500 px-2 py-1">
+            +{phones.length - 2}
+          </span>
+        )}
+      </div>
+    );
+  };
+
   const handleExportExcel = () => {
     const dataToExport =
       selectedSuppliers.length > 0
@@ -190,7 +276,11 @@ const SupplierList = () => {
     const exportData = dataToExport.map((supplier, index) => ({
       ลำดับ: index + 1,
       "ชื่อ Supplier": supplier.name,
-      เบอร์โทร: supplier.phone || "-",
+      เบอร์หลัก: supplier.phone || "-",
+      "เบอร์ที่ 2": supplier.phone_2 || "-",
+      "เบอร์ที่ 3": supplier.phone_3 || "-",
+      "เบอร์ที่ 4": supplier.phone_4 || "-",
+      "เบอร์ที่ 5": supplier.phone_5 || "-",
       "Line ID": supplier.line || "-",
       Facebook: supplier.facebook || "-",
       WhatsApp: supplier.whatsapp || "-",
@@ -494,7 +584,7 @@ const SupplierList = () => {
         </div>
       )}
 
-      {/* Mobile-Optimized Table */}
+      {/* Enhanced Mobile-Optimized Table */}
       <MobileOptimizedTable
         data={filteredSuppliers}
         columns={[
@@ -502,12 +592,7 @@ const SupplierList = () => {
             key: "index",
             label: "ลำดับ",
             render: (item, index) => (
-              <div
-                className="text-center !important"
-                style={{ textAlign: "center !important" }}
-              >
-                {index + 1}
-              </div>
+              <div className="text-center font-medium">{index + 1}</div>
             ),
           },
           {
@@ -515,10 +600,10 @@ const SupplierList = () => {
             label: "ชื่อ Supplier",
             render: (item) => (
               <div>
-                <div className="font-medium">{item.name}</div>
+                <div className="font-medium text-gray-900">{item.name}</div>
                 {item.address && (
-                  <div className="text-xs text-gray-500 mt-1">
-                    {item.address}
+                  <div className="text-xs text-gray-500 mt-1 line-clamp-2">
+                    📍 {item.address}
                   </div>
                 )}
               </div>
@@ -528,21 +613,50 @@ const SupplierList = () => {
             key: "contact",
             label: "ข้อมูลติดต่อ",
             render: (item) => (
-              <div className="space-y-1">
-                {item.phone && (
-                  <div className="flex items-center space-x-1">
-                    <span>📞</span>
-                    <span>{item.phone}</span>
-                  </div>
-                )}
-                {item.line && (
-                  <div className="flex items-center space-x-1">
-                    <span>💬</span>
-                    <span>{item.line}</span>
-                  </div>
-                )}
-                {!item.phone && !item.line && (
-                  <span className="text-gray-400 text-xs">ไม่มีข้อมูล</span>
+              <div className="space-y-2">
+                {/* Phone Numbers - แสดงแบบสวย */}
+                <div className="phone-section">
+                  {renderPhoneNumbers(item, 3)}
+                </div>
+
+                {/* Other Contact Methods */}
+                <div className="flex flex-wrap gap-2">
+                  {item.line && (
+                    <div className="inline-flex items-center space-x-1 bg-green-50 text-green-700 px-2 py-1 rounded text-xs">
+                      <span>💬</span>
+                      <span>{item.line}</span>
+                    </div>
+                  )}
+                  {item.whatsapp && (
+                    <a
+                      href={`https://wa.me/${item.whatsapp}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center space-x-1 bg-green-50 text-green-700 px-2 py-1 rounded text-xs hover:bg-green-100"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <span>📱</span>
+                      <span>WhatsApp</span>
+                    </a>
+                  )}
+                  {item.website && (
+                    <a
+                      href={item.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center space-x-1 bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs hover:bg-blue-100"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <span>🌐</span>
+                      <span>Website</span>
+                    </a>
+                  )}
+                </div>
+
+                {!item.phone && !item.line && !item.whatsapp && (
+                  <span className="text-gray-400 text-xs">
+                    ไม่มีข้อมูลติดต่อ
+                  </span>
                 )}
               </div>
             ),
@@ -562,15 +676,20 @@ const SupplierList = () => {
               </span>
             ),
           },
-          {
-            key: "status",
-            label: "สถานะ",
-            render: (item) => getStatusBadge(item),
-          },
+
           {
             key: "latest_activity",
             label: "อัพเดทล่าสุด",
-            render: (item) => formatDate(item.latest_activity),
+            render: (item) => (
+              <div className="text-sm">
+                <div>{formatDate(item.latest_activity)}</div>
+                <div className="text-xs text-gray-500">
+                  {item.latest_activity > item.updated_at
+                    ? "จากทัวร์"
+                    : "จาก Supplier"}
+                </div>
+              </div>
+            ),
           },
           {
             key: "actions",
@@ -578,10 +697,11 @@ const SupplierList = () => {
             render: (item) => (
               <Link
                 to={`/suppliers/${item.id}`}
-                className="px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm cursor-pointer"
+                className="px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm cursor-pointer inline-flex items-center space-x-1"
                 onClick={(e) => e.stopPropagation()}
               >
-                📋 ดูรายละเอียด
+                <span>📋</span>
+                <span>ดูรายละเอียด</span>
               </Link>
             ),
           },

@@ -203,6 +203,81 @@ const SupplierDetail = () => {
     }
   };
 
+  // 🎨 Enhanced Phone Numbers Render Function
+  const renderPhoneNumbers = (supplier) => {
+    const phones = [
+      { number: supplier.phone, label: "เบอร์หลัก" },
+      { number: supplier.phone_2, label: "เบอร์ 2" },
+      { number: supplier.phone_3, label: "เบอร์ 3" },
+      { number: supplier.phone_4, label: "เบอร์ 4" },
+      { number: supplier.phone_5, label: "เบอร์ 5" },
+    ].filter((item) => item.number?.trim());
+
+    if (phones.length === 0) {
+      return (
+        <div className="text-center text-gray-400 py-4">
+          <span className="text-2xl mb-2 block">📵</span>
+          <span className="text-sm">ไม่มีหมายเลขโทรศัพท์</span>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-3">
+        {phones.map((phone, index) => (
+          <div
+            key={index}
+            className={`flex items-center justify-between p-3 rounded-lg transition-all hover:shadow-md ${
+              index === 0
+                ? "bg-blue-50 border border-blue-200"
+                : "bg-gray-50 hover:bg-gray-100"
+            }`}
+          >
+            <div className="flex items-center space-x-3">
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                  index === 0 ? "bg-blue-500" : "bg-gray-500"
+                } text-white text-sm font-medium`}
+              >
+                {index === 0 ? "📞" : `${index + 1}`}
+              </div>
+              <div>
+                <div className="font-medium text-gray-900">{phone.number}</div>
+                <div
+                  className={`text-xs ${
+                    index === 0 ? "text-blue-600" : "text-gray-500"
+                  }`}
+                >
+                  {phone.label} {index === 0 && "(หลัก)"}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => handleContactClick("phone", phone.number)}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  index === 0
+                    ? "bg-blue-600 text-white hover:bg-blue-700"
+                    : "bg-gray-600 text-white hover:bg-gray-700"
+                }`}
+              >
+                📞 โทร
+              </button>
+              <button
+                onClick={() => navigator.clipboard?.writeText(phone.number)}
+                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                title="คัดลอกเบอร์"
+              >
+                📋
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -275,133 +350,167 @@ const SupplierDetail = () => {
         </div>
       </div>
 
-      {/* Supplier Info Card */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <span className="mr-2">🏢</span>
-          ข้อมูล Supplier
-        </h2>
+      {/* Supplier Info Card - Enhanced */}
+      <div className="bg-white rounded-lg shadow-sm border">
+        <div className="p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+            <span className="mr-2">🏢</span>
+            ข้อมูล Supplier
+          </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Contact Information */}
-          <div className="space-y-4">
-            <h3 className="font-medium text-gray-700 border-b pb-2">
-              ข้อมูลติดต่อ
-            </h3>
-
-            {supplier.phone && (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <span>📞</span>
-                  <span>{supplier.phone}</span>
-                </div>
-                <button
-                  onClick={() => handleContactClick("phone", supplier.phone)}
-                  className="px-3 py-1 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm"
-                >
-                  โทร
-                </button>
-              </div>
-            )}
-
-            {supplier.line && (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <span>💬</span>
-                  <span>{supplier.line}</span>
-                </div>
-                <button
-                  onClick={() => handleContactClick("line", supplier.line)}
-                  className="px-3 py-1 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm"
-                >
-                  Line
-                </button>
-              </div>
-            )}
-
-            {supplier.facebook && (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <span>📘</span>
-                  <span className="truncate max-w-48">{supplier.facebook}</span>
-                </div>
-                <button
-                  onClick={() =>
-                    handleContactClick("facebook", supplier.facebook)
-                  }
-                  className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm"
-                >
-                  เปิด
-                </button>
-              </div>
-            )}
-
-            {supplier.whatsapp && (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <span>📱</span>
-                  <span>{supplier.whatsapp}</span>
-                </div>
-                <button
-                  onClick={() =>
-                    handleContactClick("whatsapp", supplier.whatsapp)
-                  }
-                  className="px-3 py-1 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm"
-                >
-                  WhatsApp
-                </button>
-              </div>
-            )}
-
-            {/* Website - เพิ่มส่วนนี้ */}
-            {supplier.website && (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <span>🌐</span>
-                  <span className="truncate max-w-48">{supplier.website}</span>
-                </div>
-                <button
-                  onClick={() =>
-                    window.open(
-                      supplier.website,
-                      "_blank",
-                      "noopener,noreferrer"
-                    )
-                  }
-                  className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm"
-                >
-                  เยี่ยมชม
-                </button>
-              </div>
-            )}
-
-            {!supplier.phone &&
-              !supplier.line &&
-              !supplier.facebook &&
-              !supplier.whatsapp && (
-                <p className="text-gray-400 text-sm">ไม่มีข้อมูลติดต่อ</p>
-              )}
-          </div>
-
-          {/* Address & System Info */}
-          <div className="space-y-4">
-            <h3 className="font-medium text-gray-700 border-b pb-2">
-              ข้อมูลทั่วไป
-            </h3>
-
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left Column: Phone Numbers */}
             <div>
-              <p className="text-sm text-gray-600">ที่อยู่</p>
-              <p className="text-gray-900">{supplier.address || "ไม่ระบุ"}</p>
+              <h3 className="font-medium text-gray-700 mb-4 pb-2 border-b border-gray-200 flex items-center">
+                <span className="mr-2">📞</span>
+                หมายเลขโทรศัพท์
+                <span className="ml-2 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                  {
+                    [
+                      supplier.phone,
+                      supplier.phone_2,
+                      supplier.phone_3,
+                      supplier.phone_4,
+                      supplier.phone_5,
+                    ].filter((p) => p?.trim()).length
+                  }{" "}
+                  เบอร์
+                </span>
+              </h3>
+
+              {renderPhoneNumbers(supplier)}
             </div>
 
-            <div>
-              <p className="text-sm text-gray-600">สร้างเมื่อ</p>
-              <p className="text-gray-900">{formatDate(supplier.created_at)}</p>
-            </div>
+            {/* Right Column: Other Info */}
+            <div className="space-y-6">
+              {/* Other Contact Methods */}
+              <div>
+                <h3 className="font-medium text-gray-700 mb-4 pb-2 border-b border-gray-200">
+                  ช่องทางการติดต่ออื่นๆ
+                </h3>
+                <div className="space-y-3">
+                  {supplier.line && (
+                    <div className="flex items-center justify-between bg-green-50 p-3 rounded-lg">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-green-600">💬</span>
+                        <span className="font-medium">{supplier.line}</span>
+                        <span className="text-xs text-green-600">Line ID</span>
+                      </div>
+                      <button
+                        onClick={() =>
+                          handleContactClick("line", supplier.line)
+                        }
+                        className="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                      >
+                        เปิด Line
+                      </button>
+                    </div>
+                  )}
 
-            <div>
-              <p className="text-sm text-gray-600">อัพเดทล่าสุด</p>
-              <p className="text-gray-900">{formatDate(supplier.updated_at)}</p>
+                  {supplier.facebook && (
+                    <div className="flex items-center justify-between bg-blue-50 p-3 rounded-lg">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-blue-600">📘</span>
+                        <span className="font-medium truncate max-w-[200px]">
+                          {supplier.facebook}
+                        </span>
+                        <span className="text-xs text-blue-600">Facebook</span>
+                      </div>
+                      <button
+                        onClick={() =>
+                          handleContactClick("facebook", supplier.facebook)
+                        }
+                        className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                      >
+                        เปิด
+                      </button>
+                    </div>
+                  )}
+
+                  {supplier.whatsapp && (
+                    <div className="flex items-center justify-between bg-green-50 p-3 rounded-lg">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-green-600">📱</span>
+                        <span className="font-medium">{supplier.whatsapp}</span>
+                        <span className="text-xs text-green-600">WhatsApp</span>
+                      </div>
+                      <button
+                        onClick={() =>
+                          handleContactClick("whatsapp", supplier.whatsapp)
+                        }
+                        className="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                      >
+                        WhatsApp
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Website - เพิ่มส่วนนี้ */}
+                  {supplier.website && (
+                    <div className="flex items-center justify-between bg-blue-50 p-3 rounded-lg">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-blue-600">🌐</span>
+                        <span className="font-medium truncate max-w-[200px]">
+                          {supplier.website}
+                        </span>
+                        <span className="text-xs text-blue-600">Website</span>
+                      </div>
+                      <button
+                        onClick={() =>
+                          window.open(
+                            supplier.website,
+                            "_blank",
+                            "noopener,noreferrer"
+                          )
+                        }
+                        className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                      >
+                        เยี่ยมชม
+                      </button>
+                    </div>
+                  )}
+
+                  {!supplier.line &&
+                    !supplier.facebook &&
+                    !supplier.whatsapp &&
+                    !supplier.website && (
+                      <div className="text-center text-gray-400 py-4">
+                        <span className="text-2xl mb-2 block">📫</span>
+                        <span className="text-sm">ไม่มีช่องทางติดต่ออื่น</span>
+                      </div>
+                    )}
+                </div>
+              </div>
+
+              {/* Address & System Info */}
+              <div>
+                <h3 className="font-medium text-gray-700 mb-4 pb-2 border-b border-gray-200">
+                  ข้อมูลทั่วไป
+                </h3>
+                <div className="space-y-3">
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="text-sm text-gray-600 mb-1">ที่อยู่</p>
+                    <p className="text-gray-900">
+                      {supplier.address || "ไม่ระบุ"}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-sm text-gray-600 mb-1">สร้างเมื่อ</p>
+                      <p className="text-gray-900">
+                        {formatDate(supplier.created_at)}
+                      </p>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-sm text-gray-600 mb-1">อัพเดทล่าสุด</p>
+                      <p className="text-gray-900">
+                        {formatDate(supplier.updated_at)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

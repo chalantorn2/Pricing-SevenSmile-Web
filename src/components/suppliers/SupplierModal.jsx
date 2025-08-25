@@ -19,16 +19,23 @@ const SupplierModal = ({
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // Form data state
+  // Form data state - เพิ่ม phone fields
   const [formData, setFormData] = useState({
     name: initialName,
     address: "",
     phone: "",
+    phone_2: "",
+    phone_3: "",
+    phone_4: "",
+    phone_5: "",
     line: "",
     facebook: "",
     whatsapp: "",
     website: "",
   });
+
+  // Phone fields management for dynamic UI
+  const [visiblePhoneFields, setVisiblePhoneFields] = useState(1); // แสดง 1 ช่องแรก
 
   // File management states
   const [files, setFiles] = useState([]);
@@ -42,11 +49,28 @@ const SupplierModal = ({
         name: supplier.name || "",
         address: supplier.address || "",
         phone: supplier.phone || "",
+        phone_2: supplier.phone_2 || "",
+        phone_3: supplier.phone_3 || "",
+        phone_4: supplier.phone_4 || "",
+        phone_5: supplier.phone_5 || "",
         line: supplier.line || "",
         facebook: supplier.facebook || "",
         whatsapp: supplier.whatsapp || "",
         website: supplier.website || "",
       });
+
+      // คำนวณจำนวน phone fields ที่ต้องแสดง
+      const phoneFields = [
+        supplier.phone,
+        supplier.phone_2,
+        supplier.phone_3,
+        supplier.phone_4,
+        supplier.phone_5,
+      ];
+      const lastFilledIndex = phoneFields.findLastIndex((phone) =>
+        phone?.trim()
+      );
+      setVisiblePhoneFields(Math.max(1, lastFilledIndex + 1));
 
       // Load files for existing supplier
       if (supplier.id) {
@@ -57,11 +81,16 @@ const SupplierModal = ({
         name: initialName,
         address: "",
         phone: "",
+        phone_2: "",
+        phone_3: "",
+        phone_4: "",
+        phone_5: "",
         line: "",
         facebook: "",
         whatsapp: "",
         website: "",
       });
+      setVisiblePhoneFields(1);
       setFiles([]);
     }
   }, [isEdit, supplier, initialName]);
@@ -91,6 +120,47 @@ const SupplierModal = ({
       [name]: value,
     }));
   };
+
+  // จัดการเพิ่ม/ลด phone fields
+  const addPhoneField = () => {
+    if (visiblePhoneFields < 5) {
+      setVisiblePhoneFields(visiblePhoneFields + 1);
+    }
+  };
+
+  const removePhoneField = (index) => {
+    if (visiblePhoneFields > 1) {
+      // ล้างข้อมูลใน field ที่จะซ่อน
+      const phoneFieldName = index === 0 ? "phone" : `phone_${index + 1}`;
+      setFormData((prev) => ({
+        ...prev,
+        [phoneFieldName]: "",
+      }));
+
+      setVisiblePhoneFields(visiblePhoneFields - 1);
+    }
+  };
+
+  // ข้อมูล phone fields สำหรับ render
+  const phoneFields = [
+    { key: "phone", label: "เบอร์โทรหลัก", placeholder: "0xx-xxx-xxxx" },
+    {
+      key: "phone_2",
+      label: "เบอร์โทร 2",
+      placeholder: "0xx-xxx-xxxx ",
+    },
+    { key: "phone_3", label: "เบอร์โทร 3", placeholder: "0xx-xxx-xxxx " },
+    {
+      key: "phone_4",
+      label: "เบอร์โทร 4",
+      placeholder: "0xx-xxx-xxxx ",
+    },
+    {
+      key: "phone_5",
+      label: "เบอร์โทร 5",
+      placeholder: "0xx-xxx-xxxx ",
+    },
+  ];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -171,11 +241,16 @@ const SupplierModal = ({
         name: "",
         address: "",
         phone: "",
+        phone_2: "",
+        phone_3: "",
+        phone_4: "",
+        phone_5: "",
         line: "",
         facebook: "",
         whatsapp: "",
         website: "",
       });
+      setVisiblePhoneFields(1);
     }
     setShowDeleteConfirm(false);
     setFilesSectionOpen(false);
@@ -260,7 +335,7 @@ const SupplierModal = ({
                   </div>
                 </div>
 
-                {/* Section 2: Contact Info */}
+                {/* Section 2: Contact Info - Enhanced Phone Fields */}
                 <div className="mb-8">
                   <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
                     <span className="mr-2">📞</span>
@@ -268,71 +343,126 @@ const SupplierModal = ({
                   </h3>
 
                   <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-4">
+                      {/* Dynamic Phone Fields */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          เบอร์โทร
-                        </label>
-                        <input
-                          type="tel"
-                          name="phone"
-                          value={formData.phone}
-                          onChange={handleChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="0xx-xxx-xxxx"
-                        />
+                        <div className="flex items-center justify-between mb-3">
+                          <label className="block text-sm font-medium text-gray-700">
+                            หมายเลขโทรศัพท์
+                          </label>
+                          <div className="flex items-center space-x-2">
+                            {visiblePhoneFields < 5 && (
+                              <button
+                                type="button"
+                                onClick={addPhoneField}
+                                className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-lg hover:bg-blue-200 transition-colors"
+                              >
+                                ➕ เพิ่มเบอร์
+                              </button>
+                            )}
+                            <span className="text-xs text-gray-500">
+                              ({visiblePhoneFields}/5 เบอร์)
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          {phoneFields
+                            .slice(0, visiblePhoneFields)
+                            .map((field, index) => (
+                              <div
+                                key={field.key}
+                                className="flex items-center space-x-3"
+                              >
+                                <div className="flex-1">
+                                  <input
+                                    type="tel"
+                                    name={field.key}
+                                    value={formData[field.key]}
+                                    onChange={handleChange}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder={field.placeholder}
+                                  />
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-xs text-gray-500 min-w-[80px]">
+                                    {field.label}
+                                  </span>
+                                  {visiblePhoneFields > 1 && index > 0 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => removePhoneField(index)}
+                                      className="p-1 text-red-600 hover:bg-red-100 rounded transition-colors"
+                                      title="ลบเบอร์นี้"
+                                    >
+                                      ❌
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+
+                        <div className="mt-2 text-xs text-gray-500">
+                          💡 สามารถกรอกได้สูงสุด 5 เบอร์
+                          โดยเบอร์หลักควรเป็นเบอร์ที่ติดต่อได้ง่ายที่สุด
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Line ID
-                        </label>
-                        <input
-                          type="text"
-                          name="line"
-                          value={formData.line}
-                          onChange={handleChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="Line ID"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Facebook
-                        </label>
-                        <input
-                          type="text"
-                          name="facebook"
-                          value={formData.facebook}
-                          onChange={handleChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="Facebook URL หรือ Username"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          WhatsApp
-                        </label>
-                        <input
-                          type="tel"
-                          name="whatsapp"
-                          value={formData.whatsapp}
-                          onChange={handleChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="เบอร์ WhatsApp"
-                        />
-                      </div>
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          🌐 เว็บไซต์
-                        </label>
-                        <input
-                          type="url"
-                          name="website"
-                          value={formData.website}
-                          onChange={handleChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="https://example.com"
-                        />
+
+                      {/* Other Contact Fields */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Line ID
+                          </label>
+                          <input
+                            type="text"
+                            name="line"
+                            value={formData.line}
+                            onChange={handleChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Line ID"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            WhatsApp
+                          </label>
+                          <input
+                            type="tel"
+                            name="whatsapp"
+                            value={formData.whatsapp}
+                            onChange={handleChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="เบอร์ WhatsApp"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Facebook
+                          </label>
+                          <input
+                            type="text"
+                            name="facebook"
+                            value={formData.facebook}
+                            onChange={handleChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Facebook URL หรือ Username"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            🌐 เว็บไซต์
+                          </label>
+                          <input
+                            type="url"
+                            name="website"
+                            value={formData.website}
+                            onChange={handleChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="https://example.com"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>

@@ -82,8 +82,54 @@ const SupplierFileUpload = ({
     }
   };
 
-  const handleFileSelect = (event) => {
+  // เพิ่มก่อนฟังก์ชัน handleFileSelect
+  const uploadFilesSequentially = async (files) => {
+    const results = [];
+    const BATCH_SIZE = 5;
+    const DELAY_BETWEEN_BATCHES = 2000; // 2 วินาที
+
+    for (let i = 0; i < files.length; i += BATCH_SIZE) {
+      const batch = files.slice(i, i + BATCH_SIZE);
+
+      console.log(
+        `🔄 Uploading batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(
+          files.length / BATCH_SIZE
+        )}`
+      );
+
+      // อัพโหลดทีละ batch
+      const batchPromises = batch.map((file) => uploadFile(file));
+      const batchResults = await Promise.all(batchPromises);
+
+      results.push(...batchResults);
+
+      // รอก่อนอัพโหลด batch ถัดไป
+      if (i + BATCH_SIZE < files.length) {
+        console.log(
+          `⏳ Waiting ${DELAY_BETWEEN_BATCHES / 1000}s before next batch...`
+        );
+        await new Promise((resolve) =>
+          setTimeout(resolve, DELAY_BETWEEN_BATCHES)
+        );
+      }
+    }
+
+    return results;
+  };
+
+  const handleFileSelect = async (event) => {
     const files = Array.from(event.target.files);
+
+    if (files.length > 10) {
+      const confirmed = confirm(
+        `คุณกำลังจะอัพโหลด ${files.length} ไฟล์\n` +
+          `ระบบจะอัพโหลดทีละ 5 ไฟล์เพื่อป้องกันปัญหา\n` +
+          `ประมาณใช้เวลา ${Math.ceil(files.length / 5) * 2} วินาที\n\n` +
+          `ต้องการดำเนินการต่อหรือไม่?`
+      );
+
+      if (!confirmed) return;
+    }
 
     if (files.length === 1) {
       // Single file - ask for label
@@ -94,20 +140,46 @@ const SupplierFileUpload = ({
       );
 
       if (label !== null) {
-        // User didn't cancel
         uploadFile(file, label);
       }
-    } else {
-      // Multiple files - upload without labels
+    } else if (files.length <= 5) {
+      // Small batch - upload normally
       files.forEach((file) => uploadFile(file));
+    } else {
+      // Large batch - upload sequentially
+      try {
+        setUploading(true);
+        await uploadFilesSequentially(files);
+        alert(`✅ อัพโหลด ${files.length} ไฟล์เสร็จสิ้น`);
+      } catch (error) {
+        alert(`❌ เกิดข้อผิดพลาด: ${error.message}`);
+      } finally {
+        setUploading(false);
+        // Reset file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+      }
     }
   };
 
-  const handleDrop = (event) => {
+  const handleDrop = async (event) => {
     event.preventDefault();
     setDragOver(false);
 
     const files = Array.from(event.dataTransfer.files);
+
+    if (files.length > 10) {
+      const confirmed = confirm(
+        `คุณกำลังจะอัพโหลด ${files.length} ไฟล์\n` +
+          `ระบบจะอัพโหลดทีละ 5 ไฟล์เพื่อป้องกันปัญหา\n` +
+          `ประมาณใช้เวลา ${Math.ceil(files.length / 5) * 2} วินาที\n\n` +
+          `ต้องการดำเนินการต่อหรือไม่?`
+      );
+
+      if (!confirmed) return;
+    }
+
     if (files.length === 1) {
       const file = files[0];
       const label = prompt(
@@ -118,8 +190,18 @@ const SupplierFileUpload = ({
       if (label !== null) {
         uploadFile(file, label);
       }
-    } else {
+    } else if (files.length <= 5) {
       files.forEach((file) => uploadFile(file));
+    } else {
+      try {
+        setUploading(true);
+        await uploadFilesSequentially(files);
+        alert(`✅ อัพโหลด ${files.length} ไฟล์เสร็จสิ้น`);
+      } catch (error) {
+        alert(`❌ เกิดข้อผิดพลาด: ${error.message}`);
+      } finally {
+        setUploading(false);
+      }
     }
   };
 

@@ -35,18 +35,22 @@ try {
         case 'GET':
             // Get all tours with supplier information
             $sql = "SELECT t.*, 
-                          sa.name as supplier_name,
-                          sa.address,
-                          sa.phone,
-                          sa.line,
-                          sa.facebook,
-                          sa.whatsapp,
-                          sa.website,
-                          sa.created_at as sub_agent_created_at,
-                          sa.updated_at as sub_agent_updated_at
-                   FROM tours t
-                   LEFT JOIN suppliers sa ON t.supplier_id = sa.id
-                   ORDER BY t.updated_at DESC";
+              sa.name as supplier_name,
+              sa.address,
+              sa.phone,
+              sa.phone_2,
+              sa.phone_3,
+              sa.phone_4,
+              sa.phone_5,
+              sa.line,
+              sa.facebook,
+              sa.whatsapp,
+              sa.website,
+              sa.created_at as sub_agent_created_at,
+              sa.updated_at as sub_agent_updated_at
+            FROM tours t
+            LEFT JOIN suppliers sa ON t.supplier_id = sa.id
+            ORDER BY t.updated_at DESC";
 
             $stmt = $pdo->prepare($sql);
             $stmt->execute();
