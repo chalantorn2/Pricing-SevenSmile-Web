@@ -578,7 +578,7 @@ export const filesService = {
     const baseUrl = import.meta.env.VITE_API_BASE_URL || "/api";
     const cleanBaseUrl = baseUrl.replace(/\/$/, "");
     const filePath = `${cleanBaseUrl}/${file.file_path}`;
-    console.log("🔗 Generated file URL:", filePath);
+    // console.log("🔗 Generated file URL:", filePath);
     return filePath;
   },
 };

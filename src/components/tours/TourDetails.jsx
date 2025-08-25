@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { MapLink, FileGallery, FileDownloads } from "../common";
 import { filesService } from "../../services/api-service";
 import { useTourFiles } from "../../hooks";
+import { getTourCategoryInfo } from "../../utils/file-categories";
 
 const TourDetails = ({
   tour,
@@ -14,20 +15,32 @@ const TourDetails = ({
 }) => {
   const [selectedImage, setSelectedImage] = useState(null);
   const {
-    galleryFiles,
-    documentFiles,
+    filesByCategory, // ใช้ตัวนี้แทน
     loading: filesLoading,
-    hasFiles,
-    addFile,
   } = useTourFiles(tour?.id);
 
-  // ✨ Temporary fix: รวมรูปทั้งหมดเป็น gallery
-  const imageFiles = documentFiles.filter((file) => file.file_type === "image");
-  const actualDocuments = documentFiles.filter(
-    (file) => file.file_type !== "image"
-  );
-  const allGalleryFiles = [...galleryFiles, ...imageFiles];
-  const hasGallery = allGalleryFiles.length > 0;
+  const getOrderedCategories = () => {
+    const order = ["brochure", "general", "gallery"];
+    const result = [];
+
+    console.log("🐛 filesByCategory:", filesByCategory); // เพิ่มบรรทัดนี้
+
+    order.forEach((categoryKey) => {
+      if (
+        filesByCategory[categoryKey] &&
+        filesByCategory[categoryKey].length > 0
+      ) {
+        result.push({
+          key: categoryKey,
+          files: filesByCategory[categoryKey],
+          categoryInfo: getTourCategoryInfo(categoryKey),
+        });
+      }
+    });
+
+    console.log("🐛 result:", result); // เพิ่มบรรทัดนี้
+    return result;
+  };
 
   if (!tour) return null;
 
@@ -399,51 +412,56 @@ const TourDetails = ({
           </section>
         )}
 
-        {/* Files Sections */}
-        {hasFiles && (
+        {/* Files Sections - แก้ใหม่ */}
+        {getOrderedCategories().length > 0 && (
           <section className="space-y-6">
-            {/* Gallery - Enhanced UI */}
-            {hasGallery && (
-              <div>
+            {getOrderedCategories().map(({ key, files, categoryInfo }) => (
+              <div key={key}>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <span className="mr-2">🖼️</span>
-                  Gallery ทัวร์ ({allGalleryFiles.length} รูป)
+                  <span className="mr-2">{categoryInfo.icon}</span>
+                  {categoryInfo.label} ({files.length}{" "}
+                  {files.some((f) => f.file_type === "image") ? "รูป" : "ไฟล์"})
                 </h3>
 
-                {/* Grid Layout for Gallery Images */}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                  {allGalleryFiles.map((file) => (
-                    <div
-                      key={file.id}
-                      className="group relative aspect-square bg-gray-100 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
-                      onClick={() =>
-                        setSelectedImage(filesService.getFileUrl(file))
-                      }
-                    >
-                      <img
-                        src={filesService.getFileUrl(file)}
-                        alt={file.original_name}
-                        className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-110"
-                        loading="lazy"
-                      />
-                    </div>
-                  ))}
-                </div>
+                {/* ถ้าเป็น gallery หรือมีรูปภาพ -> แสดงแบบ grid */}
+                {key === "gallery" ||
+                files.some((f) => f.file_type === "image") ? (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                    {files
+                      .filter((f) => f.file_type === "image")
+                      .map((file) => (
+                        <div
+                          key={file.id}
+                          className="group relative aspect-square bg-gray-100 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
+                          onClick={() =>
+                            setSelectedImage(filesService.getFileUrl(file))
+                          }
+                        >
+                          <img
+                            src={filesService.getFileUrl(file)}
+                            alt={file.original_name}
+                            className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-110"
+                            loading="lazy"
+                          />
+                        </div>
+                      ))}
+                  </div>
+                ) : (
+                  /* ถ้าไม่ใช่รูป -> แสดงแบบ downloads */
+                  <FileDownloads
+                    files={files}
+                    getFileUrl={filesService.getFileUrl}
+                    title={categoryInfo.label}
+                    isSupplier={false}
+                    showCategory={false}
+                  />
+                )}
               </div>
-            )}
-
-            {/* Downloads */}
-            {actualDocuments.length > 0 && (
-              <FileDownloads
-                files={actualDocuments}
-                getFileUrl={filesService.getFileUrl}
-                title="เอกสารและไฟล์ดาวน์โหลด"
-                isSupplier={false}
-                showCategory={true}
-              />
-            )}
+            ))}
           </section>
         )}
+
+        {/* Loading state */}
         {filesLoading && (
           <section className="text-center py-4">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto mb-2"></div>
@@ -451,6 +469,7 @@ const TourDetails = ({
           </section>
         )}
       </div>
+
       {/* Image Modal for Enlarged View */}
       {selectedImage && (
         <div

@@ -98,11 +98,12 @@ try {
 
             $stmt = $pdo->prepare("
                 SELECT id, tour_id, file_name, original_name, file_path, 
-                       file_type, file_size, mime_type, uploaded_by, uploaded_at 
+                    file_type, file_size, mime_type, uploaded_by, uploaded_at,
+                    COALESCE(file_category, 'general') as file_category
                 FROM tour_files 
                 WHERE tour_id = ? 
                 ORDER BY uploaded_at DESC
-            ");
+                ");
             $stmt->execute(array($tour_id));
             $files = $stmt->fetchAll();
 

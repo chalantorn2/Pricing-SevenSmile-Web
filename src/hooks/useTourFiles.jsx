@@ -29,25 +29,41 @@ const useTourFiles = (tourId) => {
 
   // Memoized file categories for better performance
   const filesByCategory = useMemo(() => {
-    return files.reduce((acc, file) => {
+    const categories = {
+      brochure: [],
+      general: [],
+      gallery: [],
+    };
+
+    console.log("🐛 Raw files:", files); // Debug
+
+    files.forEach((file) => {
       const category = file.file_category || "general";
-      if (!acc[category]) acc[category] = [];
-      acc[category].push(file);
-      return acc;
-    }, {});
+      console.log(`🐛 File ${file.id}: category = "${category}"`); // Debug
+
+      if (categories[category]) {
+        categories[category].push(file);
+      } else {
+        console.log(`🐛 Unknown category: ${category}, adding to general`); // Debug
+        categories.general.push(file);
+      }
+    });
+
+    console.log("🐛 Final categories:", categories); // Debug
+    return categories;
   }, [files]);
 
+  // เก็บ galleryFiles และ documentFiles ไว้เพื่อ backward compatibility
   const galleryFiles = useMemo(() => {
-    const gallery = files.filter((file) => file.file_category === "gallery");
-    console.log("🖼️ Gallery files:", gallery.length, gallery); // Debug
-    return gallery;
-  }, [files]);
+    return filesByCategory.gallery || [];
+  }, [filesByCategory]);
 
   const documentFiles = useMemo(() => {
-    const docs = files.filter((file) => file.file_category !== "gallery");
-    console.log("📄 Document files:", docs.length, docs); // Debug
-    return docs;
-  }, [files]);
+    return [
+      ...(filesByCategory.brochure || []),
+      ...(filesByCategory.general || []),
+    ];
+  }, [filesByCategory]);
 
   const refreshFiles = () => {
     loadFiles();

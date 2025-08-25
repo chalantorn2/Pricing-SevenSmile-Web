@@ -113,6 +113,27 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
     return groups;
   };
 
+  // เพิ่มฟังก์ชันช่วยเรียงลำดับ
+  const getSortedFileGroups = () => {
+    const fileGroups = groupFilesByCategory();
+    const sortedEntries = Object.entries(fileGroups).sort(([keyA], [keyB]) => {
+      // แยก source และ category
+      const [sourceA, categoryA] = keyA.split("_");
+      const [sourceB, categoryB] = keyB.split("_");
+
+      // เรียง supplier ก่อน, tour หลัง
+      if (sourceA !== sourceB) {
+        return sourceA === "supplier" ? -1 : 1;
+      }
+
+      // เรียงตาม category: brochure, general, gallery
+      const order = ["brochure", "general", "gallery"];
+      return order.indexOf(categoryA) - order.indexOf(categoryB);
+    });
+
+    return Object.fromEntries(sortedEntries);
+  };
+
   if (!isOpen || !tour) return null;
 
   const fileGroups = groupFilesByCategory();
