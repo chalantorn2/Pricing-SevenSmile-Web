@@ -311,18 +311,6 @@ const TourFileUpload = ({ tourId, onFileUploaded, disabled = false }) => {
                 </span>
               )}
             </div>
-
-            {/* Examples for Current Category */}
-            <div className="bg-gray-50 rounded-lg p-3 text-left">
-              <p className="text-xs font-medium text-gray-700 mb-1">
-                ตัวอย่างไฟล์ในหมวด "{categoryInfo.label}":
-              </p>
-              <ul className="text-xs text-gray-600 space-y-1">
-                {categoryHints.examples.map((example, index) => (
-                  <li key={index}>• {example}</li>
-                ))}
-              </ul>
-            </div>
           </div>
         )}
       </div>

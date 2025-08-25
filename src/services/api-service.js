@@ -538,7 +538,7 @@ export const filesService = {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("tour_id", tourId);
-      formData.append("file_category", category);
+      formData.append("file_category", category); // ⭐ เพิ่มบรรทัดนี้
       formData.append("uploaded_by", uploadedBy);
 
       const response = await fetch(`${API_BASE_URL}/files.php`, {
@@ -559,7 +559,6 @@ export const filesService = {
       throw new Error("เกิดข้อผิดพลาดในการอัพโหลดไฟล์: " + error.message);
     }
   },
-
   // Delete a file
   async deleteFile(fileId) {
     try {
