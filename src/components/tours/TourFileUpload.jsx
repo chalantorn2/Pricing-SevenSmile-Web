@@ -71,7 +71,7 @@ const TourFileUpload = ({ tourId, onFileUploaded, disabled = false }) => {
         fileInputRef.current.value = "";
       }
 
-      alert(`อัพโหลดไฟล์ "${file.name}" ในหมวด "${categoryInfo.label}" สำเร็จ`);
+      // alert(`อัพโหลดไฟล์ "${file.name}" ในหมวด "${categoryInfo.label}" สำเร็จ`);
     } catch (error) {
       console.error("Upload error:", error);
       alert(error.message);

@@ -712,32 +712,34 @@ const EditTour = () => {
           </div>
         </div>
 
-        {/* Submit Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t">
-          <button
-            type="submit"
-            disabled={saving}
-            className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-          >
-            {saving ? "กำลังบันทึก..." : "💾 บันทึกการแก้ไข"}
-          </button>
+        {/* Submit Buttons - Sticky at bottom */}
+        <div className="sticky rounded-lg bottom-0 bg-white border-t border-gray-200 shadow-lg -mx-6 px-6 py-4 mt-6 z-30">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium shadow-md"
+            >
+              {saving ? "กำลังบันทึก..." : "💾 บันทึกการแก้ไข"}
+            </button>
 
-          <button
-            type="button"
-            onClick={handleDelete}
-            disabled={saving}
-            className="flex-1 bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-          >
-            {saving ? "กำลังลบ..." : "🗑️ ลบทัวร์นี้"}
-          </button>
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={saving}
+              className="flex-1 bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium shadow-md"
+            >
+              {saving ? "กำลังลบ..." : "🗑️ ลบทัวร์นี้"}
+            </button>
 
-          <button
-            type="button"
-            onClick={() => navigate("/")}
-            className="flex-1 bg-gray-300 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-400 transition-colors font-medium"
-          >
-            ยกเลิก
-          </button>
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              className="flex-1 bg-gray-300 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-400 transition-colors font-medium shadow-md"
+            >
+              ยกเลิก
+            </button>
+          </div>
         </div>
       </form>
 
