@@ -433,9 +433,6 @@ const TourDetails = ({
                         <div
                           key={file.id}
                           className="group relative aspect-square bg-gray-100 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
-                          onClick={() =>
-                            setSelectedImage(filesService.getFileUrl(file))
-                          }
                         >
                           <img
                             src={filesService.getFileUrl(file)}

@@ -56,12 +56,40 @@ try {
             $stmt->execute();
             $tours = $stmt->fetchAll();
 
-            echo json_encode(array(
-                'success' => true,
-                'data' => $tours,
-                'count' => count($tours),
-                'timestamp' => date('c')
-            ));
+            if (isset($_GET['search_gallery']) && $_GET['search_gallery']) {
+                $search_term = $_GET['search_gallery'];
+
+                $sql = "SELECT DISTINCT t.*, sa.name as supplier_name,
+                   COUNT(tf.id) as gallery_count
+            FROM tours t
+            LEFT JOIN suppliers sa ON t.supplier_id = sa.id
+            INNER JOIN tour_files tf ON t.id = tf.tour_id 
+            WHERE tf.file_category = 'gallery' 
+            AND (t.tour_name LIKE ? OR sa.name LIKE ?)
+            GROUP BY t.id
+            HAVING gallery_count > 0
+            ORDER BY t.updated_at DESC";
+
+                $stmt = $pdo->prepare($sql);
+                $search_param = '%' . $search_term . '%';
+                $stmt->execute(array($search_param, $search_param));
+                $tours = $stmt->fetchAll();
+
+                echo json_encode(array(
+                    'success' => true,
+                    'data' => $tours,
+                    'count' => count($tours),
+                    'search_term' => $search_term,
+                    'timestamp' => date('c')
+                ));
+            } else {
+                echo json_encode(array(
+                    'success' => true,
+                    'data' => $tours,
+                    'count' => count($tours),
+                    'timestamp' => date('c')
+                ));
+            }
             break;
 
         case 'POST':

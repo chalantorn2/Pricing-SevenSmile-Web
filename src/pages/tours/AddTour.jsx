@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { TourMultiForm } from "../../components/tours";
+import { TourMultiForm, ShareGalleryManager } from "../../components/tours";
 import { SupplierAutocomplete } from "../../components/suppliers";
 import { SupplierModal } from "../../components/suppliers";
 import SupplierFileUpload from "../../components/suppliers/SupplierFileUpload";
@@ -370,6 +370,20 @@ const AddTour = () => {
                   เพิ่มทัวร์หลายรายการสำหรับ {selectedSupplier?.name}
                 </p>
               </div>
+
+              {/* Share Gallery Manager - Show only if we have created tours */}
+              {completedSteps.includes(3) && (
+                <div className="mb-6">
+                  <ShareGalleryManager
+                    currentTourId={null} // For new tours, we'll handle this differently
+                    onGalleryShared={() => {
+                      alert(
+                        "เพื่อใช้การแชร์รูป Gallery โปรดบันทึกทัวร์ก่อน แล้วใช้ฟีเจอร์นี้ในหน้าแก้ไข"
+                      );
+                    }}
+                  />
+                </div>
+              )}
 
               <TourMultiForm
                 onSubmit={handleToursSubmit}

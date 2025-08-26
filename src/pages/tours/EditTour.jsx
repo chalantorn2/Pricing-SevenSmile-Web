@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { SupplierAutocomplete } from "../../components/suppliers";
 import { SupplierModal } from "../../components/suppliers";
-import { TourFileUpload } from "../../components/tours";
+import { TourFileUpload, ShareGalleryManager } from "../../components/tours";
 import { AutocompleteInput } from "../../components/common";
 import SupplierFileUpload from "../../components/suppliers/SupplierFileUpload";
 import {
@@ -662,6 +662,18 @@ const EditTour = () => {
             <TourFileUpload
               tourId={id}
               onFileUploaded={handleTourFileUploaded}
+              onGalleryShared={() => {
+                // Refresh tour files when gallery is shared
+                const fetchFiles = async () => {
+                  try {
+                    const files = await filesService.getTourFiles(id);
+                    setTourFiles(files);
+                  } catch (error) {
+                    console.error("Error refreshing tour files:", error);
+                  }
+                };
+                fetchFiles();
+              }}
             />
 
             {tourFiles.length > 0 && (

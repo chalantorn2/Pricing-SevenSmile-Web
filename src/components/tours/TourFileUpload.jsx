@@ -4,8 +4,14 @@ import {
   TOUR_FILE_CATEGORIES,
   getCategoryHints,
 } from "../../utils/file-categories";
+import ShareGalleryManager from "./ShareGalleryManager";
 
-const TourFileUpload = ({ tourId, onFileUploaded, disabled = false }) => {
+const TourFileUpload = ({
+  tourId,
+  onFileUploaded,
+  onGalleryShared,
+  disabled = false,
+}) => {
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("general");
@@ -240,6 +246,16 @@ const TourFileUpload = ({ tourId, onFileUploaded, disabled = false }) => {
           </p>
         </div>
       </div>
+
+      {/* Share Gallery Manager - แสดงเฉพาะเมื่อเลือก Gallery */}
+      {selectedCategory === "gallery" && (
+        <div className="mt-4">
+          <ShareGalleryManager
+            currentTourId={tourId}
+            onGalleryShared={onGalleryShared}
+          />
+        </div>
+      )}
 
       {/* Hidden File Input */}
       <input

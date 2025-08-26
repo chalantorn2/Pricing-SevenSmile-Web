@@ -99,12 +99,13 @@ try {
             $stmt = $pdo->prepare("
                 SELECT id, tour_id, file_name, original_name, file_path, 
                     file_type, file_size, mime_type, uploaded_by, uploaded_at,
-                    COALESCE(file_category, 'general') as file_category
+                COALESCE(file_category, 'general') as file_category,
+                    shared_with_tour_ids
                 FROM tour_files 
-                WHERE tour_id = ? 
+                WHERE tour_id = ? OR JSON_CONTAINS(shared_with_tour_ids, ?)
                 ORDER BY uploaded_at DESC
                 ");
-            $stmt->execute(array($tour_id));
+            $stmt->execute(array($tour_id, $tour_id));
             $files = $stmt->fetchAll();
 
             // Add formatted size (PHP 5.6 compatible way)
@@ -220,6 +221,63 @@ try {
                 'success' => true,
                 'data' => $new_file,
                 'message' => 'File uploaded successfully'
+            ));
+            break;
+
+        case 'PUT':
+            // Share gallery files from one tour to another
+            if (!isset($_GET['action']) || $_GET['action'] !== 'share_gallery') {
+                http_response_code(400);
+                echo json_encode(array(
+                    'success' => false,
+                    'error' => 'Invalid action'
+                ));
+                exit;
+            }
+
+            $input = file_get_contents('php://input');
+            $data = json_decode($input, true);
+
+            $source_tour_id = isset($data['source_tour_id']) ? intval($data['source_tour_id']) : 0;
+            $target_tour_id = isset($data['target_tour_id']) ? intval($data['target_tour_id']) : 0;
+
+            if ($source_tour_id <= 0 || $target_tour_id <= 0) {
+                http_response_code(400);
+                echo json_encode(array(
+                    'success' => false,
+                    'error' => 'Invalid tour IDs'
+                ));
+                exit;
+            }
+
+            // Get gallery files from source tour
+            $stmt = $pdo->prepare("
+        SELECT id, shared_with_tour_ids 
+        FROM tour_files 
+        WHERE tour_id = ? AND file_category = 'gallery'
+    ");
+            $stmt->execute(array($source_tour_id));
+            $files = $stmt->fetchAll();
+
+            $shared_count = 0;
+
+            foreach ($files as $file) {
+                $current_shared = $file['shared_with_tour_ids'] ? json_decode($file['shared_with_tour_ids'], true) : array();
+
+                if (!in_array($target_tour_id, $current_shared)) {
+                    $current_shared[] = $target_tour_id;
+                    $new_shared_json = json_encode($current_shared);
+
+                    $update_stmt = $pdo->prepare("UPDATE tour_files SET shared_with_tour_ids = ? WHERE id = ?");
+                    $update_stmt->execute(array($new_shared_json, $file['id']));
+                    $shared_count++;
+                }
+            }
+
+            echo json_encode(array(
+                'success' => true,
+                'message' => "Shared {$shared_count} gallery files successfully",
+                'shared_count' => $shared_count
             ));
             break;
 

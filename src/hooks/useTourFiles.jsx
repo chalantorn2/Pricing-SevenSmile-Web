@@ -17,7 +17,17 @@ const useTourFiles = (tourId) => {
       setLoading(true);
       setError(null);
       const tourFiles = await filesService.getTourFiles(tourId);
-      setFiles(tourFiles);
+
+      // Add metadata to distinguish owned vs shared files
+      const filesWithMetadata = tourFiles.map((file) => ({
+        ...file,
+        isOwnedByThisTour: parseInt(file.tour_id) === parseInt(tourId),
+        isSharedFile: parseInt(file.tour_id) !== parseInt(tourId),
+        sharedFromTourId:
+          parseInt(file.tour_id) !== parseInt(tourId) ? file.tour_id : null,
+      }));
+
+      setFiles(filesWithMetadata);
     } catch (err) {
       console.error("Error loading tour files:", err);
       setError(err.message);

@@ -581,6 +581,51 @@ export const filesService = {
     // console.log("🔗 Generated file URL:", filePath);
     return filePath;
   },
+  async searchToursWithGallery(searchTerm) {
+    try {
+      console.log("🔍 Searching tours with gallery:", searchTerm);
+      const response = await apiCall(
+        `/tours.php?search_gallery=${encodeURIComponent(searchTerm)}`
+      );
+      console.log(
+        "✅ Tours with gallery found:",
+        response.data?.length,
+        "items"
+      );
+      return response.data || [];
+    } catch (error) {
+      console.error("❌ Failed to search tours with gallery:", error);
+      throw new Error("เกิดข้อผิดพลาดในการค้นหาทัวร์: " + error.message);
+    }
+  },
+
+  // Share gallery files from source tour to target tour
+  async shareGalleryFiles(sourceTourId, targetTourId) {
+    try {
+      console.log(
+        "🔗 Sharing gallery files from",
+        sourceTourId,
+        "to",
+        targetTourId
+      );
+      const response = await apiCall("/files.php?action=share_gallery", {
+        method: "PUT",
+        body: JSON.stringify({
+          source_tour_id: sourceTourId,
+          target_tour_id: targetTourId,
+        }),
+      });
+      console.log(
+        "✅ Gallery files shared successfully:",
+        response.shared_count,
+        "files"
+      );
+      return response;
+    } catch (error) {
+      console.error("❌ Failed to share gallery files:", error);
+      throw new Error("เกิดข้อผิดพลาดในการแชร์รูป Gallery: " + error.message);
+    }
+  },
 };
 
 // Test API connection
