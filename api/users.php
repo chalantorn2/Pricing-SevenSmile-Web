@@ -1,5 +1,5 @@
 <?php
-// users.php - เข้ากับ PHP 5.6
+// users.php - compatible with PHP 5.6
 include 'config.php';
 
 $db = getDB();
@@ -38,7 +38,7 @@ switch ($method) {
             sendJSON($user);
         } catch (Exception $e) {
             if (strpos($e->getMessage(), 'Duplicate') !== false) {
-                sendJSON(array('error' => 'ชื่อผู้ใช้นี้มีอยู่แล้ว'), 400);
+                sendJSON(array('error' => 'This username already exists'), 400);
             }
             sendJSON(array('error' => $e->getMessage()), 500);
         }
@@ -68,7 +68,7 @@ switch ($method) {
             sendJSON($user);
         } catch (Exception $e) {
             if (strpos($e->getMessage(), 'Duplicate') !== false) {
-                sendJSON(array('error' => 'ชื่อผู้ใช้นี้มีอยู่แล้ว'), 400);
+                sendJSON(array('error' => 'This username already exists'), 400);
             }
             sendJSON(array('error' => $e->getMessage()), 500);
         }

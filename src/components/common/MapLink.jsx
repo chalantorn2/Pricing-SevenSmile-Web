@@ -9,7 +9,7 @@ const MapLink = ({ mapUrl, tourName, className = "" }) => {
     <button
       onClick={handleMapClick}
       className={`inline-flex items-center gap-2 px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm ${className}`}
-      title={`ดูแผนที่ ${tourName || "ทัวร์นี้"} ใน Google Maps`}
+      title={`View ${tourName || "this tour"} on Google Maps`}
     >
       <svg
         className="w-4 h-4"
@@ -30,7 +30,7 @@ const MapLink = ({ mapUrl, tourName, className = "" }) => {
           d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
         />
       </svg>
-      <span>ดูแผนที่</span>
+      <span>View Map</span>
       <svg
         className="w-3 h-3"
         fill="none"

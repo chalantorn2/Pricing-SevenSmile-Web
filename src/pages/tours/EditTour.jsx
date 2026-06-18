@@ -2,7 +2,11 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { SupplierAutocomplete } from "../../components/suppliers";
 import { SupplierModal } from "../../components/suppliers";
-import { TourFileUpload, ShareGalleryManager } from "../../components/tours";
+import {
+  TourFileUpload,
+  ShareGalleryManager,
+  SharedGalleryGroup,
+} from "../../components/tours";
 import { AutocompleteInput } from "../../components/common";
 import SupplierFileUpload from "../../components/suppliers/SupplierFileUpload";
 import {
@@ -11,10 +15,19 @@ import {
   filesService,
   supplierFilesService,
 } from "../../services/api-service";
+import { useTourFiles } from "../../hooks";
 
 const EditTour = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+
+  // Use tour files hook instead of manual state
+  const {
+    files: tourFiles,
+    sharedGalleryGroups,
+    ownGalleryFiles,
+    refreshFiles,
+  } = useTourFiles(id);
 
   // Loading states
   const [loading, setLoading] = useState(true);
@@ -24,7 +37,6 @@ const EditTour = () => {
   const [tour, setTour] = useState(null);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [supplierFiles, setSupplierFiles] = useState([]);
-  const [tourFiles, setTourFiles] = useState([]);
 
   // Modal states
   const [showSupplierModal, setShowSupplierModal] = useState(false);
@@ -103,21 +115,13 @@ const EditTour = () => {
             whatsapp: tourData.whatsapp,
           });
         }
-
-        // Fetch tour files
-        try {
-          const files = await filesService.getTourFiles(id);
-          setTourFiles(files);
-        } catch (error) {
-          console.error("Error fetching tour files:", error);
-        }
       } else {
-        alert("ไม่พบข้อมูลทัวร์");
+        alert("Tour not found");
         navigate("/");
       }
     } catch (error) {
       console.error("Error fetching tour:", error);
-      alert("เกิดข้อผิดพลาดในการโหลดข้อมูล");
+      alert("An error occurred while loading data");
       navigate("/");
     } finally {
       setLoading(false);
@@ -155,29 +159,29 @@ const EditTour = () => {
   };
 
   const handleTourFileUploaded = (newFile) => {
-    setTourFiles((prev) => [newFile, ...prev]);
+    refreshFiles(); // use refreshFiles from the hook instead
   };
 
   const handleDeleteTourFile = async (fileId) => {
-    if (window.confirm("คุณต้องการลบไฟล์นี้หรือไม่?")) {
+    if (window.confirm("Do you want to delete this file?")) {
       try {
         await filesService.deleteFile(fileId);
-        setTourFiles((prev) => prev.filter((file) => file.id !== fileId));
+        refreshFiles();
       } catch (error) {
         console.error("Error deleting file:", error);
-        alert("เกิดข้อผิดพลาดในการลบไฟล์");
+        alert("An error occurred while deleting the file");
       }
     }
   };
 
   const handleDeleteSupplierFile = async (fileId) => {
-    if (window.confirm("คุณต้องการลบไฟล์นี้หรือไม่?")) {
+    if (window.confirm("Do you want to delete this file?")) {
       try {
         await supplierFilesService.deleteSupplierFile(fileId);
         setSupplierFiles((prev) => prev.filter((file) => file.id !== fileId));
       } catch (error) {
         console.error("Error deleting supplier file:", error);
-        alert("เกิดข้อผิดพลาดในการลบไฟล์");
+        alert("An error occurred while deleting the file");
       }
     }
   };
@@ -187,6 +191,34 @@ const EditTour = () => {
       ? supplierFilesService.getSupplierFileUrl(file)
       : filesService.getFileUrl(file);
     window.open(fileUrl, "_blank");
+  };
+
+  const handleUnshareGallery = async (sourceTourId) => {
+    try {
+      await filesService.unshareGalleryFiles(sourceTourId, id);
+      refreshFiles(); // use refreshFiles instead of manual setTourFiles
+      alert("Gallery images unshared successfully");
+    } catch (error) {
+      console.error("Error unsharing gallery:", error);
+      alert("An error occurred while unsharing: " + error.message);
+    }
+  };
+
+  const handleUnshareFile = async (file) => {
+    try {
+      console.log("🔍 Unsharing single file:", file);
+
+      if (file.isSharedFile) {
+        await filesService.unshareSingleFile(file.id, id);
+      } else {
+        await filesService.deleteFile(file.id);
+      }
+
+      refreshFiles(); // use refreshFiles instead of manual setTourFiles
+    } catch (error) {
+      console.error("Error unsharing file:", error);
+      alert("An error occurred while deleting the file");
+    }
   };
 
   const handleChange = (e) => {
@@ -254,7 +286,7 @@ const EditTour = () => {
 
     // Required fields
     if (!formData.tour_name.trim()) {
-      newErrors.tour_name = "กรุณากรอกชื่อทัวร์";
+      newErrors.tour_name = "Please enter a tour name";
     }
 
     // Date validation
@@ -263,17 +295,17 @@ const EditTour = () => {
       const endDate = new Date(formData.end_date);
 
       if (endDate <= startDate) {
-        newErrors.end_date = "วันสิ้นสุดต้องมากกว่าวันเริ่มต้น";
+        newErrors.end_date = "End date must be later than start date";
       }
     }
 
     // Number validation
     if (formData.adult_price && isNaN(parseFloat(formData.adult_price))) {
-      newErrors.adult_price = "กรุณากรอกตัวเลขที่ถูกต้อง";
+      newErrors.adult_price = "Please enter a valid number";
     }
 
     if (formData.child_price && isNaN(parseFloat(formData.child_price))) {
-      newErrors.child_price = "กรุณากรอกตัวเลขที่ถูกต้อง";
+      newErrors.child_price = "Please enter a valid number";
     }
 
     setErrors(newErrors);
@@ -284,7 +316,7 @@ const EditTour = () => {
     e.preventDefault();
 
     if (!validateForm()) {
-      alert("กรุณาตรวจสอบข้อมูลให้ครบถ้วนและถูกต้อง");
+      alert("Please make sure all information is complete and correct");
       return;
     }
 
@@ -301,11 +333,11 @@ const EditTour = () => {
       };
 
       await toursService.updateTour(id, submitData);
-      alert("อัปเดตข้อมูลเรียบร้อยแล้ว");
+      alert("Data updated successfully");
       navigate("/");
     } catch (error) {
       console.error("Error saving tour:", error);
-      alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+      alert("An error occurred while saving data");
     } finally {
       setSaving(false);
     }
@@ -314,17 +346,17 @@ const EditTour = () => {
   const handleDelete = async () => {
     if (
       window.confirm(
-        `คุณต้องการลบทัวร์ "${formData.tour_name}" หรือไม่?\n\nการลบนี้ไม่สามารถกู้คืนได้!`
+        `Do you want to delete the tour "${formData.tour_name}"?\n\nThis deletion cannot be undone!`
       )
     ) {
       try {
         setSaving(true);
         await toursService.deleteTour(id);
-        alert("ลบข้อมูลเรียบร้อยแล้ว");
+        alert("Data deleted successfully");
         navigate("/");
       } catch (error) {
         console.error("Error deleting tour:", error);
-        alert("เกิดข้อผิดพลาดในการลบข้อมูล");
+        alert("An error occurred while deleting data");
         setSaving(false);
       }
     }
@@ -342,12 +374,12 @@ const EditTour = () => {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">แก้ไขทัวร์</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Edit Tour</h1>
         <button
           onClick={() => navigate("/")}
           className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
         >
-          ← กลับ
+          ← Back
         </button>
       </div>
 
@@ -362,20 +394,20 @@ const EditTour = () => {
             onSelect={handleSupplierSelect}
             onCreateNew={handleCreateNewSupplier}
             value={selectedSupplier}
-            placeholder="เลือกหรือเปลี่ยน Supplier..."
+            placeholder="Select or change Supplier..."
           />
         </div>
 
         {/* Tour Information */}
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            🏝️ ข้อมูลทัวร์
+            🏝️ Tour Information
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Tour Name */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                ชื่อทัวร์ <span className="text-red-500">*</span>
+                Tour name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -386,7 +418,7 @@ const EditTour = () => {
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                   errors.tour_name ? "border-red-500" : "border-gray-300"
                 }`}
-                placeholder="กรอกชื่อทัวร์"
+                placeholder="Enter tour name"
               />
               {errors.tour_name && (
                 <p className="text-red-500 text-xs mt-1">{errors.tour_name}</p>
@@ -396,7 +428,7 @@ const EditTour = () => {
             {/* Departure From - with Autocomplete */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                ออกจาก
+                Departure from
               </label>
               <AutocompleteInput
                 type="departure_from"
@@ -404,7 +436,7 @@ const EditTour = () => {
                 onChange={(value) =>
                   handleAutocompleteChange("departure_from", value)
                 }
-                placeholder="จังหวัด/สถานที่ออกเดินทาง"
+                placeholder="Province/departure location"
                 className={errors.departure_from ? "border-red-500" : ""}
               />
               {errors.departure_from && (
@@ -417,13 +449,13 @@ const EditTour = () => {
             {/* Pier - with Autocomplete */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                ท่าเรือ
+                Pier
               </label>
               <AutocompleteInput
                 type="pier"
                 value={formData.pier}
                 onChange={(value) => handleAutocompleteChange("pier", value)}
-                placeholder="ชื่อท่าเรือ"
+                placeholder="Pier name"
                 className={errors.pier ? "border-red-500" : ""}
               />
               {errors.pier && (
@@ -434,7 +466,7 @@ const EditTour = () => {
             {/* Adult Price */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                ราคาผู้ใหญ่ (บาท)
+                Adult price (THB)
               </label>
               <input
                 type="number"
@@ -457,7 +489,7 @@ const EditTour = () => {
             {/* Child Price */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                ราคาเด็ก (บาท)
+                Child price (THB)
               </label>
               <input
                 type="number"
@@ -480,7 +512,7 @@ const EditTour = () => {
             {/* Start Date */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                วันที่เริ่มต้น
+                Start date
               </label>
               <input
                 type="date"
@@ -494,7 +526,7 @@ const EditTour = () => {
             {/* End Date - with Optional Toggle */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                วันที่สิ้นสุด
+                End date
               </label>
 
               {/* End Date Input - conditionally shown */}
@@ -514,7 +546,7 @@ const EditTour = () => {
               {formData.no_end_date && (
                 <input
                   type="text"
-                  value="ไม่กำหนด"
+                  value="Not specified"
                   disabled
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-orange-50 text-orange-700 cursor-not-allowed"
                 />
@@ -530,7 +562,7 @@ const EditTour = () => {
                     className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                   />
                   <span className="ml-2 text-sm text-orange-700">
-                    ไม่กำหนดวันสิ้นสุด (ใช้ไปจนกว่าจะมีการเปลี่ยนแปลง)
+                    No end date (valid until changed)
                   </span>
                 </label>
               </div>
@@ -551,10 +583,10 @@ const EditTour = () => {
                 value={formData.map_url}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="https://maps.google.com/... หรือ https://goo.gl/maps/..."
+                placeholder="https://maps.google.com/... or https://goo.gl/maps/..."
               />
               <p className="text-xs text-gray-500 mt-1">
-                คัดลอก URL จาก Google Maps แล้ววางที่นี่ (ไม่บังคับ)
+                Copy the URL from Google Maps and paste it here (optional)
               </p>
             </div>
 
@@ -569,7 +601,7 @@ const EditTour = () => {
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
                 <span className="ml-2 text-sm text-gray-700">
-                  ราคา Net นี้ รวมค่าอุทยานแล้ว
+                  This Net price includes the park fee
                 </span>
               </label>
             </div>
@@ -577,7 +609,7 @@ const EditTour = () => {
             {/* Notes */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                หมายเหตุ
+                Notes
               </label>
               <textarea
                 name="notes"
@@ -585,7 +617,7 @@ const EditTour = () => {
                 onChange={handleChange}
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="กรอกหมายเหตุเพิ่มเติม..."
+                placeholder="Enter additional notes..."
               />
             </div>
           </div>
@@ -597,7 +629,7 @@ const EditTour = () => {
           {selectedSupplier && (
             <div className="bg-white rounded-lg shadow-sm border p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                📎 ไฟล์ Supplier ({selectedSupplier.name})
+                📎 Supplier files ({selectedSupplier.name})
               </h2>
 
               <SupplierFileUpload
@@ -608,7 +640,7 @@ const EditTour = () => {
               {supplierFiles.length > 0 && (
                 <div className="mt-6">
                   <h3 className="font-medium text-gray-900 mb-3">
-                    ไฟล์ที่อัพโหลดแล้ว ({supplierFiles.length} ไฟล์)
+                    Uploaded files ({supplierFiles.length} files)
                   </h3>
                   <div className="space-y-2">
                     {supplierFiles.map((file) => (
@@ -635,14 +667,14 @@ const EditTour = () => {
                             onClick={() => handleViewFile(file, true)}
                             className="px-2 py-1 text-blue-600 hover:bg-blue-100 rounded text-sm"
                           >
-                            👁️ ดู
+                            👁️ View
                           </button>
                           <button
                             type="button"
                             onClick={() => handleDeleteSupplierFile(file.id)}
                             className="px-2 py-1 text-red-600 hover:bg-red-50 rounded text-sm"
                           >
-                            🗑️ ลบ
+                            🗑️ Delete
                           </button>
                         </div>
                       </div>
@@ -656,69 +688,90 @@ const EditTour = () => {
           {/* Tour Files */}
           <div className="bg-white rounded-lg shadow-sm border p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              📎 ไฟล์เฉพาะทัวร์นี้
+              📎 Files for this tour
             </h2>
 
             <TourFileUpload
               tourId={id}
               onFileUploaded={handleTourFileUploaded}
-              onGalleryShared={() => {
-                // Refresh tour files when gallery is shared
-                const fetchFiles = async () => {
-                  try {
-                    const files = await filesService.getTourFiles(id);
-                    setTourFiles(files);
-                  } catch (error) {
-                    console.error("Error refreshing tour files:", error);
-                  }
-                };
-                fetchFiles();
-              }}
+              onGalleryShared={refreshFiles} // use refreshFiles instead
             />
 
             {tourFiles.length > 0 && (
               <div className="mt-6">
                 <h3 className="font-medium text-gray-900 mb-3">
-                  ไฟล์ที่อัพโหลดแล้ว ({tourFiles.length} ไฟล์)
+                  Uploaded files ({tourFiles.length} files)
                 </h3>
-                <div className="space-y-2">
-                  {tourFiles.map((file) => (
-                    <div
-                      key={file.id}
-                      className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <span className="text-lg">
-                          {file.file_type === "pdf" ? "📄" : "🖼️"}
-                        </span>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">
-                            {file.original_name}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {file.file_size_formatted} • Tour File
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <button
-                          type="button"
-                          onClick={() => handleViewFile(file, false)}
-                          className="px-2 py-1 text-blue-600 hover:bg-blue-100 rounded text-sm"
-                        >
-                          👁️ ดู
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteTourFile(file.id)}
-                          className="px-2 py-1 text-red-600 hover:bg-red-50 rounded text-sm"
-                        >
-                          🗑️ ลบ
-                        </button>
-                      </div>
+
+                {/* Own Files */}
+                {tourFiles.filter((file) => !file.isSharedFile).length > 0 && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">
+                      📁 Files for this tour
+                    </h4>
+                    <div className="space-y-2">
+                      {tourFiles
+                        .filter((file) => !file.isSharedFile)
+                        .map((file) => (
+                          <div
+                            key={file.id}
+                            className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <span className="text-lg">
+                                {file.file_type === "pdf" ? "📄" : "🖼️"}
+                              </span>
+                              <div>
+                                <p className="text-sm font-medium text-gray-900">
+                                  {file.original_name}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {file.file_size_formatted} • This tour's file •{" "}
+                                  {file.file_category || "general"}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <button
+                                type="button"
+                                onClick={() => handleViewFile(file, false)}
+                                className="px-2 py-1 text-blue-600 hover:bg-blue-100 rounded text-sm"
+                              >
+                                👁️ View
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteTourFile(file.id)}
+                                className="px-2 py-1 text-red-600 hover:bg-red-50 rounded text-sm"
+                              >
+                                🗑️ Delete
+                              </button>
+                            </div>
+                          </div>
+                        ))}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
+
+                {/* Shared Gallery Groups */}
+                {Object.keys(sharedGalleryGroups).length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">
+                      🔗 Shared Gallery images
+                    </h4>
+                    {Object.values(sharedGalleryGroups).map((group) => (
+                      <SharedGalleryGroup
+                        key={group.sourceTourId}
+                        sourceTourId={group.sourceTourId}
+                        sourceTourName={group.sourceTourName}
+                        files={group.files}
+                        onUnshareAll={handleUnshareGallery}
+                        onUnshareFile={handleUnshareFile}
+                        onViewFile={handleViewFile}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -732,7 +785,7 @@ const EditTour = () => {
               disabled={saving}
               className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium shadow-md"
             >
-              {saving ? "กำลังบันทึก..." : "💾 บันทึกการแก้ไข"}
+              {saving ? "Saving..." : "💾 Save changes"}
             </button>
 
             <button
@@ -741,7 +794,7 @@ const EditTour = () => {
               disabled={saving}
               className="flex-1 bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium shadow-md"
             >
-              {saving ? "กำลังลบ..." : "🗑️ ลบทัวร์นี้"}
+              {saving ? "Deleting..." : "🗑️ Delete this tour"}
             </button>
 
             <button
@@ -749,7 +802,7 @@ const EditTour = () => {
               onClick={() => navigate("/")}
               className="flex-1 bg-gray-300 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-400 transition-colors font-medium shadow-md"
             >
-              ยกเลิก
+              Cancel
             </button>
           </div>
         </div>

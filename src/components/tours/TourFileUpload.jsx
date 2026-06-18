@@ -34,17 +34,17 @@ const TourFileUpload = ({
 
   const validateFile = (file) => {
     if (!allowedTypes[file.type]) {
-      return "รองรับเฉพาะไฟล์ PDF และรูปภาพ (JPG, PNG, GIF, WebP)";
+      return "Only PDF and image files are supported (JPG, PNG, GIF, WebP)";
     }
 
     if (file.size > maxFileSize) {
-      return "ขนาดไฟล์ใหญ่เกินไป (สูงสุด 10MB)";
+      return "File size is too large (max 10MB)";
     }
 
     // Validate against category restrictions
     const fileType = file.type.includes("image") ? "image" : "pdf";
     if (!categoryInfo.allowedTypes.includes(fileType)) {
-      return `หมวดหมู่ "${categoryInfo.label}" รองรับเฉพาะ ${categoryHints.allowedTypesText}`;
+      return `The "${categoryInfo.label}" category only supports ${categoryHints.allowedTypesText}`;
     }
 
     return null;
@@ -77,7 +77,7 @@ const TourFileUpload = ({
         fileInputRef.current.value = "";
       }
 
-      // alert(`อัพโหลดไฟล์ "${file.name}" ในหมวด "${categoryInfo.label}" สำเร็จ`);
+      // alert(`File "${file.name}" uploaded successfully in category "${categoryInfo.label}"`);
     } catch (error) {
       console.error("Upload error:", error);
       alert(error.message);
@@ -86,11 +86,11 @@ const TourFileUpload = ({
     }
   };
 
-  // เพิ่มก่อนฟังก์ชัน handleFileSelect
+  // Added before the handleFileSelect function
   const uploadFilesSequentially = async (files) => {
     const results = [];
     const BATCH_SIZE = 5;
-    const DELAY_BETWEEN_BATCHES = 2000; // 2 วินาที
+    const DELAY_BETWEEN_BATCHES = 2000; // 2 seconds
 
     for (let i = 0; i < files.length; i += BATCH_SIZE) {
       const batch = files.slice(i, i + BATCH_SIZE);
@@ -101,13 +101,13 @@ const TourFileUpload = ({
         )}`
       );
 
-      // อัพโหลดทีละ batch
+      // Upload one batch at a time
       const batchPromises = batch.map((file) => uploadFile(file));
       const batchResults = await Promise.all(batchPromises);
 
       results.push(...batchResults);
 
-      // รอก่อนอัพโหลด batch ถัดไป
+      // Wait before uploading the next batch
       if (i + BATCH_SIZE < files.length) {
         console.log(
           `⏳ Waiting ${DELAY_BETWEEN_BATCHES / 1000}s before next batch...`
@@ -126,10 +126,10 @@ const TourFileUpload = ({
 
     if (files.length > 10) {
       const confirmed = confirm(
-        `คุณกำลังจะอัพโหลด ${files.length} ไฟล์\n` +
-          `ระบบจะอัพโหลดทีละ 5 ไฟล์เพื่อป้องกันปัญหา\n` +
-          `ประมาณใช้เวลา ${Math.ceil(files.length / 5) * 2} วินาที\n\n` +
-          `ต้องการดำเนินการต่อหรือไม่?`
+        `You are about to upload ${files.length} files\n` +
+          `The system will upload 5 files at a time to prevent issues\n` +
+          `Estimated time: ${Math.ceil(files.length / 5) * 2} seconds\n\n` +
+          `Do you want to continue?`
       );
 
       if (!confirmed) return;
@@ -143,9 +143,9 @@ const TourFileUpload = ({
       try {
         setUploading(true);
         await uploadFilesSequentially(files);
-        alert(`✅ อัพโหลด ${files.length} ไฟล์เสร็จสิ้น`);
+        alert(`✅ Finished uploading ${files.length} files`);
       } catch (error) {
-        alert(`❌ เกิดข้อผิดพลาด: ${error.message}`);
+        alert(`❌ An error occurred: ${error.message}`);
       } finally {
         setUploading(false);
         // Reset file input
@@ -164,10 +164,10 @@ const TourFileUpload = ({
 
     if (files.length > 10) {
       const confirmed = confirm(
-        `คุณกำลังจะอัพโหลด ${files.length} ไฟล์\n` +
-          `ระบบจะอัพโหลดทีละ 5 ไฟล์เพื่อป้องกันปัญหา\n` +
-          `ประมาณใช้เวลา ${Math.ceil(files.length / 5) * 2} วินาที\n\n` +
-          `ต้องการดำเนินการต่อหรือไม่?`
+        `You are about to upload ${files.length} files\n` +
+          `The system will upload 5 files at a time to prevent issues\n` +
+          `Estimated time: ${Math.ceil(files.length / 5) * 2} seconds\n\n` +
+          `Do you want to continue?`
       );
 
       if (!confirmed) return;
@@ -179,9 +179,9 @@ const TourFileUpload = ({
       try {
         setUploading(true);
         await uploadFilesSequentially(files);
-        alert(`✅ อัพโหลด ${files.length} ไฟล์เสร็จสิ้น`);
+        alert(`✅ Finished uploading ${files.length} files`);
       } catch (error) {
-        alert(`❌ เกิดข้อผิดพลาด: ${error.message}`);
+        alert(`❌ An error occurred: ${error.message}`);
       } finally {
         setUploading(false);
       }
@@ -222,7 +222,7 @@ const TourFileUpload = ({
       {/* Category Selection */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          หมวดหมู่ไฟล์ <span className="text-red-500">*</span>
+          File category <span className="text-red-500">*</span>
         </label>
         <select
           value={selectedCategory}
@@ -241,13 +241,13 @@ const TourFileUpload = ({
         <div className={`mt-2 p-3 rounded-lg ${categoryInfo.color} border`}>
           <p className="text-sm font-medium mb-1">{categoryInfo.description}</p>
           <p className="text-xs">
-            รองรับ: {categoryHints.allowedTypesText} | ตัวอย่าง:{" "}
+            Supports: {categoryHints.allowedTypesText} | Examples:{" "}
             {categoryHints.examples.slice(0, 2).join(", ")}
           </p>
         </div>
       </div>
 
-      {/* Share Gallery Manager - แสดงเฉพาะเมื่อเลือก Gallery */}
+      {/* Share Gallery Manager - shown only when Gallery is selected */}
       {selectedCategory === "gallery" && (
         <div className="mt-4">
           <ShareGalleryManager
@@ -288,7 +288,7 @@ const TourFileUpload = ({
           <div className="space-y-3">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
             <p className="text-sm text-gray-600">
-              กำลังอัพโหลดไปยัง "{categoryInfo.label}"...
+              Uploading to "{categoryInfo.label}"...
             </p>
           </div>
         ) : (
@@ -302,13 +302,13 @@ const TourFileUpload = ({
 
             <div>
               <p className="text-lg font-medium text-gray-900 mb-2">
-                อัพโหลดไฟล์ไปยัง "{categoryInfo.label}"
+                Upload files to "{categoryInfo.label}"
               </p>
               <p className="text-sm text-gray-600 mb-2">
-                คลิกเพื่อเลือกไฟล์ หรือลากไฟล์มาวางที่นี่
+                Click to select files or drag and drop them here
               </p>
               <p className="text-xs text-gray-500">
-                รองรับ {categoryHints.allowedTypesText} (สูงสุด 10MB)
+                Supports {categoryHints.allowedTypesText} (max 10MB)
               </p>
             </div>
 
@@ -333,9 +333,9 @@ const TourFileUpload = ({
 
       {/* Instructions */}
       <div className="mt-3 text-xs text-gray-500 space-y-1">
-        <p>• สามารถอัพโหลดหลายไฟล์พร้อมกันได้</p>
-        <p>• ไฟล์จะถูกจัดเก็บในหมวด "{categoryInfo.label}"</p>
-        <p>• เปลี่ยนหมวดหมู่ก่อนอัพโหลดหากต้องการจัดหมวดอื่น</p>
+        <p>• You can upload multiple files at once</p>
+        <p>• Files will be stored in the "{categoryInfo.label}" category</p>
+        <p>• Change the category before uploading if you want a different one</p>
       </div>
     </div>
   );

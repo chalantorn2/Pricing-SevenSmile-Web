@@ -3,7 +3,7 @@ const HotelList = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold text-gray-900">รายการ Hotel</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Hotel List</h1>
       </div>
 
       {/* Coming Soon Card */}
@@ -17,10 +17,10 @@ const HotelList = () => {
           {/* Title */}
           <div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              ระบบจัดการ Hotel
+              Hotel Management System
             </h2>
             <p className="text-lg text-gray-600">
-              ระบบจัดการราคาและข้อมูลโรงแรม
+              Manage hotel prices and information
             </p>
           </div>
 
@@ -29,7 +29,7 @@ const HotelList = () => {
             <div className="flex items-center justify-center space-x-2">
               <span className="text-2xl">🚧</span>
               <div>
-                <p className="font-semibold text-yellow-800">กำลังพัฒนา</p>
+                <p className="font-semibold text-yellow-800">In development</p>
                 <p className="text-sm text-yellow-700">Coming Soon...</p>
               </div>
             </div>
@@ -37,23 +37,23 @@ const HotelList = () => {
 
           {/* Features Preview */}
           <div className="max-w-2xl mx-auto">
-            <p className="text-sm text-gray-500 mb-4">ฟีเจอร์ที่กำลังจะมา:</p>
+            <p className="text-sm text-gray-500 mb-4">Upcoming features:</p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
               <div className="flex items-center space-x-2">
                 <span>🏨</span>
-                <span>จัดการโรงแรม</span>
+                <span>Manage hotels</span>
               </div>
               <div className="flex items-center space-x-2">
                 <span>🛏️</span>
-                <span>ประเภทห้อง</span>
+                <span>Room types</span>
               </div>
               <div className="flex items-center space-x-2">
                 <span>📅</span>
-                <span>ราคาตามฤดูกาล</span>
+                <span>Seasonal pricing</span>
               </div>
               <div className="flex items-center space-x-2">
                 <span>💎</span>
-                <span>ราคา Net</span>
+                <span>Net price</span>
               </div>
             </div>
           </div>

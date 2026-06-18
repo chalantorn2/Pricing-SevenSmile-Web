@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const FileGallery = ({ files, getFileUrl, title = "รูปภาพ" }) => {
+const FileGallery = ({ files, getFileUrl, title = "Images" }) => {
   const [selectedImage, setSelectedImage] = useState(null);
 
   if (!files || files.length === 0) return null;
@@ -18,7 +18,7 @@ const FileGallery = ({ files, getFileUrl, title = "รูปภาพ" }) => {
       <div className="file-gallery-section">
         <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
           <span className="mr-2">🖼️</span>
-          {title} ({files.length} รูป)
+          {title} ({files.length} images)
         </h3>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">

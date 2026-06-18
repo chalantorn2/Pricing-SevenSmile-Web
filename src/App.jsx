@@ -16,6 +16,9 @@ import SupplierList from "./pages/suppliers/SupplierList";
 import SupplierDetail from "./pages/suppliers/SupplierDetail";
 import SharedTour from "./pages/tours/SharedTour";
 import EditTour from "./pages/tours/EditTour";
+import PackageTourList from "./pages/packages/PackageTourList";
+import PackageTourForm from "./pages/packages/PackageTourForm";
+import PackageTourView from "./pages/packages/PackageTourView";
 import "./index.css";
 
 // Protected Route Component
@@ -74,7 +77,13 @@ const AppRoutes = () => {
         <Route path="add" element={<AddTour />} />
         <Route path="edit/:id" element={<EditTour />} />
 
-        {/* ✨ Supplier Routes */}
+        {/* Package Tours Routes */}
+        <Route path="packages" element={<PackageTourList />} />
+        <Route path="packages/create" element={<PackageTourForm />} />
+        <Route path="packages/edit/:id" element={<PackageTourForm />} />
+        <Route path="packages/view/:id" element={<PackageTourView />} />
+
+        {/* Supplier Routes */}
         <Route path="suppliers" element={<SupplierList />} />
         <Route path="suppliers/:id" element={<SupplierDetail />} />
 
@@ -85,14 +94,7 @@ const AppRoutes = () => {
         <Route path="hotel" element={<HotelList />} />
 
         {/* User Management Routes */}
-        <Route
-          path="users"
-          element={
-            <ProtectedRoute adminOnly>
-              <UserManagement />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="users" element={<UserManagement />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

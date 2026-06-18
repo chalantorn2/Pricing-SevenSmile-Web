@@ -25,18 +25,18 @@ const AddTour = () => {
   const steps = [
     {
       id: 1,
-      name: "เลือก Supplier",
+      name: "Select Supplier",
       icon: "🏢",
-      description: "เลือกหรือสร้าง Supplier",
+      description: "Select or create a Supplier",
     },
     {
       id: 2,
-      name: "อัพโหลดไฟล์",
+      name: "Upload files",
       icon: "📎",
-      description: "อัพโหลด Contact Rate Files",
+      description: "Upload Contact Rate Files",
     },
-    { id: 3, name: "เพิ่มทัวร์", icon: "🏝️", description: "เพิ่มรายการทัวร์" },
-    { id: 4, name: "สรุป", icon: "📋", description: "ตรวจสอบและบันทึก" },
+    { id: 3, name: "Add tours", icon: "🏝️", description: "Add tour items" },
+    { id: 4, name: "Summary", icon: "📋", description: "Review and save" },
   ];
 
   // Step 1: Supplier Selection
@@ -86,14 +86,14 @@ const AddTour = () => {
       console.log("Tours created:", response);
 
       alert(
-        `✅ สร้างทัวร์สำเร็จ ${
+        `✅ Successfully created ${
           Array.isArray(response) ? response.length : 1
-        } รายการ!`
+        } tours!`
       );
       navigate("/");
     } catch (error) {
       console.error("Error creating tours:", error);
-      alert("เกิดข้อผิดพลาดในการสร้างทัวร์: " + error.message);
+      alert("An error occurred while creating tours: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -143,17 +143,17 @@ const AddTour = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            เพิ่มราคาทัวร์ใหม่
+            Add New Tour Prices
           </h1>
           <p className="text-gray-600 mt-1">
-            ระบบใหม่: เลือก Supplier → อัพโหลดไฟล์ → เพิ่มหลายทัวร์
+            New flow: select Supplier → upload files → add multiple tours
           </p>
         </div>
         <button
           onClick={() => navigate("/")}
           className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
         >
-          ← กลับ
+          ← Back
         </button>
       </div>
 
@@ -231,10 +231,10 @@ const AddTour = () => {
             <div className="space-y-6">
               <div className="text-center pb-6 border-b">
                 <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                  🏢 เลือกหรือสร้าง Supplier
+                  🏢 Select or create a Supplier
                 </h2>
                 <p className="text-gray-600">
-                  เริ่มต้นด้วยการเลือก Supplier ที่จะเพิ่มทัวร์
+                  Start by selecting the Supplier to add tours for
                 </p>
               </div>
 
@@ -243,21 +243,21 @@ const AddTour = () => {
                   onSelect={handleSupplierSelect}
                   onCreateNew={handleCreateNewSupplier}
                   value={selectedSupplier}
-                  placeholder="ค้นหา Supplier หรือสร้างใหม่..."
+                  placeholder="Search for a Supplier or create a new one..."
                 />
 
                 {selectedSupplier && (
                   <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
                     <h3 className="font-semibold text-green-800 mb-2">
-                      ✅ Supplier ที่เลือก:
+                      ✅ Selected Supplier:
                     </h3>
                     <div className="text-sm space-y-1">
                       <p>
-                        <strong>ชื่อ:</strong> {selectedSupplier.name}
+                        <strong>Name:</strong> {selectedSupplier.name}
                       </p>
                       {selectedSupplier.phone && (
                         <p>
-                          <strong>โทร:</strong> {selectedSupplier.phone}
+                          <strong>Phone:</strong> {selectedSupplier.phone}
                         </p>
                       )}
                       {selectedSupplier.line && (
@@ -270,7 +270,7 @@ const AddTour = () => {
                       onClick={nextStep}
                       className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                     >
-                      ถัดไป: อัพโหลดไฟล์ →
+                      Next: Upload files →
                     </button>
                   </div>
                 )}
@@ -283,10 +283,10 @@ const AddTour = () => {
             <div className="space-y-6">
               <div className="text-center pb-6 border-b">
                 <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                  📎 อัพโหลด Contact Rate Files
+                  📎 Upload Contact Rate Files
                 </h2>
                 <p className="text-gray-600">
-                  อัพโหลดไฟล์ Contact Rate และเอกสารที่เกี่ยวข้อง
+                  Upload Contact Rate files and related documents
                 </p>
               </div>
 
@@ -298,7 +298,7 @@ const AddTour = () => {
               {uploadedFiles.length > 0 && (
                 <div className="space-y-4">
                   <h3 className="font-semibold text-gray-900">
-                    📁 ไฟล์ที่อัพโหลดแล้ว ({uploadedFiles.length} ไฟล์)
+                    📁 Uploaded files ({uploadedFiles.length} files)
                   </h3>
                   <div className="space-y-2">
                     {uploadedFiles.map((file) => (
@@ -317,7 +317,7 @@ const AddTour = () => {
                             <p className="text-xs text-gray-500">
                               {file.file_size_formatted} •{" "}
                               {new Date(file.uploaded_at).toLocaleDateString(
-                                "th-TH"
+                                "en-US"
                               )}
                             </p>
                           </div>
@@ -331,13 +331,13 @@ const AddTour = () => {
                       onClick={prevStep}
                       className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
                     >
-                      ← ย้อนกลับ
+                      ← Back
                     </button>
                     <button
                       onClick={nextStep}
                       className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                     >
-                      ถัดไป: เพิ่มทัวร์ →
+                      Next: Add tours →
                     </button>
                   </div>
                 </div>
@@ -349,10 +349,10 @@ const AddTour = () => {
                     onClick={nextStep}
                     className="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-colors"
                   >
-                    ข้าม: เพิ่มทัวร์ก่อน →
+                    Skip: Add tours first →
                   </button>
                   <p className="text-xs text-gray-500 mt-2">
-                    (สามารถอัพโหลดไฟล์ทีหลังได้)
+                    (You can upload files later)
                   </p>
                 </div>
               )}
@@ -364,10 +364,10 @@ const AddTour = () => {
             <div className="space-y-6">
               <div className="text-center pb-6 border-b">
                 <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                  🏝️ เพิ่มรายการทัวร์
+                  🏝️ Add tour items
                 </h2>
                 <p className="text-gray-600">
-                  เพิ่มทัวร์หลายรายการสำหรับ {selectedSupplier?.name}
+                  Add multiple tours for {selectedSupplier?.name}
                 </p>
               </div>
 
@@ -378,7 +378,7 @@ const AddTour = () => {
                     currentTourId={null} // For new tours, we'll handle this differently
                     onGalleryShared={() => {
                       alert(
-                        "เพื่อใช้การแชร์รูป Gallery โปรดบันทึกทัวร์ก่อน แล้วใช้ฟีเจอร์นี้ในหน้าแก้ไข"
+                        "To use Gallery image sharing, please save the tour first, then use this feature on the edit page"
                       );
                     }}
                   />
@@ -396,7 +396,7 @@ const AddTour = () => {
                   onClick={prevStep}
                   className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
                 >
-                  ← ย้อนกลับ
+                  ← Back
                 </button>
               </div>
             </div>

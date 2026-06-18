@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import { usersService } from "../../services/api-service";
+import { useAuth } from "../../hooks/useAuth";
 
 const UserManagement = () => {
+  const { user: currentUser, isAdmin } = useAuth();
+  const canManage = isAdmin();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -22,7 +25,7 @@ const UserManagement = () => {
       setUsers(data);
     } catch (error) {
       console.error("Error fetching users:", error);
-      alert("เกิดข้อผิดพลาดในการโหลดข้อมูลผู้ใช้");
+      alert("An error occurred while loading users");
     } finally {
       setLoading(false);
     }
@@ -61,12 +64,12 @@ const UserManagement = () => {
 
     try {
       if (!formData.username.trim()) {
-        alert("กรุณากรอกชื่อผู้ใช้");
+        alert("Please enter a username");
         return;
       }
 
       if (!editingUser && !formData.password.trim()) {
-        alert("กรุณากรอกรหัสผ่าน");
+        alert("Please enter a password");
         return;
       }
 
@@ -82,29 +85,29 @@ const UserManagement = () => {
 
       if (editingUser) {
         await usersService.updateUser(editingUser.id, submitData);
-        alert("อัปเดตข้อมูลผู้ใช้เรียบร้อยแล้ว");
+        alert("User updated successfully");
       } else {
         await usersService.addUser(submitData);
-        alert("เพิ่มผู้ใช้เรียบร้อยแล้ว");
+        alert("User added successfully");
       }
 
       handleCloseModal();
       fetchUsers();
     } catch (error) {
       console.error("Error saving user:", error);
-      alert(error.message || "เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+      alert(error.message || "An error occurred while saving data");
     }
   };
 
   const handleDeleteUser = async (userId, username) => {
-    if (window.confirm(`คุณต้องการลบผู้ใช้ "${username}" หรือไม่?`)) {
+    if (window.confirm(`Do you want to delete user "${username}"?`)) {
       try {
         await usersService.deleteUser(userId);
-        alert("ลบผู้ใช้เรียบร้อยแล้ว");
+        alert("User deleted successfully");
         fetchUsers();
       } catch (error) {
         console.error("Error deleting user:", error);
-        alert("เกิดข้อผิดพลาดในการลบผู้ใช้");
+        alert("An error occurred while deleting the user");
       }
     }
   };
@@ -119,6 +122,10 @@ const UserManagement = () => {
     });
   };
 
+  const visibleUsers = canManage
+    ? users || []
+    : (users || []).filter((u) => String(u.id) === String(currentUser?.id));
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -131,13 +138,17 @@ const UserManagement = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold text-gray-900">จัดการผู้ใช้งาน</h1>
-        <button
-          onClick={() => handleOpenModal()}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          ➕ เพิ่มผู้ใช้ใหม่
-        </button>
+        <h1 className="text-2xl font-bold text-gray-900">
+          {canManage ? "User Management" : "My User"}
+        </h1>
+        {canManage && (
+          <button
+            onClick={() => handleOpenModal()}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            ➕ Add New User
+          </button>
+        )}
       </div>
 
       {/* Users Table */}
@@ -147,21 +158,21 @@ const UserManagement = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ชื่อผู้ใช้
+                  Username
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  บทบาท
+                  Role
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  สร้างเมื่อ
+                  Created At
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  การจัดการ
+                  Actions
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {(users || []).map((user) => (
+              {visibleUsers.map((user) => (
                 <tr key={user.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="font-medium text-gray-900">
@@ -176,7 +187,7 @@ const UserManagement = () => {
                           : "bg-green-100 text-green-800"
                       }`}
                     >
-                      {user.role === "admin" ? "ผู้ดูแลระบบ" : "ผู้ใช้งาน"}
+                      {user.role === "admin" ? "Admin" : "User"}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -187,14 +198,14 @@ const UserManagement = () => {
                       onClick={() => handleOpenModal(user)}
                       className="text-blue-600 hover:text-blue-900 transition-colors"
                     >
-                      แก้ไข
+                      Edit
                     </button>
-                    {user.username !== "admin" && (
+                    {canManage && user.username !== "admin" && (
                       <button
                         onClick={() => handleDeleteUser(user.id, user.username)}
                         className="text-red-600 hover:text-red-900 transition-colors"
                       >
-                        ลบ
+                        Delete
                       </button>
                     )}
                   </td>
@@ -204,9 +215,9 @@ const UserManagement = () => {
           </table>
         </div>
 
-        {(!users || users.length === 0) && (
+        {visibleUsers.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-500">ไม่มีข้อมูลผู้ใช้</p>
+            <p className="text-gray-500">No users found</p>
           </div>
         )}
       </div>
@@ -217,13 +228,17 @@ const UserManagement = () => {
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
             <div className="p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                {editingUser ? "แก้ไขผู้ใช้" : "เพิ่มผู้ใช้ใหม่"}
+                {!canManage
+                  ? "Change Password"
+                  : editingUser
+                  ? "Edit User"
+                  : "Add New User"}
               </h2>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    ชื่อผู้ใช้ <span className="text-red-500">*</span>
+                    Username <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -231,14 +246,17 @@ const UserManagement = () => {
                     value={formData.username}
                     onChange={handleChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="กรอกชื่อผู้ใช้"
+                    readOnly={!canManage}
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      !canManage ? "bg-gray-100 text-gray-500" : ""
+                    }`}
+                    placeholder="Enter username"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    รหัสผ่าน{" "}
+                    Password{" "}
                     {editingUser ? "" : <span className="text-red-500">*</span>}
                   </label>
                   <input
@@ -250,46 +268,48 @@ const UserManagement = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder={
                       editingUser
-                        ? "เว้นว่างไว้หากไม่ต้องการเปลี่ยน"
-                        : "กรอกรหัสผ่าน"
+                        ? "Leave blank if unchanged"
+                        : "Enter password"
                     }
                   />
                   {editingUser && (
                     <p className="text-xs text-gray-500 mt-1">
-                      เว้นว่างไว้หากไม่ต้องการเปลี่ยนรหัสผ่าน
+                      Leave blank if you do not want to change the password
                     </p>
                   )}
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    บทบาท <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    name="role"
-                    value={formData.role}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="user">ผู้ใช้งาน</option>
-                    <option value="admin">ผู้ดูแลระบบ</option>
-                  </select>
-                </div>
+                {canManage && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Role <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      name="role"
+                      value={formData.role}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="user">User</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </div>
+                )}
 
                 <div className="flex gap-3 pt-4">
                   <button
                     type="submit"
                     className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
                   >
-                    {editingUser ? "อัปเดต" : "เพิ่มผู้ใช้"}
+                    {editingUser ? "Update" : "Add User"}
                   </button>
                   <button
                     type="button"
                     onClick={handleCloseModal}
                     className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors"
                   >
-                    ยกเลิก
+                    Cancel
                   </button>
                 </div>
               </form>

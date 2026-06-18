@@ -107,7 +107,7 @@ try {
                 $stmt = $pdo->prepare("SELECT id FROM suppliers WHERE id = ?");
                 $stmt->execute(array($supplier_id));
                 if (!$stmt->fetch()) {
-                    throw new Exception("Supplier ไม่พบในระบบ");
+                    throw new Exception("Supplier was not found in the system");
                 }
             }
 
@@ -120,7 +120,7 @@ try {
                 foreach ($tours as $tour) {
                     // Validate required fields
                     if (empty($tour['tour_name'])) {
-                        throw new Exception("กรุณากรอกชื่อทัวร์");
+                        throw new Exception("Please enter a tour name");
                     }
 
                     $sql = "INSERT INTO tours (supplier_id, tour_name, departure_from, pier, adult_price, child_price, start_date, end_date, notes, park_fee_included, map_url, updated_by) 
@@ -159,7 +159,7 @@ try {
 
                         $created_tours[] = $created_tour;
                     } else {
-                        throw new Exception("ไม่สามารถบันทึกทัวร์ได้");
+                        throw new Exception("Unable to save the tour");
                     }
                 }
 
@@ -169,7 +169,7 @@ try {
                 echo json_encode(array(
                     'success' => true,
                     'data' => count($created_tours) === 1 ? $created_tours[0] : $created_tours,
-                    'message' => 'เพิ่มทัวร์สำเร็จ (' . count($created_tours) . ' รายการ)',
+                    'message' => 'Tours added successfully (' . count($created_tours) . ' items)',
                     'count' => count($created_tours)
                 ));
             } catch (Exception $e) {
@@ -182,13 +182,13 @@ try {
             // Update tour
             $id = isset($_GET['id']) ? $_GET['id'] : null;
             if (!$id) {
-                throw new Exception("ไม่พบ ID");
+                throw new Exception("ID not found");
             }
 
             $input = file_get_contents('php://input');
             $data = json_decode($input, true);
 
-            // ✅ เพิ่มบรรทัดนี้ - รองรับ map_url
+            // ✅ Add this line to support map_url
             $sql = "UPDATE tours 
            SET supplier_id=?, tour_name=?, departure_from=?, pier=?, adult_price=?, child_price=?, start_date=?, end_date=?, notes=?, park_fee_included=?, map_url=?, updated_by=?, updated_at=NOW() 
            WHERE id=?";
@@ -205,7 +205,7 @@ try {
                 isset($data['end_date']) && $data['end_date'] && !$data['no_end_date'] ? $data['end_date'] : null,
                 isset($data['notes']) ? $data['notes'] : null,
                 isset($data['park_fee_included']) && $data['park_fee_included'] ? 1 : 0,
-                isset($data['map_url']) ? $data['map_url'] : null, // ✅ เพิ่มบรรทัดนี้
+                isset($data['map_url']) ? $data['map_url'] : null, // ✅ Add this line
                 isset($data['updated_by']) ? $data['updated_by'] : 'Unknown',
                 $id
             ));
@@ -226,10 +226,10 @@ try {
                 echo json_encode(array(
                     'success' => true,
                     'data' => $tour,
-                    'message' => 'อัพเดทสำเร็จ'
+                    'message' => 'Updated successfully'
                 ));
             } else {
-                throw new Exception("ไม่สามารถอัพเดทข้อมูลได้");
+                throw new Exception("Unable to update data");
             }
             break;
 
@@ -237,7 +237,7 @@ try {
             // Delete tour
             $id = isset($_GET['id']) ? $_GET['id'] : null;
             if (!$id) {
-                throw new Exception("ไม่พบ ID");
+                throw new Exception("ID not found");
             }
 
             $stmt = $pdo->prepare("DELETE FROM tours WHERE id = ?");
@@ -246,10 +246,10 @@ try {
             if ($result) {
                 echo json_encode(array(
                     'success' => true,
-                    'message' => 'ลบสำเร็จ'
+                    'message' => 'Deleted successfully'
                 ));
             } else {
-                throw new Exception("ไม่สามารถลบข้อมูลได้");
+                throw new Exception("Unable to delete data");
             }
             break;
 

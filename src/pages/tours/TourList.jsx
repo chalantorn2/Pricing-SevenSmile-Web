@@ -14,32 +14,32 @@ const TourList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
 
-  // Modals (logic เดิม)
+  // Modals (existing logic)
   const [selectedTour, setSelectedTour] = useState(null);
   const [showTourDetailsModal, setShowTourDetailsModal] = useState(false);
   const [showDocumentModal, setShowDocumentModal] = useState(false);
 
-  // Columns (logic เดิม)
+  // Columns (existing logic)
   const mainColumns = [
-    { key: "id", label: "ลำดับ", sortable: false },
-    { key: "tour_name", label: "ชื่อทัวร์", sortable: true },
-    { key: "departure_from", label: "ออกจาก", sortable: true },
-    { key: "adult_price", label: "ราคาผู้ใหญ่", sortable: true },
-    { key: "child_price", label: "ราคาเด็ก", sortable: true },
-    { key: "details", label: "รายละเอียดเพิ่มเติม", sortable: false },
-    { key: "documents", label: "ดูเอกสาร", sortable: false },
+    { key: "id", label: "No.", sortable: false },
+    { key: "tour_name", label: "Tour name", sortable: true },
+    { key: "departure_from", label: "Departure from", sortable: true },
+    { key: "adult_price", label: "Adult price", sortable: true },
+    { key: "child_price", label: "Child price", sortable: true },
+    { key: "details", label: "More details", sortable: false },
+    { key: "documents", label: "View documents", sortable: false },
   ];
 
   const allColumns = [
-    { key: "id", label: "ลำดับ", sortable: false },
-    { key: "tour_name", label: "ชื่อทัวร์", sortable: true },
-    { key: "departure_from", label: "ออกจาก", sortable: true },
-    { key: "pier", label: "ท่าเรือ", sortable: true },
-    { key: "adult_price", label: "ราคาผู้ใหญ่", sortable: true },
-    { key: "child_price", label: "ราคาเด็ก", sortable: true },
-    { key: "notes", label: "หมายเหตุ", sortable: false },
-    { key: "updated_at", label: "อัพเดทเมื่อ", sortable: true },
-    { key: "updated_by", label: "อัพเดทโดย", sortable: true },
+    { key: "id", label: "No.", sortable: false },
+    { key: "tour_name", label: "Tour name", sortable: true },
+    { key: "departure_from", label: "Departure from", sortable: true },
+    { key: "pier", label: "Pier", sortable: true },
+    { key: "adult_price", label: "Adult price", sortable: true },
+    { key: "child_price", label: "Child price", sortable: true },
+    { key: "notes", label: "Notes", sortable: false },
+    { key: "updated_at", label: "Updated at", sortable: true },
+    { key: "updated_by", label: "Updated by", sortable: true },
   ];
 
   const [visibleColumns, setVisibleColumns] = useState({
@@ -56,7 +56,7 @@ const TourList = () => {
 
   const [useMainTable, setUseMainTable] = useState(true);
 
-  // ========= Effects (logic เดิม) =========
+  // ========= Effects (existing logic) =========
   useEffect(() => {
     fetchTours();
   }, []);
@@ -65,7 +65,7 @@ const TourList = () => {
     filterAndSortTours();
   }, [tours, searchTerm, sortConfig]);
 
-  // ========= Data/Logic (เดิม) =========
+  // ========= Data/Logic (existing) =========
   const fetchTours = async () => {
     try {
       setLoading(true);
@@ -73,7 +73,7 @@ const TourList = () => {
       setTours(data);
     } catch (error) {
       console.error("Error fetching tours:", error);
-      alert("เกิดข้อผิดพลาดในการโหลดข้อมูล");
+      alert("An error occurred while loading data");
     } finally {
       setLoading(false);
     }
@@ -130,7 +130,7 @@ const TourList = () => {
   };
 
   const formatDate = (dateString) =>
-    new Date(dateString).toLocaleDateString("th-TH", {
+    new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -139,50 +139,50 @@ const TourList = () => {
     });
 
   const formatPrice = (price) => {
-    // รองรับทั้ง number และ string ที่เป็นตัวเลข
+    // Support both number and numeric string
     const n =
       typeof price === "number"
         ? price
         : Number(String(price ?? "").replace(/[, ]/g, ""));
     if (Number.isNaN(n)) return "-";
-    return new Intl.NumberFormat("th-TH").format(n);
+    return new Intl.NumberFormat("en-US").format(n);
   };
 
   const getNotesWithExpiry = (tour) => {
     let notes = tour.notes || "";
     notes =
       (tour.park_fee_included
-        ? "ราคา Net นี้ รวมค่าอุทยานแล้ว"
-        : "ราคา Net นี้ ยังไม่รวมค่าอุทยาน") + (notes ? ` | ${notes}` : "");
+        ? "This Net price includes the park fee"
+        : "This Net price does not include the park fee") + (notes ? ` | ${notes}` : "");
 
     if (isExpired(tour.end_date)) {
-      notes += " | ⚠️ หมดอายุแล้ว กรุณาต่ออายุ";
+      notes += " | ⚠️ Expired, please renew";
     }
     return notes;
   };
 
   const handleExportExcel = () => {
     const exportData = filteredTours.map((tour, index) => ({
-      ลำดับ: index + 1,
-      ชื่อทัวร์: tour.tour_name,
+      "No.": index + 1,
+      "Tour name": tour.tour_name,
       Supplier: tour.supplier_name,
-      ออกจาก: tour.departure_from,
-      ท่าเรือ: tour.pier,
-      ราคาผู้ใหญ่: tour.adult_price,
-      ราคาเด็ก: tour.child_price,
-      หมายเหตุ: getNotesWithExpiry(tour),
-      วันที่เริ่มต้น: new Date(tour.start_date).toLocaleDateString("th-TH"),
-      วันที่สิ้นสุด: new Date(tour.end_date).toLocaleDateString("th-TH"),
-      อัพเดทเมื่อ: formatDate(tour.updated_at),
-      อัพเดทโดย: tour.updated_by,
+      "Departure from": tour.departure_from,
+      Pier: tour.pier,
+      "Adult price": tour.adult_price,
+      "Child price": tour.child_price,
+      Notes: getNotesWithExpiry(tour),
+      "Start date": new Date(tour.start_date).toLocaleDateString("en-US"),
+      "End date": new Date(tour.end_date).toLocaleDateString("en-US"),
+      "Updated at": formatDate(tour.updated_at),
+      "Updated by": tour.updated_by,
     }));
 
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "ราคาทัวร์");
+    XLSX.utils.book_append_sheet(wb, ws, "Tour Prices");
     XLSX.writeFile(
       wb,
-      `ราคาทัวร์_${new Date().toLocaleDateString("th-TH")}.xlsx`
+      `Tour_Prices_${new Date().toLocaleDateString("en-US")}.xlsx`
     );
   };
 
@@ -212,7 +212,7 @@ const TourList = () => {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-3"></div>
-          <p className="text-gray-600">กำลังโหลดข้อมูล...</p>
+          <p className="text-gray-600">Loading data...</p>
         </div>
       </div>
     );
@@ -228,9 +228,9 @@ const TourList = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">รายการทัวร์</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Tour List</h1>
           <p className="text-sm text-gray-500 mt-1">
-            จัดการราคาและรายละเอียดทัวร์ทั้งหมดในระบบ
+            Manage all tour prices and details in the system
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
@@ -246,7 +246,7 @@ const TourList = () => {
             className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700 active:scale-[.98] shadow-sm"
           >
             <span>➕</span>
-            <span>เพิ่มราคาใหม่</span>
+            <span>Add new price</span>
           </Link>
         </div>
       </div>
@@ -257,13 +257,13 @@ const TourList = () => {
           {/* Search */}
           <div className="flex-1">
             <label htmlFor="tour-search" className="sr-only">
-              ค้นหารายการทัวร์
+              Search tours
             </label>
             <div className="relative">
               <input
                 id="tour-search"
                 type="text"
-                placeholder="ค้นหา: ชื่อทัวร์, Supplier, ออกจาก, ท่าเรือ, หมายเหตุ..."
+                placeholder="Search: tour name, Supplier, departure, pier, notes..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
@@ -287,9 +287,9 @@ const TourList = () => {
 
           {/* Result count */}
           <div className="text-sm text-gray-600 flex items-center">
-            แสดง{" "}
-            <span className="mx-1 font-medium">{filteredTours.length}</span> จาก{" "}
-            <span className="mx-1 font-medium">{tours.length}</span> รายการ
+            Showing{" "}
+            <span className="mx-1 font-medium">{filteredTours.length}</span> of{" "}
+            <span className="mx-1 font-medium">{tours.length}</span> items
           </div>
         </div>
 
@@ -303,9 +303,9 @@ const TourList = () => {
                   ? "bg-blue-50 text-blue-700 border-blue-200"
                   : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
               }`}
-              title="สลับรูปแบบคอลัมน์"
+              title="Switch column layout"
             >
-              {useMainTable ? "📋 ตารางย่อ" : "📊 ตารางเต็ม"}
+              {useMainTable ? "📋 Compact table" : "📊 Full table"}
             </button>
 
             {!useMainTable && (
@@ -320,7 +320,7 @@ const TourList = () => {
           </div>
 
           <div className="text-xs text-gray-500">
-            {useMainTable ? "แสดงคอลัมน์หลัก 7 คอลัมน์" : "แสดงตารางแบบเต็ม"}
+            {useMainTable ? "Showing 7 main columns" : "Showing full table"}
           </div>
         </div>
       </div>
@@ -424,7 +424,7 @@ const TourList = () => {
                    group-hover:bg-emerald-100 group-hover:ring-emerald-300"
                         >
                           <span className="font-semibold text-emerald-700">
-                            ฿{formatPrice(tour.adult_price)}
+                            THB {formatPrice(tour.adult_price)}
                           </span>
                         </div>
                       </td>
@@ -440,7 +440,7 @@ const TourList = () => {
                    group-hover:bg-cyan-100 group-hover:ring-cyan-300"
                         >
                           <span className="font-semibold text-cyan-700">
-                            ฿{formatPrice(tour.child_price)}
+                            THB {formatPrice(tour.child_price)}
                           </span>
                         </div>
                       </td>
@@ -476,20 +476,20 @@ const TourList = () => {
                           <button
                             onClick={() => openTourDetailsModal(tour)}
                             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200 hover:bg-blue-100 active:scale-[.98] text-xs"
-                            title="ดูรายละเอียด"
+                            title="View details"
                           >
                             <span aria-hidden>📋</span>
-                            <span>ดูรายละเอียด</span>
+                            <span>View details</span>
                           </button>
                         </td>
                         <td className="px-6 py-3 whitespace-nowrap text-center">
                           <button
                             onClick={() => openDocumentModal(tour)}
                             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-200 hover:bg-gray-100 active:scale-[.98] text-xs"
-                            title="ดูเอกสาร"
+                            title="View documents"
                           >
                             <span aria-hidden>📎</span>
-                            <span>ดูเอกสาร</span>
+                            <span>View documents</span>
                           </button>
                         </td>
                       </>
@@ -503,12 +503,12 @@ const TourList = () => {
 
         {filteredTours.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-500">ไม่พบข้อมูลที่ค้นหา</p>
+            <p className="text-gray-500">No matching data found</p>
           </div>
         )}
       </div>
 
-      {/* Modals (logic เดิม) */}
+      {/* Modals (existing logic) */}
       <TourDetailsModal
         isOpen={showTourDetailsModal}
         onClose={closeModals}

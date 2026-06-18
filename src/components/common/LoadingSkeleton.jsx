@@ -110,8 +110,8 @@ export const DetailSkeleton = () => (
 );
 
 export const ErrorState = ({
-  title = "เกิดข้อผิดพลาด",
-  message = "ไม่สามารถโหลดข้อมูลได้ กรุณาลองใหม่อีกครั้ง",
+  title = "An error occurred",
+  message = "Unable to load data. Please try again.",
   onRetry,
   icon = "😞",
 }) => (
@@ -124,15 +124,15 @@ export const ErrorState = ({
         onClick={onRetry}
         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
       >
-        🔄 ลองใหม่
+        🔄 Try again
       </button>
     )}
   </div>
 );
 
 export const EmptyState = ({
-  title = "ไม่มีข้อมูล",
-  message = "ยังไม่มีข้อมูลในระบบ",
+  title = "No data",
+  message = "No data in the system yet",
   actionText,
   onAction,
   icon = "📭",
@@ -250,7 +250,7 @@ export const MobileOptimizedTable = ({
                   )}
                   {item.tour_count !== undefined && (
                     <p className="text-sm text-gray-600">
-                      🏝️ {item.tour_count} ทัวร์
+                      🏝️ {item.tour_count} tours
                     </p>
                   )}
                 </div>
@@ -288,8 +288,8 @@ export const MobileOptimizedTable = ({
 
       {data.length === 0 && (
         <EmptyState
-          title="ไม่พบข้อมูล"
-          message="ลองเปลี่ยนคำค้นหาหรือรีเฟรชหน้า"
+          title="No data found"
+          message="Try changing your search or refreshing the page"
           icon="🔍"
         />
       )}

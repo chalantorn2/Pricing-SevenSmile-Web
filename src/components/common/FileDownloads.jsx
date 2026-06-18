@@ -37,7 +37,7 @@ const FileDownloads = ({
     <div className="file-downloads-section space-y-4">
       <h3 className="text-sm font-semibold text-gray-900 flex items-center">
         <span className="mr-2">📁</span>
-        {title} ({files.length} ไฟล์)
+        {title} ({files.length} files)
       </h3>
 
       {Object.entries(groupedFiles).map(([categoryId, categoryFiles]) => {
@@ -73,7 +73,7 @@ const FileDownloads = ({
                         <span>•</span>
                         <span>
                           {new Date(file.uploaded_at).toLocaleDateString(
-                            "th-TH"
+                            "en-US"
                           )}
                         </span>
                         {file.file_type && (
@@ -90,7 +90,7 @@ const FileDownloads = ({
                     onClick={() => handleFileView(file)}
                     className="flex-shrink-0 px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors text-sm"
                   >
-                    {file.file_type === "pdf" ? "เปิด" : "ดู"}
+                    {file.file_type === "pdf" ? "Open" : "View"}
                   </button>
                 </div>
               ))}

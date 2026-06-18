@@ -5,7 +5,7 @@ const SupplierAutocomplete = ({
   onSelect,
   onCreateNew,
   value = null,
-  placeholder = "ค้นหาหรือเลือก Supplier...",
+  placeholder = "Search or select a Supplier...",
   disabled = false,
   required = false,
 }) => {
@@ -174,9 +174,9 @@ const SupplierAutocomplete = ({
             type="button"
             onClick={handleCreateNew}
             className="absolute right-12 top-1/2 transform -translate-y-1/2 px-2 py-1 bg-green-100 text-green-700 text-xs rounded hover:bg-green-200 transition-colors"
-            title="สร้าง Supplier ใหม่"
+            title="Create new Supplier"
           >
-            ➕ ใหม่
+            ➕ New
           </button>
         )}
 
@@ -240,7 +240,7 @@ const SupplierAutocomplete = ({
                       agent.phone_4,
                       agent.phone_5,
                     ]
-                      .filter((phone) => phone) // เอาเฉพาะที่มีค่า
+                      .filter((phone) => phone) // keep only non-empty values
                       .map((phone, index) => (
                         <span key={index} className="flex items-center">
                           <span className="mr-1">📞</span>
@@ -278,7 +278,7 @@ const SupplierAutocomplete = ({
           {loading && (
             <div className="px-4 py-3 text-center text-gray-500">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto mb-2"></div>
-              <p className="text-sm">กำลังค้นหา...</p>
+              <p className="text-sm">Searching...</p>
             </div>
           )}
         </div>
@@ -286,8 +286,8 @@ const SupplierAutocomplete = ({
 
       {/* Helper Text */}
       <div className="mt-1 text-xs text-gray-500">
-        พิมพ์อย่างน้อย 2 ตัวอักษรเพื่อค้นหา Supplier
-        {onCreateNew && " หรือคลิกปุ่ม ➕ ใหม่ เพื่อสร้าง"}
+        Type at least 2 characters to search for a Supplier
+        {onCreateNew && " or click the ➕ New button to create one"}
       </div>
     </div>
   );

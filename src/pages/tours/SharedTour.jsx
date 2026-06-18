@@ -22,11 +22,11 @@ const SharedTour = () => {
       if (foundTour) {
         setTour(foundTour);
       } else {
-        setError("ไม่พบข้อมูลทัวร์ที่ต้องการ");
+        setError("The requested tour was not found");
       }
     } catch (error) {
       console.error("Error fetching tour:", error);
-      setError("เกิดข้อผิดพลาดในการโหลดข้อมูล");
+      setError("An error occurred while loading data");
     } finally {
       setLoading(false);
     }
@@ -37,7 +37,7 @@ const SharedTour = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">กำลังโหลดข้อมูลทัวร์...</p>
+          <p className="text-gray-600">Loading tour data...</p>
         </div>
       </div>
     );
@@ -48,13 +48,13 @@ const SharedTour = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
           <div className="text-6xl mb-4">😞</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">ไม่พบข้อมูล</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">No data found</h1>
           <p className="text-gray-600 mb-6">{error}</p>
           <Link
             to="/"
             className="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
-            กลับไปยังระบบ
+            Back to the app
           </Link>
         </div>
       </div>
@@ -72,7 +72,7 @@ const SharedTour = () => {
                 className="truncate text-xl font-semibold text-gray-900"
                 title={tour.tour_name}
               >
-                {tour.tour_name || "รายละเอียดทัวร์"}
+                {tour.tour_name || "Tour Details"}
               </h1>
               <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
                 {!!tour.supplier_name && (
@@ -82,12 +82,12 @@ const SharedTour = () => {
                 )}
                 {!!tour.departure_from && (
                   <span className="inline-flex items-center rounded-full bg-gray-50 px-3 py-1 text-gray-700 ring-1 ring-inset ring-gray-200">
-                    ออกจาก: {tour.departure_from}
+                    Departure from: {tour.departure_from}
                   </span>
                 )}
                 {!!tour.pier && (
                   <span className="inline-flex items-center rounded-full bg-gray-50 px-3 py-1 text-gray-700 ring-1 ring-inset ring-gray-200">
-                    ท่าเรือ: {tour.pier}
+                    Pier: {tour.pier}
                   </span>
                 )}
               </div>
@@ -96,7 +96,7 @@ const SharedTour = () => {
               to="/"
               className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
             >
-              เข้าสู่ระบบ →
+              Sign in →
             </Link>
           </div>
         </div>
@@ -119,13 +119,13 @@ const SharedTour = () => {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="text-sm text-gray-500">
                 <p>Seven Smile Tour And Ticket</p>
-                <p>ระบบจัดการราคาทัวร์</p>
+                <p>Tour Price Management System</p>
               </div>
               <Link
                 to="/"
                 className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
               >
-                🔒 เข้าสู่ระบบเพื่อจัดการ
+                🔒 Sign in to manage
               </Link>
             </div>
           </div>

@@ -48,9 +48,9 @@ const TourMultiForm = ({
     // Phase 4: Copy from previous tour (if exists)
     if (tours.length > 0) {
       const lastTour = tours[tours.length - 1];
-      // Copy all fields except ID and tour_name
+      // Copy all fields except ID
       Object.keys(newTour).forEach((key) => {
-        if (key !== "id" && key !== "tour_name") {
+        if (key !== "id") {
           newTour[key] = lastTour[key];
         }
       });
@@ -62,7 +62,7 @@ const TourMultiForm = ({
   // Remove tour
   const removeTour = (tourId) => {
     if (tours.length <= 1) {
-      alert("ต้องมีทัวร์อย่างน้อย 1 รายการ");
+      alert("At least 1 tour is required");
       return;
     }
     setTours((prev) => prev.filter((tour) => tour.id !== tourId));
@@ -124,7 +124,7 @@ const TourMultiForm = ({
     const tourErrors = {};
 
     if (!tour.tour_name.trim()) {
-      tourErrors.tour_name = "กรุณากรอกชื่อทัวร์";
+      tourErrors.tour_name = "Please enter a tour name";
     }
 
     // Validate dates only if end date is specified
@@ -133,7 +133,7 @@ const TourMultiForm = ({
       const endDate = new Date(tour.end_date);
 
       if (endDate <= startDate) {
-        tourErrors.end_date = "วันสิ้นสุดต้องมากกว่าวันเริ่มต้น";
+        tourErrors.end_date = "End date must be later than start date";
       }
     }
 
@@ -162,7 +162,7 @@ const TourMultiForm = ({
     e.preventDefault();
 
     if (!validateAllTours()) {
-      alert("กรุณาตรวจสอบข้อมูลให้ครบถ้วนและถูกต้อง");
+      alert("Please make sure all information is complete and correct");
       return;
     }
 
@@ -206,10 +206,10 @@ const TourMultiForm = ({
             {/* Tour Header */}
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-semibold text-gray-900">
-                ทัวร์ที่ {index + 1}
+                Tour {index + 1}
                 {index > 0 && (
                   <span className="ml-2 text-sm font-normal text-blue-600">
-                    (คัดลอกจากทัวร์ก่อนหน้า)
+                    (copied from previous tour)
                   </span>
                 )}
               </h3>
@@ -219,7 +219,7 @@ const TourMultiForm = ({
                     type="button"
                     onClick={() => removeTour(tour.id)}
                     className="text-red-600 hover:text-red-800 p-2 hover:bg-red-50 rounded-lg transition-colors"
-                    title="ลบทัวร์นี้"
+                    title="Remove this tour"
                   >
                     <svg
                       className="w-5 h-5"
@@ -244,7 +244,7 @@ const TourMultiForm = ({
               {/* Tour Name */}
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  ชื่อทัวร์ <span className="text-red-500">*</span>
+                  Tour name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -257,7 +257,7 @@ const TourMultiForm = ({
                       ? "border-red-500"
                       : "border-gray-300"
                   }`}
-                  placeholder="กรอกชื่อทัวร์"
+                  placeholder="Enter tour name"
                 />
                 {hasFieldError(tour.id, "tour_name") && (
                   <p className="text-red-500 text-xs mt-1">
@@ -269,7 +269,7 @@ const TourMultiForm = ({
               {/* Departure From - with Autocomplete */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  ออกจาก
+                  Departure from
                 </label>
                 <AutocompleteInput
                   type="departure_from"
@@ -277,27 +277,27 @@ const TourMultiForm = ({
                   onChange={(value) =>
                     updateTour(tour.id, "departure_from", value)
                   }
-                  placeholder="จังหวัด/สถานที่ออกเดินทาง"
+                  placeholder="Province/departure location"
                 />
               </div>
 
               {/* Pier - with Autocomplete */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  ท่าเรือ
+                  Pier
                 </label>
                 <AutocompleteInput
                   type="pier"
                   value={tour.pier}
                   onChange={(value) => updateTour(tour.id, "pier", value)}
-                  placeholder="ชื่อท่าเรือ"
+                  placeholder="Pier name"
                 />
               </div>
 
               {/* Adult Price */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  ราคาผู้ใหญ่ (บาท)
+                  Adult price (THB)
                 </label>
                 <input
                   type="number"
@@ -313,7 +313,7 @@ const TourMultiForm = ({
               {/* Child Price */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  ราคาเด็ก (บาท)
+                  Child price (THB)
                 </label>
                 <input
                   type="number"
@@ -326,7 +326,7 @@ const TourMultiForm = ({
                 />
               </div>
 
-              {/* Map URL - เพิ่มส่วนนี้ */}
+              {/* Map URL - added this section */}
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   🗺️ Google Maps URL
@@ -338,17 +338,17 @@ const TourMultiForm = ({
                     updateTour(tour.id, "map_url", e.target.value)
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="https://maps.google.com/... หรือ https://goo.gl/maps/..."
+                  placeholder="https://maps.google.com/... or https://goo.gl/maps/..."
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  คัดลอก URL จาก Google Maps แล้ววางที่นี่ (ไม่บังคับ)
+                  Copy the URL from Google Maps and paste it here (optional)
                 </p>
               </div>
 
               {/* Start Date */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  วันที่เริ่มต้น
+                  Start date
                 </label>
                 <input
                   type="date"
@@ -363,7 +363,7 @@ const TourMultiForm = ({
               {/* End Date - with Optional Toggle */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  วันที่สิ้นสุด
+                  End date
                 </label>
 
                 {/* End Date Input - conditionally shown */}
@@ -394,7 +394,7 @@ const TourMultiForm = ({
                       className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                     />
                     <span className="ml-2 text-sm text-orange-700">
-                      ไม่กำหนดวันสิ้นสุด (ใช้ไปจนกว่าจะมีการเปลี่ยนแปลง)
+                      No end date (valid until changed)
                     </span>
                   </label>
                 </div>
@@ -403,7 +403,7 @@ const TourMultiForm = ({
                 {tour.no_end_date && (
                   <input
                     type="text"
-                    value="ไม่กำหนด"
+                    value="Not specified"
                     disabled
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-orange-50 text-orange-700 cursor-not-allowed"
                   />
@@ -428,7 +428,7 @@ const TourMultiForm = ({
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                   <span className="ml-2 text-sm text-gray-700">
-                    ราคา Net นี้ รวมค่าอุทยานแล้ว
+                    This Net price includes the park fee
                   </span>
                 </label>
               </div>
@@ -436,14 +436,14 @@ const TourMultiForm = ({
               {/* Notes */}
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  หมายเหตุเฉพาะทัวร์นี้
+                  Notes specific to this tour
                 </label>
                 <textarea
                   value={tour.notes}
                   onChange={(e) => updateTour(tour.id, "notes", e.target.value)}
                   rows={2}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="หมายเหตุเพิ่มเติมสำหรับทัวร์นี้..."
+                  placeholder="Additional notes for this tour..."
                 />
               </div>
             </div>
@@ -471,7 +471,7 @@ const TourMultiForm = ({
               d="M12 4v16m8-8H4"
             />
           </svg>
-          <span>เพิ่มทัวร์อีก 1 รายการ</span>
+          <span>Add another tour</span>
         </button>
       </div>
 
@@ -480,14 +480,14 @@ const TourMultiForm = ({
         <div className="flex items-center justify-between">
           <div>
             <h4 className="font-medium text-gray-900">
-              พร้อมบันทึก {tours.length} ทัวร์
+              Ready to save {tours.length} tours
             </h4>
             <p className="text-sm text-gray-500 mt-1">
-              ตรวจสอบข้อมูลให้ครบถ้วนก่อนบันทึก
+              Make sure all information is complete before saving
             </p>
             {tours.length > 1 && (
               <p className="text-xs text-blue-600 mt-1">
-                💡 Tip: ทัวร์ใหม่จะคัดลอกข้อมูลจากทัวร์ก่อนหน้าอัตโนมัติ
+                💡 Tip: New tours automatically copy data from the previous tour
               </p>
             )}
           </div>
@@ -499,10 +499,10 @@ const TourMultiForm = ({
             {loading ? (
               <div className="flex items-center space-x-2">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                <span>กำลังบันทึก...</span>
+                <span>Saving...</span>
               </div>
             ) : (
-              `💾 บันทึกทัวร์ทั้งหมด (${tours.length} รายการ)`
+              `💾 Save all tours (${tours.length})`
             )}
           </button>
         </div>

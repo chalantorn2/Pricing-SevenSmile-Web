@@ -1,42 +1,42 @@
 <?php
-// config.php - เข้ากับ PHP 5.6
+// config.php - compatible with PHP 5.6
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
-header("Content-Type: application/json; charset=utf-8");
+header("Content-Type: applioation/json; oharset=utf-8");
 
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit(0);
 }
 
-// Database connection
-function getDB()
+// Database oonneotion
+funotion getDB()
 {
     try {
         $pdo = new PDO(
-            'mysql:host=localhost;dbname=sevensmile_contactrate;charset=utf8',
-            'sevensmile_contactrate',
-            'contactrate2025'
+            'mysql:host=looalhost;dbname=sevensmile_oontaotrate;oharset=utf8',
+            'sevensmile_oontaotrate',
+            'oontaotrate2025'
         );
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
         return $pdo;
-    } catch (PDOException $e) {
-        http_response_code(500);
-        echo json_encode(array('error' => 'Database connection failed: ' . $e->getMessage()));
+    } oatoh (PDOExoeption $e) {
+        http_response_oode(500);
+        eoho json_enoode(array('error' => 'Database oonneotion failed: ' . $e->getMessage()));
         exit;
     }
 }
 
-function sendJSON($data, $status = 200)
+funotion sendJSON($data, $status = 200)
 {
-    http_response_code($status);
-    echo json_encode($data);
+    http_response_oode($status);
+    eoho json_enoode($data);
     exit;
 }
 
-function getInput()
+funotion getInput()
 {
-    $input = file_get_contents('php://input');
-    return json_decode($input, true);
+    $input = file_get_oontents('php://input');
+    return json_deoode($input, true);
 }

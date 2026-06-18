@@ -11,18 +11,18 @@ const SupplierDashboard = ({ suppliers, tours, loading }) => {
   }, [suppliers, tours, loading]);
 
   const calculateRecentlyUpdated = () => {
-    // Recently Updated (7 วันล่าสุด) - แสดงแค่ 3 รายการ
+    // Recently Updated (last 7 days) - show only 3 items
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const recentSuppliers = suppliers
       .filter((supplier) => new Date(supplier.updated_at) > weekAgo)
       .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
-      .slice(0, 3); // ✨ เปลี่ยนจาก 5 เป็น 3
+      .slice(0, 3); // ✨ changed from 5 to 3
 
     setRecentlyUpdated(recentSuppliers);
   };
 
   const formatDateTime = (dateString) => {
-    return new Date(dateString).toLocaleDateString("th-TH", {
+    return new Date(dateString).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       hour: "2-digit",
@@ -70,22 +70,22 @@ const SupplierDashboard = ({ suppliers, tours, loading }) => {
         <h2 className="text-xl font-bold text-gray-900 mb-2">
           📊 Supplier Dashboard
         </h2>
-        <p className="text-gray-600">ภาพรวมและการแจ้งเตือนสำคัญ</p>
+        <p className="text-gray-600">Overview and important alerts</p>
       </div>
 
-      {/* อัพเดทล่าสุด - Horizontal Layout */}
-      <div className="bg-white rounded-lg shadow-sm border">
+      {/* Recently Updated - Horizontal Layout */}
+      {/* <div className="bg-white rounded-lg shadow-sm border">
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center">
               <span className="mr-2">🆕</span>
-              อัพเดทล่าสุด
+              Recently Updated
             </h3>
             <Link
               to="/suppliers"
               className="text-blue-600 hover:text-blue-800 text-sm font-medium"
             >
-              ดูทั้งหมด →
+              View all →
             </Link>
           </div>
         </div>
@@ -107,19 +107,19 @@ const SupplierDashboard = ({ suppliers, tours, loading }) => {
                         {supplier.name}
                       </Link>
                       <p className="text-sm text-gray-600 mt-1">
-                        อัพเดท {formatDateTime(supplier.updated_at)}
+                        Updated {formatDateTime(supplier.updated_at)}
                       </p>
-                      {/* แสดงจำนวนทัวร์ถ้ามี */}
+
                       {supplier.tour_count > 0 && (
                         <div className="mt-2">
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            🏝️ {supplier.tour_count} ทัวร์
+                            🏝️ {supplier.tour_count} tours
                           </span>
                         </div>
                       )}
                     </div>
                     <span className="text-blue-600 text-xs whitespace-nowrap ml-2">
-                      🕒 ใหม่
+                      🕒 New
                     </span>
                   </div>
                 </div>
@@ -128,11 +128,11 @@ const SupplierDashboard = ({ suppliers, tours, loading }) => {
           ) : (
             <div className="text-center py-8">
               <div className="text-gray-400 text-4xl mb-2">📅</div>
-              <p className="text-gray-500">ไม่มีการอัพเดทใน 7 วันล่าสุด</p>
+              <p className="text-gray-500">No updates in the last 7 days</p>
             </div>
           )}
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };

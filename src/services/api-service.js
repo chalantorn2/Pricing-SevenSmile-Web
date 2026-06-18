@@ -25,13 +25,13 @@ async function apiCall(endpoint, options = {}) {
       throw new Error(data.error || `HTTP error! status: ${response.status}`);
     }
 
-    // ✅ เพิ่ม fallback สำหรับ PHP Warning
+    // ✅ Add fallback for PHP warnings
     const text = await response.text();
 
-    // ลองแยก JSON จาก PHP Warning
+    // Try to extract JSON from PHP warnings
     let jsonText = text;
     if (text.includes('{"')) {
-      // หา JSON ส่วนแรกในข้อความ
+      // Find the first JSON segment in the response
       const jsonStart = text.indexOf('{"');
       if (jsonStart !== -1) {
         jsonText = text.substring(jsonStart);
@@ -47,7 +47,7 @@ async function apiCall(endpoint, options = {}) {
         text.substring(0, 500)
       );
 
-      // ✅ ถ้า parse ไม่ได้แต่ status 200 = success
+      // ✅ If parsing fails but status is 200, assume success
       if (response.status === 200) {
         console.log("⚠️ Assuming success despite parse error");
         return { success: true, data: null };
@@ -81,7 +81,7 @@ export const authService = {
         body: JSON.stringify({ username, password }),
       });
 
-      // เก็บข้อมูล user ใน localStorage
+      // Store user data in localStorage
       const userData = {
         id: response.data.id,
         username: response.data.username,
@@ -136,7 +136,7 @@ export const suppliersService = {
     } catch (error) {
       console.error("❌ Failed to fetch suppliers:", error);
       throw new Error(
-        "เกิดข้อผิดพลาดในการโหลดข้อมูล Suppliers: " + error.message
+        "An error occurred while loading Suppliers: " + error.message
       );
     }
   },
@@ -156,7 +156,7 @@ export const suppliersService = {
       return response.data || [];
     } catch (error) {
       console.error("❌ Failed to search suppliers:", error);
-      throw new Error("เกิดข้อผิดพลาดในการค้นหา Suppliers: " + error.message);
+      throw new Error("An error occurred while searching Suppliers: " + error.message);
     }
   },
 
@@ -172,7 +172,7 @@ export const suppliersService = {
       return response.data;
     } catch (error) {
       console.error("❌ Failed to add supplier:", error);
-      throw new Error("เกิดข้อผิดพลาดในการเพิ่ม Supplier: " + error.message);
+      throw new Error("An error occurred while adding Supplier: " + error.message);
     }
   },
 
@@ -188,7 +188,7 @@ export const suppliersService = {
       return response.data;
     } catch (error) {
       console.error("❌ Failed to update supplier:", error);
-      throw new Error("เกิดข้อผิดพลาดในการอัพเดท Supplier: " + error.message);
+      throw new Error("An error occurred while updating Supplier: " + error.message);
     }
   },
 
@@ -202,7 +202,7 @@ export const suppliersService = {
       console.log("✅ Supplier deleted successfully");
     } catch (error) {
       console.error("❌ Failed to delete supplier:", error);
-      throw new Error("เกิดข้อผิดพลาดในการลบ Supplier: " + error.message);
+      throw new Error("An error occurred while deleting Supplier: " + error.message);
     }
   },
 
@@ -215,7 +215,7 @@ export const suppliersService = {
     } catch (error) {
       console.error("❌ Failed to fetch supplier:", error);
       throw new Error(
-        "เกิดข้อผิดพลาดในการโหลดข้อมูล Supplier: " + error.message
+        "An error occurred while loading Supplier: " + error.message
       );
     }
   },
@@ -238,7 +238,7 @@ export const supplierFilesService = {
       return response.data || [];
     } catch (error) {
       console.error("❌ Failed to fetch supplier files:", error);
-      throw new Error("เกิดข้อผิดพลาดในการโหลดไฟล์ Supplier: " + error.message);
+      throw new Error("An error occurred while loading Supplier files: " + error.message);
     }
   },
 
@@ -252,7 +252,7 @@ export const supplierFilesService = {
       console.log("✅ Supplier file deleted successfully");
     } catch (error) {
       console.error("❌ Failed to delete supplier file:", error);
-      throw new Error("เกิดข้อผิดพลาดในการลบไฟล์: " + error.message);
+      throw new Error("An error occurred while deleting the file: " + error.message);
     }
   },
 
@@ -267,7 +267,7 @@ export const supplierFilesService = {
     } catch (error) {
       console.error("❌ Failed to fetch category files:", error);
       throw new Error(
-        "เกิดข้อผิดพลาดในการโหลดไฟล์ตามหมวดหมู่: " + error.message
+        "An error occurred while loading files by category: " + error.message
       );
     }
   },
@@ -287,7 +287,7 @@ export const supplierFilesService = {
     } catch (error) {
       console.error("❌ Failed to fetch supplier category files:", error);
       throw new Error(
-        "เกิดข้อผิดพลาดในการโหลดไฟล์ Supplier ตามหมวดหมู่: " + error.message
+        "An error occurred while loading Supplier files by category: " + error.message
       );
     }
   },
@@ -326,7 +326,7 @@ export const supplierFilesService = {
     } catch (error) {
       console.error("❌ Failed to upload supplier file:", error);
       throw new Error(
-        "เกิดข้อผิดพลาดในการอัพโหลดไฟล์ Supplier: " + error.message
+        "An error occurred while uploading Supplier file: " + error.message
       );
     }
   },
@@ -334,8 +334,8 @@ export const supplierFilesService = {
   // Get file URL
   getSupplierFileUrl(file) {
     const baseUrl = import.meta.env.VITE_API_BASE_URL || "/api";
-    // เอา leading slash ออกจาก baseUrl ถ้ามี และรวม path ให้ถูกต้อง
-    const cleanBaseUrl = baseUrl.replace(/\/$/, ""); // เอา trailing slash ออก
+    // Remove the trailing slash from baseUrl when present and build the path correctly
+    const cleanBaseUrl = baseUrl.replace(/\/$/, ""); // Remove trailing slash
     const filePath = `${cleanBaseUrl}/${file.file_path}`;
 
     console.log("🔗 Generated supplier file URL:", filePath); // Debug log
@@ -358,7 +358,7 @@ export const toursService = {
       return response.data;
     } catch (error) {
       console.error("❌ Failed to fetch tours:", error);
-      throw new Error("เกิดข้อผิดพลาดในการโหลดข้อมูลทัวร์: " + error.message);
+      throw new Error("An error occurred while loading tours: " + error.message);
     }
   },
 
@@ -370,7 +370,7 @@ export const toursService = {
       return response.data;
     } catch (error) {
       console.error("❌ Failed to fetch tour:", error);
-      throw new Error("เกิดข้อผิดพลาดในการโหลดข้อมูลทัวร์: " + error.message);
+      throw new Error("An error occurred while loading tours: " + error.message);
     }
   },
 
@@ -393,7 +393,7 @@ export const toursService = {
       return response.data;
     } catch (error) {
       console.error("❌ Failed to add tour(s):", error);
-      throw new Error("เกิดข้อผิดพลาดในการเพิ่มทัวร์: " + error.message);
+      throw new Error("An error occurred while adding tours: " + error.message);
     }
   },
 
@@ -421,7 +421,7 @@ export const toursService = {
       return response.data;
     } catch (error) {
       console.error("❌ Failed to update tour:", error);
-      throw new Error("เกิดข้อผิดพลาดในการอัพเดททัวร์: " + error.message);
+      throw new Error("An error occurred while updating the tour: " + error.message);
     }
   },
 
@@ -435,7 +435,7 @@ export const toursService = {
       console.log("✅ Tour deleted successfully");
     } catch (error) {
       console.error("❌ Failed to delete tour:", error);
-      throw new Error("เกิดข้อผิดพลาดในการลบทัวร์: " + error.message);
+      throw new Error("An error occurred while deleting the tour: " + error.message);
     }
   },
 };
@@ -455,7 +455,7 @@ export const usersService = {
       return response.data;
     } catch (error) {
       console.error("❌ Failed to fetch users:", error);
-      throw new Error("เกิดข้อผิดพลาดในการโหลดข้อมูลผู้ใช้: " + error.message);
+      throw new Error("An error occurred while loading users: " + error.message);
     }
   },
 
@@ -501,7 +501,7 @@ export const usersService = {
       console.log("✅ User deleted successfully");
     } catch (error) {
       console.error("❌ Failed to delete user:", error);
-      throw new Error("เกิดข้อผิดพลาดในการลบผู้ใช้: " + error.message);
+      throw new Error("An error occurred while deleting the user: " + error.message);
     }
   },
 };
@@ -521,7 +521,7 @@ export const filesService = {
       return response.data || [];
     } catch (error) {
       console.error("❌ Failed to fetch files:", error);
-      throw new Error("เกิดข้อผิดพลาดในการโหลดไฟล์: " + error.message);
+      throw new Error("An error occurred while loading files: " + error.message);
     }
   },
 
@@ -538,7 +538,7 @@ export const filesService = {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("tour_id", tourId);
-      formData.append("file_category", category); // ⭐ เพิ่มบรรทัดนี้
+      formData.append("file_category", category); // ⭐ Add this line
       formData.append("uploaded_by", uploadedBy);
 
       const response = await fetch(`${API_BASE_URL}/files.php`, {
@@ -556,7 +556,7 @@ export const filesService = {
       return result.data;
     } catch (error) {
       console.error("❌ Failed to upload tour file:", error);
-      throw new Error("เกิดข้อผิดพลาดในการอัพโหลดไฟล์: " + error.message);
+      throw new Error("An error occurred while uploading the file: " + error.message);
     }
   },
   // Delete a file
@@ -569,7 +569,7 @@ export const filesService = {
       console.log("✅ File deleted successfully");
     } catch (error) {
       console.error("❌ Failed to delete file:", error);
-      throw new Error("เกิดข้อผิดพลาดในการลบไฟล์: " + error.message);
+      throw new Error("An error occurred while deleting the file: " + error.message);
     }
   },
 
@@ -595,11 +595,10 @@ export const filesService = {
       return response.data || [];
     } catch (error) {
       console.error("❌ Failed to search tours with gallery:", error);
-      throw new Error("เกิดข้อผิดพลาดในการค้นหาทัวร์: " + error.message);
+      throw new Error("An error occurred while searching tours: " + error.message);
     }
   },
 
-  // Share gallery files from source tour to target tour
   async shareGalleryFiles(sourceTourId, targetTourId) {
     try {
       console.log(
@@ -623,7 +622,59 @@ export const filesService = {
       return response;
     } catch (error) {
       console.error("❌ Failed to share gallery files:", error);
-      throw new Error("เกิดข้อผิดพลาดในการแชร์รูป Gallery: " + error.message);
+      throw new Error("An error occurred while sharing gallery images: " + error.message);
+    }
+  },
+
+  async unshareGalleryFiles(sourceTourId, targetTourId) {
+    try {
+      console.log(
+        "🔗 Unsharing gallery files from",
+        sourceTourId,
+        "to",
+        targetTourId
+      );
+      const response = await apiCall("/files.php?action=unshare_gallery", {
+        method: "PUT",
+        body: JSON.stringify({
+          source_tour_id: sourceTourId,
+          target_tour_id: targetTourId,
+        }),
+      });
+      console.log(
+        "✅ Gallery files unshared successfully:",
+        response.unshared_count,
+        "files"
+      );
+      return response;
+    } catch (error) {
+      console.error("❌ Failed to unshare gallery files:", error);
+      throw new Error(
+        "An error occurred while unsharing gallery images: " + error.message
+      );
+    }
+  },
+  // Unshare single file
+  async unshareSingleFile(fileId, targetTourId) {
+    try {
+      console.log(
+        "🔗 Unsharing single file:",
+        fileId,
+        "from tour:",
+        targetTourId
+      );
+      const response = await apiCall("/files.php?action=unshare_single_file", {
+        method: "PUT",
+        body: JSON.stringify({
+          file_id: fileId,
+          target_tour_id: targetTourId,
+        }),
+      });
+      console.log("✅ Single file unshared successfully");
+      return response;
+    } catch (error) {
+      console.error("❌ Failed to unshare single file:", error);
+      throw new Error("An error occurred while unsharing the file: " + error.message);
     }
   },
 };
@@ -635,10 +686,10 @@ export const testConnection = async () => {
     console.log("🌐 API Base URL:", API_BASE_URL);
 
     await apiCall("/tours.php");
-    console.log("✅ เชื่อมต่อ API สำเร็จ");
+    console.log("✅ API connection successful");
     return true;
   } catch (error) {
-    console.error("❌ เชื่อมต่อ API ไม่สำเร็จ:", error.message);
+    console.error("❌ API connection failed:", error.message);
     return false;
   }
 };
@@ -663,6 +714,103 @@ export const autocompleteService = {
     } catch (error) {
       console.error("❌ Failed to fetch autocomplete:", error);
       return []; // Return empty array on error, don't throw
+    }
+  },
+};
+
+// Package Tours service
+export const packageToursService = {
+  // Get all package tours
+  async getAllPackages() {
+    try {
+      console.log("📦 Fetching all package tours...");
+      const response = await apiCall("/packages.php");
+      console.log(
+        "✅ Package tours fetched successfully:",
+        response.data?.length,
+        "items"
+      );
+      return response.data;
+    } catch (error) {
+      console.error("❌ Failed to fetch package tours:", error);
+      throw new Error(
+        "An error occurred while loading tour packages: " + error.message
+      );
+    }
+  },
+
+  // Get package tour by ID
+  async getPackageById(id) {
+    try {
+      console.log("📦 Fetching package tour by ID:", id);
+      const response = await apiCall(`/packages.php?id=${id}`);
+      console.log("✅ Package tour fetched successfully:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("❌ Failed to fetch package tour:", error);
+      throw new Error(
+        "An error occurred while loading tour packages: " + error.message
+      );
+    }
+  },
+
+  // Create new package tour
+  async createPackage(packageData) {
+    try {
+      const user = authService.getCurrentUser();
+      const dataWithUser = {
+        ...packageData,
+        created_by: user?.id || null,
+      };
+
+      console.log("➕ Creating new package tour:", dataWithUser);
+      const response = await apiCall("/packages.php", {
+        method: "POST",
+        body: JSON.stringify(dataWithUser),
+      });
+
+      console.log("✅ Package tour created successfully:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("❌ Failed to create package tour:", error);
+      throw new Error(
+        "An error occurred while creating the tour package: " + error.message
+      );
+    }
+  },
+
+  // Update package tour
+  async updatePackage(id, packageData) {
+    try {
+      console.log("🔄 Updating package tour:", id, packageData);
+      const response = await apiCall(`/packages.php?id=${id}`, {
+        method: "PUT",
+        body: JSON.stringify(packageData),
+      });
+
+      console.log("✅ Package tour updated successfully:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("❌ Failed to update package tour:", error);
+      throw new Error(
+        "An error occurred while updating the tour package: " + error.message
+      );
+    }
+  },
+
+  // Delete package tour
+  async deletePackage(id) {
+    try {
+      console.log("🗑️ Deleting package tour:", id);
+      await apiCall(`/packages.php?id=${id}`, {
+        method: "DELETE",
+      });
+      console.log("✅ Package tour deleted successfully");
+    } catch (error) {
+      console.error("❌ Failed to delete package tour:", error);
+      throw new Error(
+        "An error occurred while deleting the tour package: " + error.message
+      );
     }
   },
 };

@@ -222,7 +222,7 @@ const AutocompleteInput = ({
                 </span>
                 {suggestion.usage_count > 1 && (
                   <span className="text-xs text-gray-500 ml-2">
-                    ใช้ {suggestion.usage_count} ครั้ง
+                    Used {suggestion.usage_count} times
                   </span>
                 )}
               </div>
@@ -234,7 +234,7 @@ const AutocompleteInput = ({
       {/* Helper Text */}
       {!disabled && (
         <div className="mt-1 text-xs text-gray-500">
-          พิมพ์อย่างน้อย 2 ตัวอักษรเพื่อดูคำแนะนำ
+          Type at least 2 characters to see suggestions
         </div>
       )}
     </div>

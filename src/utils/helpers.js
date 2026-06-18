@@ -1,5 +1,5 @@
 export const isExpired = (endDate) => {
-  // ถ้าไม่มี end_date หรือเป็น null ให้ถือว่าไม่หมดอายุ
+  // If there is no end_date or it is null, treat as not expired
   if (!endDate || endDate === "0000-00-00") {
     return false;
   }
@@ -8,7 +8,7 @@ export const isExpired = (endDate) => {
 
 export const formatEndDate = (endDate) => {
   if (!endDate) {
-    return "ไม่กำหนด";
+    return "Not specified";
   }
   return formatDate(endDate);
 };
@@ -17,18 +17,18 @@ export const getNotesWithExpiry = (tour) => {
   let notes = tour.notes || "";
 
   if (tour.park_fee_included) {
-    notes = "ราคา Net นี้ รวมค่าอุทยานแล้ว" + (notes ? ` | ${notes}` : "");
+    notes = "This Net price includes the park fee" + (notes ? ` | ${notes}` : "");
   } else {
-    notes = "ราคา Net นี้ ยังไม่รวมค่าอุทยาน" + (notes ? ` | ${notes}` : "");
+    notes = "This Net price does not include the park fee" + (notes ? ` | ${notes}` : "");
   }
 
-  // ✨ เพิ่มเงื่อนไข: เฉพาะทัวร์ที่มี end_date เท่านั้นที่จะเช็คหมดอายุ
+  // ✨ Only check expiry for tours that have an end_date
   if (
     tour.end_date &&
     tour.end_date !== "0000-00-00" &&
     isExpired(tour.end_date)
   ) {
-    notes += " | ⚠️ หมดอายุแล้ว กรุณาต่ออายุ";
+    notes += " | ⚠️ Expired, please renew";
   }
 
   return notes;

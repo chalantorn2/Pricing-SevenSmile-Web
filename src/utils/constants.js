@@ -24,15 +24,15 @@ export const FILE_UPLOAD = {
 
 export const MESSAGES = {
   SUCCESS: {
-    TOUR_CREATED: "สร้างทัวร์สำเร็จ",
-    TOUR_UPDATED: "อัปเดตทัวร์สำเร็จ",
-    TOUR_DELETED: "ลบทัวร์สำเร็จ",
-    FILE_UPLOADED: "อัพโหลดไฟล์สำเร็จ",
-    FILE_DELETED: "ลบไฟล์สำเร็จ",
+    TOUR_CREATED: "Tour created successfully",
+    TOUR_UPDATED: "Tour updated successfully",
+    TOUR_DELETED: "Tour deleted successfully",
+    FILE_UPLOADED: "File uploaded successfully",
+    FILE_DELETED: "File deleted successfully",
   },
   ERROR: {
-    REQUIRED_FIELD: "กรุณากรอกข้อมูลให้ครบถ้วน",
-    FILE_TOO_LARGE: "ขนาดไฟล์ใหญ่เกินไป",
-    INVALID_FILE_TYPE: "รองรับเฉพาะไฟล์ PDF และรูปภาพ",
+    REQUIRED_FIELD: "Please fill in all required fields",
+    FILE_TOO_LARGE: "File size is too large",
+    INVALID_FILE_TYPE: "Only PDF and image files are supported",
   },
 };

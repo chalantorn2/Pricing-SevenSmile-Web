@@ -39,7 +39,7 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
       setFiles(allFiles);
     } catch (error) {
       console.error("Error fetching files:", error);
-      alert("เกิดข้อผิดพลาดในการโหลดไฟล์");
+      alert("An error occurred while loading files");
     } finally {
       setLoading(false);
     }
@@ -78,7 +78,7 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("th-TH", {
+    return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -113,20 +113,20 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
     return groups;
   };
 
-  // เพิ่มฟังก์ชันช่วยเรียงลำดับ
+  // Helper function for sorting
   const getSortedFileGroups = () => {
     const fileGroups = groupFilesByCategory();
     const sortedEntries = Object.entries(fileGroups).sort(([keyA], [keyB]) => {
-      // แยก source และ category
+      // Split source and category
       const [sourceA, categoryA] = keyA.split("_");
       const [sourceB, categoryB] = keyB.split("_");
 
-      // เรียง supplier ก่อน, tour หลัง
+      // Sort supplier first, tour after
       if (sourceA !== sourceB) {
         return sourceA === "supplier" ? -1 : 1;
       }
 
-      // เรียงตาม category: brochure, general, gallery
+      // Sort by category: brochure, general, gallery
       const order = ["brochure", "general", "gallery"];
       return order.indexOf(categoryA) - order.indexOf(categoryB);
     });
@@ -145,7 +145,7 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
           {/* Header */}
           <div className="modal-header border-b border-gray-200 px-6 py-4 flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">เอกสารแนบ</h2>
+              <h2 className="text-xl font-semibold text-gray-900">Attachments</h2>
               <p className="text-sm text-gray-600 mt-1">{tour.tour_name}</p>
             </div>
             <button
@@ -176,7 +176,7 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
             {loading ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                <p className="text-sm text-gray-600">กำลังโหลดไฟล์...</p>
+                <p className="text-sm text-gray-600">Loading files...</p>
               </div>
             ) : files.length > 0 ? (
               <div className="space-y-8">
@@ -198,7 +198,7 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
                         </span>
                       </div>
                       <span className="ml-3 text-sm text-gray-500">
-                        {group.files.length} ไฟล์
+                        {group.files.length} files
                       </span>
                     </div>
 
@@ -211,20 +211,20 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
                         {/* Gallery Header */}
                         <div className="flex items-center justify-between">
                           <p className="text-sm text-gray-600">
-                            คลิกรูปเพื่อดูขนาดใหญ่
+                            Click an image to enlarge
                           </p>
                           <span className="text-xs text-gray-500">
-                            {/* ⭐ นับเฉพาะรูปภาพ */}
+                            {/* ⭐ Count images only */}
                             {
                               group.files.filter(
                                 (file) => file.file_type === "image"
                               ).length
                             }{" "}
-                            รูป
+                            images
                           </span>
                         </div>
 
-                        {/* Grid Layout แบบ TourDetails */}
+                        {/* Grid Layout like TourDetails */}
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                           {group.files
                             .filter((file) => file.file_type === "image")
@@ -261,7 +261,7 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
                         {/* Gallery Footer */}
                         <div className="text-center pt-4 border-t border-gray-100">
                           <p className="text-xs text-gray-500">
-                            💡 เคล็บลับ: คลิกรูปเพื่อดูขนาดเต็ม
+                            💡 Tip: Click an image to view full size
                           </p>
                         </div>
                       </div>
@@ -299,11 +299,11 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
                                     <span>{file.file_size_formatted}</span>
                                     <span>•</span>
                                     <span>
-                                      อัพโหลดเมื่อ{" "}
+                                      Uploaded on{" "}
                                       {formatDate(file.uploaded_at)}
                                     </span>
                                     <span>•</span>
-                                    <span>โดย {file.uploaded_by}</span>
+                                    <span>by {file.uploaded_by}</span>
                                   </div>
                                 </div>
                               </div>
@@ -312,13 +312,13 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
                                   onClick={() => handleViewFile(file)}
                                   className="px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors text-sm"
                                 >
-                                  👁️ ดู
+                                  👁️ View
                                 </button>
                                 <button
                                   onClick={() => handleDownloadFile(file)}
                                   className="px-3 py-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors text-sm"
                                 >
-                                  📥 ดาวน์โหลด
+                                  📥 Download
                                 </button>
                               </div>
                             </div>
@@ -335,10 +335,10 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
                   <span className="text-2xl text-gray-400">📂</span>
                 </div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  ยังไม่มีเอกสารแนบ
+                  No attachments yet
                 </h3>
                 <p className="text-gray-500 mb-4">
-                  ไปที่หน้าแก้ไขเพื่อเพิ่มเอกสารสำหรับทัวร์นี้
+                  Go to the edit page to add documents for this tour
                 </p>
               </div>
             )}
@@ -348,14 +348,14 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
           <div className="modal-footer border-t border-gray-200 px-6 py-4 flex justify-between items-center">
             <div className="text-sm text-gray-500">
               {files.length > 0
-                ? `มีเอกสาร ${files.length} ไฟล์`
-                : "ไม่มีเอกสาร"}
+                ? `${files.length} documents`
+                : "No documents"}
             </div>
             <button
               onClick={onClose}
               className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
             >
-              ปิด
+              Close
             </button>
           </div>
         </div>

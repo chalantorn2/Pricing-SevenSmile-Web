@@ -1,5 +1,5 @@
 <?php
-// api/auth.php - ตามแบบที่ทำงาน
+// api/auth.php - working version
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
@@ -32,7 +32,7 @@ try {
     
     // Validate required fields
     if (empty($data['username']) || empty($data['password'])) {
-        throw new Exception("กรุณากรอก username และ password ให้ครบถ้วน");
+        throw new Exception("Please enter both username and password");
     }
     
     // Database connection
@@ -52,12 +52,12 @@ try {
     $user = $stmt->fetch();
     
     if (!$user) {
-        throw new Exception("ไม่พบชื่อผู้ใช้");
+        throw new Exception("Username not found");
     }
     
     // Check password
     if ($user['password'] !== $data['password']) {
-        throw new Exception("รหัสผ่านไม่ถูกต้อง");
+        throw new Exception("Incorrect password");
     }
     
     // Return user data (without password)
@@ -66,7 +66,7 @@ try {
     echo json_encode(array(
         'success' => true,
         'data' => $user,
-        'message' => 'เข้าสู่ระบบสำเร็จ',
+        'message' => 'Login successful',
         'timestamp' => date('c')
     ));
     

@@ -35,7 +35,7 @@ const Login = () => {
             <h1 className="text-3xl font-bold text-blue-600 mb-2">
               Contact Rate
             </h1>
-            <p className="text-gray-600">ระบบจัดการราคาทัวร์</p>
+            <p className="text-gray-600">Tour Price Management System</p>
           </div>
 
           {/* Login Form */}
@@ -51,7 +51,7 @@ const Login = () => {
                 htmlFor="username"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
-                ชื่อผู้ใช้
+                Username
               </label>
               <input
                 id="username"
@@ -60,7 +60,7 @@ const Login = () => {
                 onChange={(e) => setUsername(e.target.value)}
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                placeholder="กรอกชื่อผู้ใช้"
+                placeholder="Enter username"
               />
             </div>
 
@@ -69,7 +69,7 @@ const Login = () => {
                 htmlFor="password"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
-                รหัสผ่าน
+                Password
               </label>
               <input
                 id="password"
@@ -78,7 +78,7 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                placeholder="กรอกรหัสผ่าน"
+                placeholder="Enter password"
               />
             </div>
 
@@ -87,7 +87,7 @@ const Login = () => {
               disabled={loading}
               className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
-              {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
+              {loading ? "Signing in..." : "Sign in"}
             </button>
           </form>
 

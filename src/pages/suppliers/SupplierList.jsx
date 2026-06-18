@@ -57,7 +57,7 @@ const SupplierList = () => {
       setTours(toursData);
     } catch (error) {
       console.error("Error fetching data:", error);
-      setError(error.message || "เกิดข้อผิดพลาดในการโหลดข้อมูล Suppliers");
+      setError(error.message || "An error occurred while loading Suppliers data");
     } finally {
       setLoading(false);
     }
@@ -84,7 +84,7 @@ const SupplierList = () => {
       };
     });
 
-    // Apply search filter - รวมการค้นหาในเบอร์ทุกเบอร์
+    // Apply search filter - include all phone numbers in the search
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(
@@ -178,15 +178,15 @@ const SupplierList = () => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("th-TH", {
+    return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
     });
   };
 
-  // 🎨 Helper function สำหรับแสดงเบอร์โทรหลายเบอร์
-  const renderPhoneNumbers = (supplier, maxShow = 2) => {
+  // 🎨 Helper function for displaying multiple phone numbers
+  const renderPhoneoumbers = (supplier, maxShow = 2) => {
     const phones = [
       supplier.phone,
       supplier.phone_2,
@@ -196,7 +196,7 @@ const SupplierList = () => {
     ].filter((phone) => phone?.trim());
 
     if (phones.length === 0) {
-      return <span className="text-gray-400 text-xs">ไม่มีเบอร์</span>;
+      return <span className="text-gray-400 text-xs">No phone</span>;
     }
 
     const visiblePhones = phones.slice(0, maxShow);
@@ -216,7 +216,7 @@ const SupplierList = () => {
             </a>
             {index === 0 && (
               <span className="text-xs bg-blue-100 text-blue-700 px-1 rounded">
-                หลัก
+                Primary
               </span>
             )}
           </div>
@@ -224,7 +224,7 @@ const SupplierList = () => {
 
         {hiddenCount > 0 && (
           <div className="text-xs text-gray-500">
-            +{hiddenCount} เบอร์เพิ่มเติม
+            +{hiddenCount} more numbers
           </div>
         )}
       </div>
@@ -242,7 +242,7 @@ const SupplierList = () => {
     ].filter((phone) => phone?.trim());
 
     if (phones.length === 0) {
-      return <span className="text-gray-400 text-xs">ไม่มีเบอร์</span>;
+      return <span className="text-gray-400 text-xs">No phone</span>;
     }
 
     return (
@@ -274,32 +274,32 @@ const SupplierList = () => {
         : filteredSuppliers;
 
     const exportData = dataToExport.map((supplier, index) => ({
-      ลำดับ: index + 1,
-      "ชื่อ Supplier": supplier.name,
-      เบอร์หลัก: supplier.phone || "-",
-      "เบอร์ที่ 2": supplier.phone_2 || "-",
-      "เบอร์ที่ 3": supplier.phone_3 || "-",
-      "เบอร์ที่ 4": supplier.phone_4 || "-",
-      "เบอร์ที่ 5": supplier.phone_5 || "-",
+      "oo.": index + 1,
+      "Supplier name": supplier.name,
+      "Primary phone": supplier.phone || "-",
+      "Phone 2": supplier.phone_2 || "-",
+      "Phone 3": supplier.phone_3 || "-",
+      "Phone 4": supplier.phone_4 || "-",
+      "Phone 5": supplier.phone_5 || "-",
       "Line ID": supplier.line || "-",
       Facebook: supplier.facebook || "-",
       WhatsApp: supplier.whatsapp || "-",
-      ที่อยู่: supplier.address || "-",
-      จำนวนทัวร์: supplier.tour_count,
-      สร้างเมื่อ: formatDate(supplier.created_at),
-      อัพเดทล่าสุด: formatDate(supplier.latest_activity),
+      Address: supplier.address || "-",
+      "Tour count": supplier.tour_count,
+      "Created at": formatDate(supplier.created_at),
+      "Last updated": formatDate(supplier.latest_activity),
     }));
 
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "รายการ Suppliers");
+    XLSX.utils.book_append_sheet(wb, ws, "Suppliers List");
 
     const filename =
       selectedSuppliers.length > 0
-        ? `รายการ_Suppliers_เลือก_${new Date().toLocaleDateString(
-            "th-TH"
+        ? `Suppliers_List_Selected_${new Date().toLocaleDateString(
+            "en-US"
           )}.xlsx`
-        : `รายการ_Suppliers_${new Date().toLocaleDateString("th-TH")}.xlsx`;
+        : `Suppliers_List_${new Date().toLocaleDateString("en-US")}.xlsx`;
 
     XLSX.writeFile(wb, filename);
   };
@@ -327,7 +327,7 @@ const SupplierList = () => {
 
   const handleBulkAction = (action) => {
     if (selectedSuppliers.length === 0) {
-      alert("กรุณาเลือก Suppliers ที่ต้องการดำเนินการ");
+      alert("Please select the Suppliers you want to act on");
       return;
     }
 
@@ -342,18 +342,18 @@ const SupplierList = () => {
 
         if (incompleteContacts.length > 0) {
           alert(
-            `พบ ${
+            `Found ${
               incompleteContacts.length
-            } Suppliers ที่ข้อมูลติดต่อไม่ครบ:\n${incompleteContacts
+            } Suppliers with incomplete contact info:\n${incompleteContacts
               .map((s) => s.name)
               .join(", ")}`
           );
         } else {
-          alert("Suppliers ที่เลือกมีข้อมูลติดต่อครบถ้วนแล้ว");
+          alert("The selected Suppliers have complete contact information");
         }
         break;
       default:
-        alert(`ฟีเจอร์ ${action} กำลังพัฒนา`);
+        alert(`The ${action} feature is in development`);
     }
   };
 
@@ -361,20 +361,20 @@ const SupplierList = () => {
     if (supplier.tour_count === 0) {
       return (
         <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700">
-          ไม่มีทัวร์
+          No tours
         </span>
       );
     }
     if (!supplier.phone && !supplier.line) {
       return (
         <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-700">
-          ข้อมูลไม่ครบ
+          Incomplete info
         </span>
       );
     }
     return (
       <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">
-        พร้อมใช้งาน
+        Ready
       </span>
     );
   };
@@ -404,7 +404,7 @@ const SupplierList = () => {
   if (error) {
     return (
       <ErrorState
-        title="เกิดข้อผิดพลาด"
+        title="An error occurred"
         message={error}
         onRetry={fetchData}
         icon="🚨"
@@ -428,13 +428,13 @@ const SupplierList = () => {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
             {showDashboard
-              ? "จัดการ Suppliers"
-              : `ผลการค้นหา (${filteredSuppliers.length})`}
+              ? "Manage Suppliers"
+              : `Search results (${filteredSuppliers.length})`}
           </h1>
           <p className="text-gray-600 mt-1">
             {showDashboard
-              ? "จัดการข้อมูล Suppliers และดูทัวร์ที่เกี่ยวข้อง"
-              : "แสดงผลตามฟิลเตอร์ที่เลือก"}
+              ? "Manage Supplier data and view related tours"
+              : "Showing results based on the selected filters"}
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
@@ -447,7 +447,7 @@ const SupplierList = () => {
               }}
               className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
             >
-              🏠 กลับ Dashboard
+              🏠 Back to Dashboard
             </button>
           )}
           <button
@@ -460,7 +460,7 @@ const SupplierList = () => {
             to="/add"
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-center cursor-pointer"
           >
-            ➕ เพิ่มทัวร์ใหม่
+            ➕ Add new tour
           </Link>
         </div>
       </div>
@@ -484,7 +484,7 @@ const SupplierList = () => {
         <div className="bg-white p-4 rounded-lg shadow-sm border">
           <div className="flex items-center">
             <div className="flex-1">
-              <p className="text-sm font-medium text-gray-600">มีทัวร์</p>
+              <p className="text-sm font-medium text-gray-600">Has tours</p>
               <p className="text-2xl font-bold text-green-600">
                 {
                   suppliers.filter((s) =>
@@ -500,7 +500,7 @@ const SupplierList = () => {
         <div className="bg-white p-4 rounded-lg shadow-sm border">
           <div className="flex items-center">
             <div className="flex-1">
-              <p className="text-sm font-medium text-gray-600">ไม่มีทัวร์</p>
+              <p className="text-sm font-medium text-gray-600">No tours</p>
               <p className="text-2xl font-bold text-yellow-600">
                 {
                   suppliers.filter(
@@ -516,7 +516,7 @@ const SupplierList = () => {
         <div className="bg-white p-4 rounded-lg shadow-sm border">
           <div className="flex items-center">
             <div className="flex-1">
-              <p className="text-sm font-medium text-gray-600">ข้อมูลไม่ครบ</p>
+              <p className="text-sm font-medium text-gray-600">Incomplete info</p>
               <p className="text-2xl font-bold text-red-600">
                 {suppliers.filter((s) => !s.phone && !s.line).length}
               </p>
@@ -532,7 +532,7 @@ const SupplierList = () => {
           <div className="flex-1">
             <input
               type="text"
-              placeholder="ค้นหา Supplier, เบอร์โทร, Line ID, ที่อยู่..."
+              placeholder="Search Supplier, phone, Line ID, address..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -545,7 +545,7 @@ const SupplierList = () => {
               tours={tours}
             />
             <div className="text-sm text-gray-600">
-              แสดง {filteredSuppliers.length} จาก {suppliers.length} Suppliers
+              Showing {filteredSuppliers.length} of {suppliers.length} Suppliers
             </div>
           </div>
         </div>
@@ -557,13 +557,13 @@ const SupplierList = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <span className="text-blue-700 font-medium">
-                เลือกแล้ว {selectedSuppliers.length} Suppliers
+                Selected {selectedSuppliers.length} Suppliers
               </span>
               <button
                 onClick={() => setSelectedSuppliers([])}
                 className="text-blue-600 hover:text-blue-800 text-sm"
               >
-                ยกเลิกการเลือก
+                Clear selection
               </button>
             </div>
             <div className="flex items-center space-x-2">
@@ -571,13 +571,13 @@ const SupplierList = () => {
                 onClick={() => handleBulkAction("export")}
                 className="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
               >
-                📊 Export ที่เลือก
+                📊 Export Selected
               </button>
               <button
                 onClick={() => handleBulkAction("contact_check")}
                 className="px-3 py-1 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm"
               >
-                📋 ตรวจสอบข้อมูล
+                📋 Check Data
               </button>
             </div>
           </div>
@@ -590,14 +590,14 @@ const SupplierList = () => {
         columns={[
           {
             key: "index",
-            label: "ลำดับ",
+            label: "oo.",
             render: (item, index) => (
               <div className="text-center font-medium">{index + 1}</div>
             ),
           },
           {
             key: "name",
-            label: "ชื่อ Supplier",
+            label: "Supplier oame",
             render: (item) => (
               <div>
                 <div className="font-medium text-gray-900">{item.name}</div>
@@ -611,12 +611,12 @@ const SupplierList = () => {
           },
           {
             key: "contact",
-            label: "ข้อมูลติดต่อ",
+            label: "Contact Info",
             render: (item) => (
               <div className="space-y-2">
-                {/* Phone Numbers - แสดงแบบสวย */}
+                {/* Phone oumbers - display neatly */}
                 <div className="phone-section">
-                  {renderPhoneNumbers(item, 3)}
+                  {renderPhoneoumbers(item, 1)}
                 </div>
 
                 {/* Other Contact Methods */}
@@ -655,7 +655,7 @@ const SupplierList = () => {
 
                 {!item.phone && !item.line && !item.whatsapp && (
                   <span className="text-gray-400 text-xs">
-                    ไม่มีข้อมูลติดต่อ
+                    No contact information
                   </span>
                 )}
               </div>
@@ -663,7 +663,7 @@ const SupplierList = () => {
           },
           {
             key: "tour_count",
-            label: "จำนวนทัวร์",
+            label: "Tour Count",
             render: (item) => (
               <span
                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -672,28 +672,28 @@ const SupplierList = () => {
                     : "bg-gray-100 text-gray-800"
                 }`}
               >
-                {item.tour_count} ทัวร์
+                {item.tour_count} tours
               </span>
             ),
           },
 
           {
             key: "latest_activity",
-            label: "อัพเดทล่าสุด",
+            label: "Last Updated",
             render: (item) => (
               <div className="text-sm">
                 <div>{formatDate(item.latest_activity)}</div>
                 <div className="text-xs text-gray-500">
                   {item.latest_activity > item.updated_at
-                    ? "จากทัวร์"
-                    : "จาก Supplier"}
+                    ? "From tour"
+                    : "From Supplier"}
                 </div>
               </div>
             ),
           },
           {
             key: "actions",
-            label: "การดำเนินการ",
+            label: "Actions",
             render: (item) => (
               <Link
                 to={`/suppliers/${item.id}`}
@@ -701,7 +701,7 @@ const SupplierList = () => {
                 onClick={(e) => e.stopPropagation()}
               >
                 <span>📋</span>
-                <span>ดูรายละเอียด</span>
+                <span>View Details</span>
               </Link>
             ),
           },
@@ -711,7 +711,7 @@ const SupplierList = () => {
         onSelectItem={handleSelectSupplier}
         onSelectAll={handleSelectAll}
         onRowClick={(supplier) => {
-          // Navigate to supplier detail on row click (mobile-friendly)
+          // oavigate to supplier detail on row click (mobile-friendly)
           window.location.href = `/suppliers/${supplier.id}`;
         }}
       />

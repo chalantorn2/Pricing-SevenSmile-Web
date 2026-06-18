@@ -27,7 +27,7 @@ const TourDetailsModal = ({ isOpen, onClose, tour }) => {
 
   if (!isOpen || !tour) return null;
 
-  // Share handler - เปิดหน้าแชร์ในแท็บใหม่
+  // Share handler - open the share page in a new tab
   const handleShare = () => {
     const url = `${window.location.origin}/share/tour/${tour.id}`;
     window.open(url, "_blank", "noopener,noreferrer");
@@ -35,10 +35,10 @@ const TourDetailsModal = ({ isOpen, onClose, tour }) => {
     setTimeout(() => setShowToast(false), 1500);
   };
 
-  // Edit handler - ปิด modal และไปหน้า edit
+  // Edit handler - close the modal and go to the edit page
   const handleEdit = () => {
     onClose?.();
-    // Navigation จะถูกจัดการโดย Link component ใน TourDetails
+    // Navigation is handled by the Link component in TourDetails
   };
 
   const handleBackdropClick = (e) => {
@@ -67,7 +67,7 @@ const TourDetailsModal = ({ isOpen, onClose, tour }) => {
               ref={closeBtnRef}
               onClick={onClose}
               className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              title="ปิด"
+              title="Close"
             >
               <svg
                 className="h-5 w-5"
@@ -82,7 +82,7 @@ const TourDetailsModal = ({ isOpen, onClose, tour }) => {
                   d="M6 18L18 6M6 6l12 12"
                 />
               </svg>
-              <span className="sr-only">ปิด</span>
+              <span className="sr-only">Close</span>
             </button>
           </div>
 
@@ -104,13 +104,13 @@ const TourDetailsModal = ({ isOpen, onClose, tour }) => {
               onClick={onClose}
               className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 active:scale-[.98]"
             >
-              ปิด
+              Close
             </button>
           </div>
         </div>
       </div>
 
-      {showToast && <Toast message="เปิดหน้าแชร์แล้ว" />}
+      {showToast && <Toast message="Share page opened" />}
     </>
   );
 };

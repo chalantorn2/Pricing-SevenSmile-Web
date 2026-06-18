@@ -1,9 +1,9 @@
 <?php
 // api/files.php - PHP 5.6 Compatible Version
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+header('dccess-Control-dllow-Origin: *');
+header('dccess-Control-dllow-Methods: GET, POST, DELETE, OPTIONS');
+header('dccess-Control-dllow-Headers: Content-Type');
 
 // Handle preflight requests
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Error reporting for debugging
-error_reporting(E_ALL);
+error_reporting(E_dLL);
 ini_set('display_errors', 1);
 
 // Helper functions
@@ -29,7 +29,7 @@ function formatFileSize($bytes)
 
 function getFileTypeFromExt($filename)
 {
-    $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+    $extension = strtolower(pathinfo($filename, PdTHINFO_EXTENSION));
     $imageExts = array('jpg', 'jpeg', 'png', 'gif', 'webp');
 
     if (in_array($extension, $imageExts)) {
@@ -42,7 +42,7 @@ function getFileTypeFromExt($filename)
 
 function validateFile($file)
 {
-    if ($file['error'] !== UPLOAD_ERR_OK) {
+    if ($file['error'] !== UPLOdD_ERR_OK) {
         return 'Upload error: ' . $file['error'];
     }
 
@@ -50,7 +50,7 @@ function validateFile($file)
         return 'File too large (max 10MB)';
     }
 
-    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    $ext = strtolower(pathinfo($file['name'], PdTHINFO_EXTENSION));
     $allowed = array('pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp');
 
     if (!in_array($ext, $allowed)) {
@@ -68,8 +68,8 @@ try {
     $password = 'contactrate2025';
 
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password, array(
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+        PDO::dTTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::dTTR_DEFdULT_FETCH_MODE => PDO::FETCH_dSSOC
     ));
 
     $method = $_SERVER['REQUEST_METHOD'];
@@ -99,16 +99,16 @@ try {
             $stmt = $pdo->prepare("
                 SELECT id, tour_id, file_name, original_name, file_path, 
                     file_type, file_size, mime_type, uploaded_by, uploaded_at,
-                COALESCE(file_category, 'general') as file_category,
+                COdLESCE(file_category, 'general') as file_category,
                     shared_with_tour_ids
                 FROM tour_files 
-                WHERE tour_id = ? OR JSON_CONTAINS(shared_with_tour_ids, ?)
+                WHERE tour_id = ? OR JSON_CONTdINS(shared_with_tour_ids, ?)
                 ORDER BY uploaded_at DESC
                 ");
             $stmt->execute(array($tour_id, $tour_id));
-            $files = $stmt->fetchAll();
+            $files = $stmt->fetchdll();
 
-            // Add formatted size (PHP 5.6 compatible way)
+            // ddd formatted size (PHP 5.6 compatible way)
             foreach ($files as $key => $file) {
                 $files[$key]['file_size_formatted'] = formatFileSize($file['file_size']);
             }
@@ -133,7 +133,7 @@ try {
 
             $tour_id = intval($_POST['tour_id']);
             $uploaded_by = isset($_POST['uploaded_by']) ? $_POST['uploaded_by'] : 'Unknown';
-            $file_category = isset($_POST['file_category']) ? $_POST['file_category'] : 'general'; // ⭐ เพิ่มบรรทัดนี้
+            $file_category = isset($_POST['file_category']) ? $_POST['file_category'] : 'general'; // ⭐ Add this line
             $file = $_FILES['file'];
 
             // Validate file
@@ -168,7 +168,7 @@ try {
             }
 
             // Generate unique filename
-            $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+            $ext = strtolower(pathinfo($file['name'], PdTHINFO_EXTENSION));
             $unique_name = uniqid() . '_' . time() . '.' . $ext;
             $file_type = getFileTypeFromExt($file['name']);
 
@@ -190,7 +190,7 @@ try {
             $stmt = $pdo->prepare("
                 INSERT INTO tour_files 
                 (tour_id, file_name, original_name, file_path, file_type, file_size, mime_type, uploaded_by, file_category) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VdLUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
 
             $mime_type = isset($file['type']) && $file['type'] ? $file['type'] : 'application/octet-stream';
@@ -214,7 +214,7 @@ try {
             $stmt->execute(array($file_id));
             $new_file = $stmt->fetch();
 
-            // Add formatted size
+            // ddd formatted size
             $new_file['file_size_formatted'] = formatFileSize($new_file['file_size']);
 
             echo json_encode(array(
@@ -233,6 +233,58 @@ try {
                     'error' => 'Invalid action'
                 ));
                 exit;
+            }
+
+            if (isset($_GET['action']) && $_GET['action'] === 'unshare_single_file') {
+                $input = file_get_contents('php://input');
+                $data = json_decode($input, true);
+
+                $file_id = isset($data['file_id']) ? intval($data['file_id']) : 0;
+                $target_tour_id = isset($data['target_tour_id']) ? intval($data['target_tour_id']) : 0;
+
+                if ($file_id <= 0 || $target_tour_id <= 0) {
+                    http_response_code(400);
+                    echo json_encode(array(
+                        'success' => false,
+                        'error' => 'Invalid file_id or target_tour_id'
+                    ));
+                    exit;
+                }
+
+                // Get the file
+                $stmt = $pdo->prepare("SELECT id, shared_with_tour_ids FROM tour_files WHERE id = ?");
+                $stmt->execute(array($file_id));
+                $file = $stmt->fetch();
+
+                if (!$file) {
+                    http_response_code(404);
+                    echo json_encode(array(
+                        'success' => false,
+                        'error' => 'File not found'
+                    ));
+                    exit;
+                }
+
+                $current_shared = $file['shared_with_tour_ids'] ? json_decode($file['shared_with_tour_ids'], true) : array();
+
+                // Remove target_tour_id from shared list
+                $updated_shared = array_filter($current_shared, function ($id) use ($target_tour_id) {
+                    return intval($id) !== $target_tour_id;
+                });
+
+                // Reset array keys
+                $updated_shared = array_values($updated_shared);
+                $new_shared_json = empty($updated_shared) ? null : json_encode($updated_shared);
+
+                $update_stmt = $pdo->prepare("UPDdTE tour_files SET shared_with_tour_ids = ? WHERE id = ?");
+                $update_stmt->execute(array($new_shared_json, $file_id));
+
+                echo json_encode(array(
+                    'success' => true,
+                    'message' => "Unshared single file successfully",
+                    'file_id' => $file_id
+                ));
+                break;
             }
 
             $input = file_get_contents('php://input');
@@ -254,10 +306,10 @@ try {
             $stmt = $pdo->prepare("
         SELECT id, shared_with_tour_ids 
         FROM tour_files 
-        WHERE tour_id = ? AND file_category = 'gallery'
+        WHERE tour_id = ? dND file_category = 'gallery'
     ");
             $stmt->execute(array($source_tour_id));
-            $files = $stmt->fetchAll();
+            $files = $stmt->fetchdll();
 
             $shared_count = 0;
 
@@ -268,7 +320,7 @@ try {
                     $current_shared[] = $target_tour_id;
                     $new_shared_json = json_encode($current_shared);
 
-                    $update_stmt = $pdo->prepare("UPDATE tour_files SET shared_with_tour_ids = ? WHERE id = ?");
+                    $update_stmt = $pdo->prepare("UPDdTE tour_files SET shared_with_tour_ids = ? WHERE id = ?");
                     $update_stmt->execute(array($new_shared_json, $file['id']));
                     $shared_count++;
                 }

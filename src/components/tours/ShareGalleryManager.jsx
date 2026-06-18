@@ -23,7 +23,7 @@ const ShareGalleryManager = ({ currentTourId, onGalleryShared }) => {
       setSearchResults(filteredTours);
     } catch (error) {
       console.error("Search error:", error);
-      alert("เกิดข้อผิดพลาดในการค้นหา");
+      alert("An error occurred while searching");
     } finally {
       setLoading(false);
     }
@@ -32,8 +32,8 @@ const ShareGalleryManager = ({ currentTourId, onGalleryShared }) => {
   const handleShareGallery = async (sourceTour) => {
     if (
       !window.confirm(
-        `คุณต้องการนำรูป Gallery จาก "${sourceTour.tour_name}" มาใช้ใช่หรือไม่?\n\n` +
-          `จะได้รูป: ${sourceTour.gallery_count} รูป`
+        `Do you want to use the Gallery images from "${sourceTour.tour_name}"?\n\n` +
+          `You will get: ${sourceTour.gallery_count} images`
       )
     ) {
       return;
@@ -46,7 +46,7 @@ const ShareGalleryManager = ({ currentTourId, onGalleryShared }) => {
         currentTourId
       );
 
-      alert(`✅ นำรูป Gallery มาใช้สำเร็จ ${result.shared_count} รูป`);
+      alert(`✅ Gallery images added successfully: ${result.shared_count} images`);
 
       if (onGalleryShared) {
         onGalleryShared();
@@ -57,7 +57,7 @@ const ShareGalleryManager = ({ currentTourId, onGalleryShared }) => {
       setSearchResults([]);
     } catch (error) {
       console.error("Share error:", error);
-      alert("เกิดข้อผิดพลาดในการแชร์รูป: " + error.message);
+      alert("An error occurred while sharing images: " + error.message);
     } finally {
       setSharing(false);
     }
@@ -67,14 +67,14 @@ const ShareGalleryManager = ({ currentTourId, onGalleryShared }) => {
     <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
         <span className="mr-2">🔗</span>
-        เอารูป Gallery จากทัวร์อื่นมาใช้
+        Use Gallery images from another tour
       </h3>
 
       {/* Search Box */}
       <div className="mb-4">
         <input
           type="text"
-          placeholder="ค้นหาทัวร์ที่มีรูป Gallery (พิมพ์อย่างน้อย 2 ตัวอักษร)"
+          placeholder="Search tours with Gallery images (type at least 2 characters)"
           value={searchTerm}
           onChange={(e) => {
             const term = e.target.value;
@@ -90,7 +90,7 @@ const ShareGalleryManager = ({ currentTourId, onGalleryShared }) => {
       {searchResults.length > 0 && (
         <div className="space-y-2">
           <p className="text-sm text-gray-700 mb-2">
-            🎯 พบทัวร์ที่มีรูป Gallery: {searchResults.length} ทัวร์
+            🎯 Found tours with Gallery images: {searchResults.length} tours
           </p>
 
           {searchResults.map((tour) => (
@@ -104,10 +104,10 @@ const ShareGalleryManager = ({ currentTourId, onGalleryShared }) => {
                     {tour.tour_name}
                   </h4>
                   <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
-                    <span>📸 Gallery: {tour.gallery_count} รูป</span>
+                    <span>📸 Gallery: {tour.gallery_count} images</span>
                     {tour.supplier_name && <span>🏢 {tour.supplier_name}</span>}
                     <span>
-                      📅 {new Date(tour.updated_at).toLocaleDateString("th-TH")}
+                      📅 {new Date(tour.updated_at).toLocaleDateString("en-US")}
                     </span>
                   </div>
                 </div>
@@ -117,7 +117,7 @@ const ShareGalleryManager = ({ currentTourId, onGalleryShared }) => {
                   disabled={sharing}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                 >
-                  {sharing ? "กำลังนำมา..." : "เลือกทัวร์นี้"}
+                  {sharing ? "Adding..." : "Select this tour"}
                 </button>
               </div>
             </div>
@@ -127,7 +127,7 @@ const ShareGalleryManager = ({ currentTourId, onGalleryShared }) => {
 
       {searchTerm.length >= 2 && !loading && searchResults.length === 0 && (
         <div className="text-center py-4 text-gray-500">
-          😔 ไม่พบทัวร์ที่มีรูป Gallery สำหรับ "{searchTerm}"
+          😔 No tours with Gallery images found for "{searchTerm}"
         </div>
       )}
     </div>

@@ -54,7 +54,7 @@ try {
                     http_response_code(404);
                     echo json_encode(array(
                         'success' => false,
-                        'error' => 'ไม่พบข้อมูล Supplier'
+                        'error' => 'Supplier not found'
                     ));
                     exit;
                 }
@@ -81,8 +81,6 @@ try {
                 $stmt = $pdo->prepare($sql);
                 $searchParam = '%' . $search . '%';
                 $stmt->execute(array($searchParam, $searchParam, $searchParam, $searchParam, $searchParam, $searchParam));
-                $stmt = $pdo->prepare($sql);
-                $stmt->execute(array('%' . $search . '%'));
             } else {
                 // Get all suppliers with tour count
                 $sql = "SELECT sa.*, 
@@ -113,14 +111,14 @@ try {
 
             // Validate required fields
             if (empty($data['name'])) {
-                throw new Exception("กรุณากรอกชื่อ Supplier");
+                throw new Exception("Please enter a Supplier name");
             }
 
             // Check if name already exists
             $stmt = $pdo->prepare("SELECT id FROM suppliers WHERE name = ?");
             $stmt->execute(array($data['name']));
             if ($stmt->fetch()) {
-                throw new Exception("ชื่อ Supplier นี้มีอยู่แล้ว");
+                throw new Exception("This Supplier name already exists");
             }
 
             $sql = "INSERT INTO suppliers (name, address, phone, phone_2, phone_3, phone_4, phone_5, line, facebook, whatsapp, website) 
@@ -150,10 +148,10 @@ try {
                 echo json_encode(array(
                     'success' => true,
                     'data' => $supplier,
-                    'message' => 'เพิ่ม Supplier สำเร็จ'
+                    'message' => 'Supplier added successfully'
                 ));
             } else {
-                throw new Exception("ไม่สามารถบันทึกข้อมูลได้");
+                throw new Exception("Unable to save data");
             }
             break;
 
@@ -161,7 +159,7 @@ try {
             // Update supplier
             $id = isset($_GET['id']) ? $_GET['id'] : null;
             if (!$id) {
-                throw new Exception("ไม่พบ ID");
+                throw new Exception("ID not found");
             }
 
             $input = file_get_contents('php://input');
@@ -169,14 +167,14 @@ try {
 
             // Validate required fields
             if (empty($data['name'])) {
-                throw new Exception("กรุณากรอกชื่อ Supplier");
+                throw new Exception("Please enter a Supplier name");
             }
 
             // Check if name already exists (exclude current record)
             $stmt = $pdo->prepare("SELECT id FROM suppliers WHERE name = ? AND id != ?");
             $stmt->execute(array($data['name'], $id));
             if ($stmt->fetch()) {
-                throw new Exception("ชื่อ Supplier นี้มีอยู่แล้ว");
+                throw new Exception("This Supplier name already exists");
             }
 
             $sql = "UPDATE suppliers 
@@ -207,10 +205,10 @@ try {
                 echo json_encode(array(
                     'success' => true,
                     'data' => $supplier,
-                    'message' => 'อัพเดท Supplier สำเร็จ'
+                    'message' => 'Supplier updated successfully'
                 ));
             } else {
-                throw new Exception("ไม่สามารถอัพเดทข้อมูลได้");
+                throw new Exception("Unable to update data");
             }
             break;
 
@@ -218,7 +216,7 @@ try {
             // Delete supplier
             $id = isset($_GET['id']) ? $_GET['id'] : null;
             if (!$id) {
-                throw new Exception("ไม่พบ ID");
+                throw new Exception("ID not found");
             }
 
             // Start transaction
@@ -242,7 +240,7 @@ try {
                 if ($result) {
                     echo json_encode(array(
                         'success' => true,
-                        'message' => 'ลบ Supplier และทัวร์ที่เกี่ยวข้องสำเร็จ'
+                        'message' => 'Supplier and related tours deleted successfully'
                     ));
                 }
             } catch (Exception $e) {

@@ -48,35 +48,35 @@ const SupplierFilters = ({ onFilterChange, suppliers, tours }) => {
   const filterOptions = [
     {
       id: "expiring_soon",
-      label: "ทัวร์ใกล้หมดอายุ (30 วัน)",
+      label: "Tours expiring soon (30 days)",
       count: filterCounts.expiringSoon,
       color: "bg-orange-100 text-orange-700",
       icon: "⏰",
     },
     {
       id: "no_tours",
-      label: "ไม่มีทัวร์",
+      label: "No tours",
       count: filterCounts.noTours,
       color: "bg-yellow-100 text-yellow-700",
       icon: "⚠️",
     },
     {
       id: "incomplete_info",
-      label: "ข้อมูลติดต่อไม่ครบ",
+      label: "Incomplete contact info",
       count: filterCounts.incompleteInfo,
       color: "bg-red-100 text-red-700",
       icon: "📋",
     },
     {
       id: "has_active_promo",
-      label: "มีโปรโมชั่น (รวมค่าอุทยาน)",
+      label: "Has promotion (park fee included)",
       count: filterCounts.hasActivePromo,
       color: "bg-green-100 text-green-700",
       icon: "🎯",
     },
     {
       id: "recent_activity",
-      label: "อัพเดทภายใน 7 วัน",
+      label: "Updated within 7 days",
       count: suppliers.filter((supplier) => {
         const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
         return new Date(supplier.updated_at) > weekAgo;
@@ -155,14 +155,14 @@ const SupplierFilters = ({ onFilterChange, suppliers, tours }) => {
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-medium text-gray-700">
-                  กรองข้อมูลอัจฉริยะ
+                  Smart Filters
                 </h3>
                 {hasActiveFilters && (
                   <button
                     onClick={clearAllFilters}
                     className="text-xs text-blue-600 hover:text-blue-800"
                   >
-                    ล้างทั้งหมด
+                    Clear all
                   </button>
                 )}
               </div>

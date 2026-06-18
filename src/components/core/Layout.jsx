@@ -8,14 +8,14 @@ const Layout = () => {
   const location = useLocation();
 
   const navigation = [
-    { name: "รายการ Tour", href: "/", icon: "🏝️" },
-    { name: "จัดการ Suppliers", href: "/suppliers", icon: "🏢" }, // ✨ เพิ่มเมนูใหม่
-    { name: "รายการ Transfer", href: "/transfer", icon: "🚐" },
-    { name: "รายการ Hotel", href: "/hotel", icon: "🏨" },
-    { name: "เพิ่มราคาใหม่", href: "/add", icon: "➕" },
-    ...(isAdmin()
-      ? [{ name: "จัดการผู้ใช้", href: "/users", icon: "👥" }]
-      : []),
+    { name: "Tour List", href: "/", icon: "🏝️" },
+    // { name: "Tour Packages", href: "/packages", icon: "📦" },
+    { name: "Manage Suppliers", href: "/suppliers", icon: "🏢" },
+    {
+      name: isAdmin() ? "Manage Users" : "My User",
+      href: "/users",
+      icon: "👥",
+    },
   ];
 
   const isActive = (path) => {
@@ -71,13 +71,13 @@ const Layout = () => {
                   {user?.username}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {user?.role === "admin" ? "ผู้ดูแลระบบ" : "ผู้ใช้งาน"}
+                  {user?.role === "admin" ? "Administrator" : "User"}
                 </p>
               </div>
               <button
                 onClick={logout}
                 className="ml-3 text-gray-400 hover:text-gray-600 transition-colors"
-                title="ออกจากระบบ"
+                title="Log out"
               >
                 <svg
                   className="w-5 h-5"
@@ -124,7 +124,7 @@ const Layout = () => {
 
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">
-                ยินดีต้อนรับ, {user?.username}
+                Welcome, {user?.username}
               </span>
             </div>
           </div>

@@ -4,28 +4,28 @@
 export const TOUR_FILE_CATEGORIES = {
   gallery: {
     id: "gallery",
-    label: "Gallery ทัวร์",
-    description: "รูปภาพสถานที่ท่องเที่ยว, กิจกรรม, ทัวร์",
-    allowedTypes: ["image"], // เฉพาะรูป
-    examples: ["รูปเกาะ", "รูปกิจกรรม", "รูปโรงแรม"],
+    label: "Tour Gallery",
+    description: "Photos of attractions, activities, tours",
+    allowedTypes: ["image"], // images only
+    examples: ["Island photos", "Activity photos", "Hotel photos"],
     color: "bg-blue-100 text-blue-700",
     icon: "🖼️",
   },
   brochure: {
     id: "brochure",
     label: "Brochure",
-    description: "ใบปลิว, แคตตาล็อก, รายละเอียดทัวร์",
+    description: "Flyers, catalogs, tour details",
     allowedTypes: ["pdf", "image"],
-    examples: ["ใบปลิวทัวร์", "แคตตาล็อกโรงแรม", "รายการอาหาร"],
+    examples: ["Tour flyer", "Hotel catalog", "Menu"],
     color: "bg-green-100 text-green-700",
     icon: "📋",
   },
   general: {
     id: "general",
-    label: "อื่นๆ",
-    description: "ไฟล์ทั่วไป",
+    label: "Other",
+    description: "General files",
     allowedTypes: ["pdf", "image"],
-    examples: ["เอกสารเพิ่มเติม"],
+    examples: ["Additional documents"],
     color: "bg-gray-100 text-gray-700",
     icon: "📎",
   },
@@ -35,16 +35,16 @@ export const SUPPLIER_FILE_CATEGORIES = {
   contact_rate: {
     id: "contact_rate",
     label: "Contact Rate",
-    description: "ใบราคาจาก Supplier",
+    description: "Price list from Supplier",
     allowedTypes: ["pdf", "image"],
-    examples: ["ใบราคา Jan 2025", "Price List Update"],
+    examples: ["Price list Jan 2025", "Price List Update"],
     color: "bg-emerald-100 text-emerald-700",
     icon: "💰",
   },
   qr_code: {
     id: "qr_code",
     label: "QR Code",
-    description: "QR Code กลุ่ม Line, Social Media",
+    description: "QR Code for Line group, Social Media",
     allowedTypes: ["pdf", "image"],
     examples: ["QR Code Line Group", "QR Code Facebook"],
     color: "bg-purple-100 text-purple-700",
@@ -52,10 +52,10 @@ export const SUPPLIER_FILE_CATEGORIES = {
   },
   general: {
     id: "general",
-    label: "อื่นๆ",
-    description: "เอกสารทั่วไป",
+    label: "Other",
+    description: "General documents",
     allowedTypes: ["pdf", "image"],
-    examples: ["เอกสารเพิ่มเติม"],
+    examples: ["Additional documents"],
     color: "bg-gray-100 text-gray-700",
     icon: "📎",
   },
@@ -103,9 +103,9 @@ export const getCategoryHints = (categoryId, isSupplier = false) => {
     allowedTypesText:
       category.allowedTypes.includes("image") &&
       category.allowedTypes.includes("pdf")
-        ? "PDF และรูปภาพ"
+        ? "PDF and images"
         : category.allowedTypes.includes("pdf")
-        ? "เฉพาะ PDF"
-        : "เฉพาะรูปภาพ",
+        ? "PDF only"
+        : "Images only",
   };
 };

@@ -48,7 +48,7 @@ const SupplierDetail = () => {
         suppliers.map((s) => ({ id: s.id, name: s.name, idType: typeof s.id }))
       );
 
-      // ✅ แก้ไขการเปรียบเทียบ ID
+      // ✅ Fix ID comparison
       const foundSupplier = suppliers.find((s) => Number(s.id) === Number(id));
 
       console.log("✅ Found supplier:", foundSupplier);
@@ -57,12 +57,12 @@ const SupplierDetail = () => {
         setSupplier(foundSupplier);
       } else {
         console.error("❌ Supplier not found for ID:", id);
-        alert("ไม่พบข้อมูล Supplier");
+        alert("Supplier not found");
         navigate("/suppliers");
       }
     } catch (error) {
       console.error("Error fetching supplier:", error);
-      alert("เกิดข้อผิดพลาดในการโหลดข้อมูล Supplier");
+      alert("An error occurred while loading Supplier data");
     } finally {
       setLoading(false);
     }
@@ -73,7 +73,7 @@ const SupplierDetail = () => {
       setToursLoading(true);
       const allTours = await toursService.getAllTours();
 
-      // ✅ แก้ไขการกรองทัวร์
+      // ✅ Fix tour filtering
       const filteredTours = allTours.filter(
         (tour) => Number(tour.supplier_id) === Number(id)
       );
@@ -88,7 +88,7 @@ const SupplierDetail = () => {
       setSupplierTours(filteredTours);
     } catch (error) {
       console.error("Error fetching tours:", error);
-      alert("เกิดข้อผิดพลาดในการโหลดข้อมูลทัวร์");
+      alert("An error occurred while loading tours");
     } finally {
       setToursLoading(false);
     }
@@ -115,7 +115,7 @@ const SupplierDetail = () => {
   const handleSupplierUpdate = (updatedSupplier) => {
     setSupplier(updatedSupplier);
     setShowEditModal(false);
-    // Refresh files ด้วยในกรณีที่มีการเปลี่ยนแปลง
+    // Refresh files when changes occur
     fetchSupplierFiles();
   };
 
@@ -126,7 +126,7 @@ const SupplierDetail = () => {
 
   // Helper functions
   const formatDate = (dateString) => {
-    if (!dateString || dateString === "0000-00-00") return "ไม่กำหนด";
+    if (!dateString || dateString === "0000-00-00") return "Not set";
     return new Date(dateString).toLocaleDateString("th-TH", {
       year: "numeric",
       month: "long",
@@ -147,11 +147,11 @@ const SupplierDetail = () => {
     let notes = tour.notes || "";
     notes =
       (tour.park_fee_included
-        ? "ราคา Net นี้ รวมค่าอุทยานแล้ว"
-        : "ราคา Net นี้ ยังไม่รวมค่าอุทยาน") + (notes ? ` | ${notes}` : "");
+        ? "This net price includes the national park fee"
+        : "This net price does not include the national park fee") + (notes ? ` | ${notes}` : "");
 
     if (isExpired(tour.end_date)) {
-      notes += " | ⚠️ หมดอายุแล้ว กรุณาต่ออายุ";
+      notes += " | ⚠️ Expired. Please renew";
     }
     return notes;
   };
@@ -206,18 +206,18 @@ const SupplierDetail = () => {
   // 🎨 Enhanced Phone Numbers Render Function
   const renderPhoneNumbers = (supplier) => {
     const phones = [
-      { number: supplier.phone, label: "เบอร์หลัก" },
-      { number: supplier.phone_2, label: "เบอร์ 2" },
-      { number: supplier.phone_3, label: "เบอร์ 3" },
-      { number: supplier.phone_4, label: "เบอร์ 4" },
-      { number: supplier.phone_5, label: "เบอร์ 5" },
+      { number: supplier.phone, label: "Primary phone" },
+      { number: supplier.phone_2, label: "Phone 2" },
+      { number: supplier.phone_3, label: "Phone 3" },
+      { number: supplier.phone_4, label: "Phone 4" },
+      { number: supplier.phone_5, label: "Phone 5" },
     ].filter((item) => item.number?.trim());
 
     if (phones.length === 0) {
       return (
         <div className="text-center text-gray-400 py-4">
           <span className="text-2xl mb-2 block">📵</span>
-          <span className="text-sm">ไม่มีหมายเลขโทรศัพท์</span>
+          <span className="text-sm">No phone numbers</span>
         </div>
       );
     }
@@ -248,7 +248,7 @@ const SupplierDetail = () => {
                     index === 0 ? "text-blue-600" : "text-gray-500"
                   }`}
                 >
-                  {phone.label} {index === 0 && "(หลัก)"}
+                  {phone.label} {index === 0 && "(Primary)"}
                 </div>
               </div>
             </div>
@@ -262,12 +262,12 @@ const SupplierDetail = () => {
                     : "bg-gray-600 text-white hover:bg-gray-700"
                 }`}
               >
-                📞 โทร
+                📞 Call
               </button>
               <button
                 onClick={() => navigator.clipboard?.writeText(phone.number)}
                 className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                title="คัดลอกเบอร์"
+                title="Copy phone number"
               >
                 📋
               </button>
@@ -290,12 +290,12 @@ const SupplierDetail = () => {
     return (
       <div className="text-center py-12">
         <div className="text-gray-400 text-4xl mb-4">😞</div>
-        <p className="text-gray-500 text-lg mb-4">ไม่พบข้อมูล Supplier</p>
+        <p className="text-gray-500 text-lg mb-4">Supplier not found</p>
         <Link
           to="/suppliers"
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
-          ← กลับไปรายการ Suppliers
+          ← Back to Suppliers
         </Link>
       </div>
     );
@@ -309,7 +309,7 @@ const SupplierDetail = () => {
           <button
             onClick={() => navigate("/suppliers")}
             className="p-2 text-gray-600 hover:text-gray-800 transition-colors"
-            title="กลับ"
+            title="Back"
           >
             <svg
               className="w-6 h-6"
@@ -330,7 +330,7 @@ const SupplierDetail = () => {
               {supplier.name}
             </h1>
             <p className="text-gray-600 mt-1">
-              รายละเอียด Supplier และทัวร์ที่เกี่ยวข้อง
+              Supplier details and related tours
             </p>
           </div>
         </div>
@@ -339,13 +339,13 @@ const SupplierDetail = () => {
             to={`/add?supplier=${supplier.id}`}
             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-center"
           >
-            ➕ เพิ่มทัวร์ใหม่
+            ➕ Add New Tour
           </Link>
           <button
             onClick={handleEditSupplier}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
-            ✏️ แก้ไข Supplier
+            ✏️ Edit Supplier
           </button>
         </div>
       </div>
@@ -355,7 +355,7 @@ const SupplierDetail = () => {
         <div className="p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
             <span className="mr-2">🏢</span>
-            ข้อมูล Supplier
+            Supplier Information
           </h2>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -363,7 +363,7 @@ const SupplierDetail = () => {
             <div>
               <h3 className="font-medium text-gray-700 mb-4 pb-2 border-b border-gray-200 flex items-center">
                 <span className="mr-2">📞</span>
-                หมายเลขโทรศัพท์
+                Phone Numbers
                 <span className="ml-2 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
                   {
                     [
@@ -374,7 +374,7 @@ const SupplierDetail = () => {
                       supplier.phone_5,
                     ].filter((p) => p?.trim()).length
                   }{" "}
-                  เบอร์
+                  numbers
                 </span>
               </h3>
 
@@ -386,7 +386,7 @@ const SupplierDetail = () => {
               {/* Other Contact Methods */}
               <div>
                 <h3 className="font-medium text-gray-700 mb-4 pb-2 border-b border-gray-200">
-                  ช่องทางการติดต่ออื่นๆ
+                  Other Contact Methods
                 </h3>
                 <div className="space-y-3">
                   {supplier.line && (
@@ -402,7 +402,7 @@ const SupplierDetail = () => {
                         }
                         className="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
                       >
-                        เปิด Line
+                        Open Line
                       </button>
                     </div>
                   )}
@@ -422,7 +422,7 @@ const SupplierDetail = () => {
                         }
                         className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
                       >
-                        เปิด
+                        Open
                       </button>
                     </div>
                   )}
@@ -445,7 +445,7 @@ const SupplierDetail = () => {
                     </div>
                   )}
 
-                  {/* Website - เพิ่มส่วนนี้ */}
+                  {/* Website - add this section */}
                   {supplier.website && (
                     <div className="flex items-center justify-between bg-blue-50 p-3 rounded-lg">
                       <div className="flex items-center space-x-2">
@@ -465,7 +465,7 @@ const SupplierDetail = () => {
                         }
                         className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
                       >
-                        เยี่ยมชม
+                        Visit
                       </button>
                     </div>
                   )}
@@ -476,7 +476,7 @@ const SupplierDetail = () => {
                     !supplier.website && (
                       <div className="text-center text-gray-400 py-4">
                         <span className="text-2xl mb-2 block">📫</span>
-                        <span className="text-sm">ไม่มีช่องทางติดต่ออื่น</span>
+                        <span className="text-sm">No other contact methods</span>
                       </div>
                     )}
                 </div>
@@ -485,25 +485,25 @@ const SupplierDetail = () => {
               {/* Address & System Info */}
               <div>
                 <h3 className="font-medium text-gray-700 mb-4 pb-2 border-b border-gray-200">
-                  ข้อมูลทั่วไป
+                  General Information
                 </h3>
                 <div className="space-y-3">
                   <div className="bg-gray-50 p-3 rounded-lg">
-                    <p className="text-sm text-gray-600 mb-1">ที่อยู่</p>
+                    <p className="text-sm text-gray-600 mb-1">Address</p>
                     <p className="text-gray-900">
-                      {supplier.address || "ไม่ระบุ"}
+                      {supplier.address || "Not specified"}
                     </p>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="bg-gray-50 p-3 rounded-lg">
-                      <p className="text-sm text-gray-600 mb-1">สร้างเมื่อ</p>
+                      <p className="text-sm text-gray-600 mb-1">Created At</p>
                       <p className="text-gray-900">
                         {formatDate(supplier.created_at)}
                       </p>
                     </div>
                     <div className="bg-gray-50 p-3 rounded-lg">
-                      <p className="text-sm text-gray-600 mb-1">อัพเดทล่าสุด</p>
+                      <p className="text-sm text-gray-600 mb-1">Last Updated</p>
                       <p className="text-gray-900">
                         {formatDate(supplier.updated_at)}
                       </p>
@@ -520,19 +520,19 @@ const SupplierDetail = () => {
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
           <span className="mr-2">📁</span>
-          ไฟล์เอกสาร ({supplierFiles.length} ไฟล์)
+          Document Files ({supplierFiles.length} files)
         </h2>
 
         {filesLoading ? (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-            <p className="text-sm text-gray-600">กำลังโหลดไฟล์...</p>
+            <p className="text-sm text-gray-600">Loading files...</p>
           </div>
         ) : (
           <FileDownloads
             files={supplierFiles}
             getFileUrl={supplierFilesService.getSupplierFileUrl}
-            title="เอกสาร Supplier"
+            title="Supplier Documents"
             isSupplier={true}
             showCategory={true}
           />
@@ -543,13 +543,13 @@ const SupplierDetail = () => {
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
           <span className="mr-2">🏝️</span>
-          ทัวร์ของ Supplier นี้ ({supplierTours.length} ทัวร์)
+          Tours from This Supplier ({supplierTours.length} tours)
         </h2>
 
         {toursLoading ? (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-            <p className="text-sm text-gray-600">กำลังโหลดทัวร์...</p>
+            <p className="text-sm text-gray-600">Loading tours...</p>
           </div>
         ) : supplierTours.length > 0 ? (
           <div className="overflow-x-auto">
@@ -557,22 +557,22 @@ const SupplierDetail = () => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    ชื่อทัวร์
+                    Tour Name
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    ออกจาก
+                    Departure From
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    ราคาผู้ใหญ่
+                    Adult Price
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    ราคาเด็ก
+                    Child Price
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    สิ้นสุด
+                    End Date
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    การดำเนินการ
+                    Actions
                   </th>
                 </tr>
               </thead>
@@ -588,7 +588,7 @@ const SupplierDetail = () => {
                       <div className="font-medium">{tour.tour_name}</div>
                       {tour.pier && (
                         <div className="text-xs text-gray-500">
-                          ท่าเรือ: {tour.pier}
+                          Pier: {tour.pier}
                         </div>
                       )}
                     </td>
@@ -596,10 +596,10 @@ const SupplierDetail = () => {
                       {tour.departure_from || "-"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
-                      ฿{formatPrice(tour.adult_price)}
+                      THB {formatPrice(tour.adult_price)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
-                      ฿{formatPrice(tour.child_price)}
+                      THB {formatPrice(tour.child_price)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       <span
@@ -616,19 +616,19 @@ const SupplierDetail = () => {
                           onClick={() => openTourDetailsModal(tour)}
                           className="px-2 py-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors text-xs"
                         >
-                          📋 รายละเอียด
+                          📋 Details
                         </button>
                         <button
                           onClick={() => openDocumentModal(tour)}
                           className="px-2 py-1 bg-gray-50 text-gray-600 rounded hover:bg-gray-100 transition-colors text-xs"
                         >
-                          📎 เอกสาร
+                          📎 Documents
                         </button>
                         <Link
                           to={`/edit/${tour.id}`}
                           className="px-2 py-1 bg-green-50 text-green-600 rounded hover:bg-green-100 transition-colors text-xs"
                         >
-                          ✏️ แก้ไข
+                          ✏️ Edit
                         </Link>
                       </div>
                     </td>
@@ -640,15 +640,15 @@ const SupplierDetail = () => {
         ) : (
           <div className="text-center py-8">
             <div className="text-gray-400 text-4xl mb-4">🏝️</div>
-            <p className="text-gray-500 text-lg mb-2">ยังไม่มีทัวร์</p>
+            <p className="text-gray-500 text-lg mb-2">No tours yet</p>
             <p className="text-gray-400 text-sm mb-4">
-              เพิ่มทัวร์แรกให้กับ Supplier นี้
+              Add the first tour for this Supplier
             </p>
             <Link
               to={`/add?supplier=${supplier.id}`}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
-              ➕ เพิ่มทัวร์ใหม่
+              ➕ Add New Tour
             </Link>
           </div>
         )}

@@ -4,7 +4,7 @@ export const validateTour = (tour) => {
   const errors = {};
 
   if (!tour.tour_name?.trim()) {
-    errors.tour_name = "กรุณากรอกชื่อทัวร์";
+    errors.tour_name = "Please enter a tour name";
   }
 
   return errors;
@@ -12,16 +12,16 @@ export const validateTour = (tour) => {
 
 export const validateFile = (file) => {
   if (!file) {
-    return "กรุณาเลือกไฟล์";
+    return "Please select a file";
   }
 
   if (file.size > FILE_UPLOAD.MAX_SIZE) {
-    return "ขนาดไฟล์ใหญ่เกินไป (สูงสุด 10MB)";
+    return "File size is too large (max 10MB)";
   }
 
   const fileExt = file.name.split(".").pop().toLowerCase();
   if (!FILE_UPLOAD.ALLOWED_TYPES.includes(fileExt)) {
-    return "รองรับเฉพาะไฟล์ PDF และรูปภาพ";
+    return "Only PDF and image files are supported";
   }
 
   return null;
@@ -31,7 +31,7 @@ export const validateSupplier = (supplier) => {
   const errors = {};
 
   if (!supplier.name?.trim()) {
-    errors.name = "กรุณากรอกชื่อ Supplier";
+    errors.name = "Please enter a Supplier name";
   }
 
   return errors;
