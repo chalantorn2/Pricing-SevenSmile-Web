@@ -33,7 +33,7 @@ const Login = () => {
           {/* Logo/Header */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-blue-600 mb-2">
-              Contact Rate
+              Contract Rate
             </h1>
             <p className="text-gray-600">Tour Price Management System</p>
           </div>
@@ -93,7 +93,7 @@ const Login = () => {
 
           {/* Footer */}
           <div className="mt-8 text-center text-sm text-gray-500">
-            <p>Seven Smile Tour And Ticket</p>
+            <p>Contract Rate System</p>
           </div>
         </div>
       </div>

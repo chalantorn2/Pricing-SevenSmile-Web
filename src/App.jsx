@@ -89,9 +89,11 @@ const AppRoutes = () => {
 
         {/* Transfer Routes */}
         <Route path="transfer" element={<TransferList />} />
+        <Route path="transfer/:province" element={<TransferList />} />
 
         {/* Hotel Routes */}
         <Route path="hotel" element={<HotelList />} />
+        <Route path="hotel/:province" element={<HotelList />} />
 
         {/* User Management Routes */}
         <Route path="users" element={<UserManagement />} />

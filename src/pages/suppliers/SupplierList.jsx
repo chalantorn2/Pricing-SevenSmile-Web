@@ -10,6 +10,21 @@ import {
   MobileOptimizedTable,
 } from "../../components/common/LoadingSkeleton";
 import * as XLSX from "xlsx";
+import {
+  Home,
+  FileSpreadsheet,
+  Plus,
+  Building2,
+  Palmtree,
+  AlertTriangle,
+  ClipboardList,
+  MapPin,
+  MessageCircle,
+  Smartphone,
+  Globe,
+  Phone,
+  FileText,
+} from "lucide-react";
 
 const SupplierList = () => {
   const [suppliers, setSuppliers] = useState([]);
@@ -185,7 +200,7 @@ const SupplierList = () => {
     });
   };
 
-  // 🎨 Helper function for displaying multiple phone numbers
+  // Helper function for displaying multiple phone numbers
   const renderPhoneoumbers = (supplier, maxShow = 2) => {
     const phones = [
       supplier.phone,
@@ -206,7 +221,7 @@ const SupplierList = () => {
       <div className="space-y-1">
         {visiblePhones.map((phone, index) => (
           <div key={index} className="flex items-center space-x-1">
-            <span className="text-blue-600">📞</span>
+            <Phone className="w-3.5 h-3.5 text-blue-600" />
             <a
               href={`tel:${phone}`}
               className="text-blue-600 hover:text-blue-800 text-sm hover:underline"
@@ -231,7 +246,7 @@ const SupplierList = () => {
     );
   };
 
-  // 🎨 Compact phone display for mobile
+  // Compact phone display for mobile
   const renderPhoneCompact = (supplier) => {
     const phones = [
       supplier.phone,
@@ -254,7 +269,7 @@ const SupplierList = () => {
             className="inline-flex items-center space-x-1 bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs hover:bg-blue-100"
             onClick={(e) => e.stopPropagation()}
           >
-            <span>📞</span>
+            <Phone className="w-3 h-3" />
             <span>{phone.length > 8 ? `${phone.slice(0, 8)}...` : phone}</span>
           </a>
         ))}
@@ -407,7 +422,7 @@ const SupplierList = () => {
         title="An error occurred"
         message={error}
         onRetry={fetchData}
-        icon="🚨"
+        icon={<AlertTriangle className="w-12 h-12 mx-auto text-red-500" />}
       />
     );
   }
@@ -445,22 +460,25 @@ const SupplierList = () => {
                 setShowDashboard(true);
                 setSearchTerm("");
               }}
-              className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+              className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors inline-flex items-center justify-center gap-2"
             >
-              🏠 Back to Dashboard
+              <Home className="w-4 h-4" />
+              Back to Dashboard
             </button>
           )}
           <button
             onClick={handleExportExcel}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer"
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer inline-flex items-center justify-center gap-2"
           >
-            📊 Export Excel
+            <FileSpreadsheet className="w-4 h-4" />
+            Export Excel
           </button>
           <Link
             to="/add"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-center cursor-pointer"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-center cursor-pointer inline-flex items-center justify-center gap-2"
           >
-            ➕ Add new tour
+            <Plus className="w-4 h-4" />
+            Add new tour
           </Link>
         </div>
       </div>
@@ -477,7 +495,7 @@ const SupplierList = () => {
                 {suppliers.length}
               </p>
             </div>
-            <div className="text-blue-500">🏢</div>
+            <Building2 className="w-8 h-8 text-blue-500" />
           </div>
         </div>
 
@@ -493,7 +511,7 @@ const SupplierList = () => {
                 }
               </p>
             </div>
-            <div className="text-green-500">🏝️</div>
+            <Palmtree className="w-8 h-8 text-green-500" />
           </div>
         </div>
 
@@ -509,7 +527,7 @@ const SupplierList = () => {
                 }
               </p>
             </div>
-            <div className="text-yellow-500">⚠️</div>
+            <AlertTriangle className="w-8 h-8 text-yellow-500" />
           </div>
         </div>
 
@@ -521,7 +539,7 @@ const SupplierList = () => {
                 {suppliers.filter((s) => !s.phone && !s.line).length}
               </p>
             </div>
-            <div className="text-red-500">📋</div>
+            <ClipboardList className="w-8 h-8 text-red-500" />
           </div>
         </div>
       </div>
@@ -569,15 +587,17 @@ const SupplierList = () => {
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => handleBulkAction("export")}
-                className="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                className="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm inline-flex items-center gap-1.5"
               >
-                📊 Export Selected
+                <FileSpreadsheet className="w-4 h-4" />
+                Export Selected
               </button>
               <button
                 onClick={() => handleBulkAction("contact_check")}
-                className="px-3 py-1 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm"
+                className="px-3 py-1 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm inline-flex items-center gap-1.5"
               >
-                📋 Check Data
+                <ClipboardList className="w-4 h-4" />
+                Check Data
               </button>
             </div>
           </div>
@@ -602,8 +622,9 @@ const SupplierList = () => {
               <div>
                 <div className="font-medium text-gray-900">{item.name}</div>
                 {item.address && (
-                  <div className="text-xs text-gray-500 mt-1 line-clamp-2">
-                    📍 {item.address}
+                  <div className="text-xs text-gray-500 mt-1 line-clamp-2 flex items-start gap-1">
+                    <MapPin className="w-3 h-3 mt-0.5 shrink-0" />
+                    <span>{item.address}</span>
                   </div>
                 )}
               </div>
@@ -623,7 +644,7 @@ const SupplierList = () => {
                 <div className="flex flex-wrap gap-2">
                   {item.line && (
                     <div className="inline-flex items-center space-x-1 bg-green-50 text-green-700 px-2 py-1 rounded text-xs">
-                      <span>💬</span>
+                      <MessageCircle className="w-3 h-3" />
                       <span>{item.line}</span>
                     </div>
                   )}
@@ -635,7 +656,7 @@ const SupplierList = () => {
                       className="inline-flex items-center space-x-1 bg-green-50 text-green-700 px-2 py-1 rounded text-xs hover:bg-green-100"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <span>📱</span>
+                      <Smartphone className="w-3 h-3" />
                       <span>WhatsApp</span>
                     </a>
                   )}
@@ -647,7 +668,7 @@ const SupplierList = () => {
                       className="inline-flex items-center space-x-1 bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs hover:bg-blue-100"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <span>🌐</span>
+                      <Globe className="w-3 h-3" />
                       <span>Website</span>
                     </a>
                   )}
@@ -700,7 +721,7 @@ const SupplierList = () => {
                 className="px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm cursor-pointer inline-flex items-center space-x-1"
                 onClick={(e) => e.stopPropagation()}
               >
-                <span>📋</span>
+                <FileText className="w-4 h-4" />
                 <span>View Details</span>
               </Link>
             ),

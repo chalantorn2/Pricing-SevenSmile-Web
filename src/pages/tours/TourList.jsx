@@ -1,10 +1,24 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { toursService } from "../../services/api-service";
 import { TourDetailsModal } from "../../components/tours";
 import { DocumentModal } from "../../components/common";
 import { ColumnToggle } from "../../components/core";
 import * as XLSX from "xlsx";
+import {
+  MapPin,
+  X,
+  FileSpreadsheet,
+  Plus,
+  Building2,
+  FileText,
+  Paperclip,
+  ChevronUp,
+  ChevronDown,
+  ChevronsUpDown,
+  LayoutList,
+  Table2,
+} from "lucide-react";
 
 const TourList = () => {
   // ========= State =========
@@ -13,6 +27,12 @@ const TourList = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+  const [searchParams] = useSearchParams();
+  const activeProvince = searchParams.get("province");
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   // Modals (existing logic)
   const [selectedTour, setSelectedTour] = useState(null);
@@ -63,7 +83,12 @@ const TourList = () => {
 
   useEffect(() => {
     filterAndSortTours();
-  }, [tours, searchTerm, sortConfig]);
+  }, [tours, searchTerm, sortConfig, activeProvince]);
+
+  // Reset to first page when filters/search/sort/pageSize change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, sortConfig, activeProvince, pageSize]);
 
   // ========= Data/Logic (existing) =========
   const fetchTours = async () => {
@@ -82,6 +107,14 @@ const TourList = () => {
   const filterAndSortTours = () => {
     const searchLower = searchTerm.toLowerCase().trim();
     let filtered = tours.filter((tour) => {
+      // Province filter (from sidebar submenu)
+      if (
+        activeProvince &&
+        (tour.departure_from || "").trim().toLowerCase() !==
+          activeProvince.trim().toLowerCase()
+      ) {
+        return false;
+      }
       return (
         tour.tour_name?.toLowerCase().includes(searchLower) ||
         tour.supplier_name?.toLowerCase().includes(searchLower) ||
@@ -223,14 +256,34 @@ const TourList = () => {
     ? (key) => mainColumns.some((col) => col.key === key)
     : (key) => visibleColumns[key];
 
+  // Pagination derived values
+  const totalItems = filteredTours.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIndex = (safePage - 1) * pageSize;
+  const paginatedTours = filteredTours.slice(startIndex, startIndex + pageSize);
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Tour List</h1>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-2xl font-semibold text-gray-900">Tour List</h1>
+            {activeProvince && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700">
+                <MapPin className="w-4 h-4" />
+                {activeProvince}
+                <Link to="/" className="ml-1 text-blue-500 hover:text-blue-800">
+                  <X className="w-4 h-4" />
+                </Link>
+              </span>
+            )}
+          </div>
           <p className="text-sm text-gray-500 mt-1">
-            Manage all tour prices and details in the system
+            {activeProvince
+              ? `Showing tours departing from ${activeProvince}`
+              : "Manage all tour prices and details in the system"}
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
@@ -238,14 +291,14 @@ const TourList = () => {
             onClick={handleExportExcel}
             className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white bg-green-600 hover:bg-green-700 active:scale-[.98] shadow-sm"
           >
-            <span>📊</span>
+            <FileSpreadsheet className="w-4 h-4" />
             <span>Export Excel</span>
           </button>
           <Link
             to="/add"
             className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700 active:scale-[.98] shadow-sm"
           >
-            <span>➕</span>
+            <Plus className="w-4 h-4" />
             <span>Add new price</span>
           </Link>
         </div>
@@ -305,7 +358,14 @@ const TourList = () => {
               }`}
               title="Switch column layout"
             >
-              {useMainTable ? "📋 Compact table" : "📊 Full table"}
+              <span className="inline-flex items-center gap-1.5">
+                {useMainTable ? (
+                  <LayoutList className="w-4 h-4" />
+                ) : (
+                  <Table2 className="w-4 h-4" />
+                )}
+                {useMainTable ? "Compact table" : "Full table"}
+              </span>
             </button>
 
             {!useMainTable && (
@@ -345,19 +405,16 @@ const TourList = () => {
                     >
                       <div className="inline-flex items-center gap-1">
                         <span>{column.label}</span>
-                        {column.sortable && (
-                          <span
-                            className={`${
-                              active ? "text-gray-800" : "text-gray-400"
-                            }`}
-                          >
-                            {active
-                              ? sortConfig.direction === "asc"
-                                ? "↑"
-                                : "↓"
-                              : "↕"}
-                          </span>
-                        )}
+                        {column.sortable &&
+                          (active ? (
+                            sortConfig.direction === "asc" ? (
+                              <ChevronUp className="w-3.5 h-3.5 text-gray-800" />
+                            ) : (
+                              <ChevronDown className="w-3.5 h-3.5 text-gray-800" />
+                            )
+                          ) : (
+                            <ChevronsUpDown className="w-3.5 h-3.5 text-gray-400" />
+                          ))}
                       </div>
                     </th>
                   );
@@ -366,7 +423,7 @@ const TourList = () => {
             </thead>
 
             <tbody className="divide-y divide-gray-100">
-              {filteredTours.map((tour, index) => {
+              {paginatedTours.map((tour, index) => {
                 const expired = isExpired(tour.end_date);
 
                 return (
@@ -379,7 +436,7 @@ const TourList = () => {
                     {/* Index */}
                     {showColumn("id") && (
                       <td className="px-6 py-3 whitespace-nowrap text-gray-900">
-                        {index + 1}
+                        {startIndex + index + 1}
                       </td>
                     )}
 
@@ -391,7 +448,7 @@ const TourList = () => {
                         </div>
                         {tour.supplier_name && (
                           <div className="mt-1 inline-flex items-center gap-1 text-xs text-gray-600">
-                            <span aria-hidden>🏢</span>
+                            <Building2 className="w-3.5 h-3.5" />
                             <span className="truncate">
                               {tour.supplier_name}
                             </span>
@@ -478,7 +535,7 @@ const TourList = () => {
                             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200 hover:bg-blue-100 active:scale-[.98] text-xs"
                             title="View details"
                           >
-                            <span aria-hidden>📋</span>
+                            <FileText className="w-3.5 h-3.5" />
                             <span>View details</span>
                           </button>
                         </td>
@@ -488,7 +545,7 @@ const TourList = () => {
                             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-200 hover:bg-gray-100 active:scale-[.98] text-xs"
                             title="View documents"
                           >
-                            <span aria-hidden>📎</span>
+                            <Paperclip className="w-3.5 h-3.5" />
                             <span>View documents</span>
                           </button>
                         </td>
@@ -504,6 +561,72 @@ const TourList = () => {
         {filteredTours.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-500">No matching data found</p>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalItems > 0 && (
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-6 py-4 border-t border-gray-100">
+            <div className="flex items-center gap-3 text-sm text-gray-600">
+              <span>
+                Showing{" "}
+                <span className="font-medium">{startIndex + 1}</span>–
+                <span className="font-medium">
+                  {Math.min(startIndex + pageSize, totalItems)}
+                </span>{" "}
+                of <span className="font-medium">{totalItems}</span>
+              </span>
+              <span className="hidden sm:inline text-gray-300">|</span>
+              <label className="flex items-center gap-2">
+                <span>Per page</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => setPageSize(Number(e.target.value))}
+                  className="rounded-lg border border-gray-300 px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  {[10, 25, 50, 100].map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={safePage === 1}
+                className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                First
+              </button>
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={safePage === 1}
+                className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Prev
+              </button>
+              <span className="px-3 py-1.5 text-sm text-gray-600">
+                Page <span className="font-medium">{safePage}</span> /{" "}
+                <span className="font-medium">{totalPages}</span>
+              </span>
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={safePage === totalPages}
+                className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+              <button
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={safePage === totalPages}
+                className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Last
+              </button>
+            </div>
           </div>
         )}
       </div>

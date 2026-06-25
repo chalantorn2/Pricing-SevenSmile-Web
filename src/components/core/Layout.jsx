@@ -1,130 +1,76 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Outlet } from "react-router-dom";
+import { Menu, PanelLeftClose, PanelLeft } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
-import { Link, useLocation, Outlet } from "react-router-dom";
+import Sidebar from "./Sidebar";
 
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user, logout, isAdmin } = useAuth();
-  const location = useLocation();
+  const [collapsed, setCollapsed] = useState(
+    () => localStorage.getItem("sidebarCollapsed") === "1"
+  );
+  const { user } = useAuth();
 
-  const navigation = [
-    { name: "Tour List", href: "/", icon: "🏝️" },
-    // { name: "Tour Packages", href: "/packages", icon: "📦" },
-    { name: "Manage Suppliers", href: "/suppliers", icon: "🏢" },
-    {
-      name: isAdmin() ? "Manage Users" : "My User",
-      href: "/users",
-      icon: "👥",
-    },
-  ];
-
-  const isActive = (path) => {
-    return location.pathname === path;
-  };
+  useEffect(() => {
+    localStorage.setItem("sidebarCollapsed", collapsed ? "1" : "0");
+  }, [collapsed]);
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 modal-backdrop z-40 lg:hidden"
+          className="fixed inset-0 bg-gray-900/40 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed inset-y-0 left-0 z-50 w-64 border-r border-gray-200 shadow-sm transform transition-all duration-300 ease-in-out lg:translate-x-0 ${
+          collapsed ? "lg:w-16" : "lg:w-64"
+        } ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
-        <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="flex items-center justify-center h-16 border-b border-gray-200">
-            <h1 className="text-xl font-bold text-blue-600">Contact Rate</h1>
-          </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-2">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
-                  isActive(item.href)
-                    ? "bg-blue-100 text-blue-700"
-                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                }`}
-                onClick={() => setSidebarOpen(false)}
-              >
-                <span className="mr-3 text-lg">{item.icon}</span>
-                {item.name}
-              </Link>
-            ))}
-          </nav>
-
-          {/* User info */}
-          <div className="border-t border-gray-200 p-4">
-            <div className="flex items-center">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">
-                  {user?.username}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {user?.role === "admin" ? "Administrator" : "User"}
-                </p>
-              </div>
-              <button
-                onClick={logout}
-                className="ml-3 text-gray-400 hover:text-gray-600 transition-colors"
-                title="Log out"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
+        <Sidebar
+          collapsed={collapsed}
+          onSetCollapsed={setCollapsed}
+          onNavigate={() => setSidebarOpen(false)}
+        />
       </div>
 
       {/* Main content */}
-      <div className="lg:pl-64">
+      <div
+        className={`transition-all duration-300 ${
+          collapsed ? "lg:pl-16" : "lg:pl-64"
+        }`}
+      >
         {/* Top bar */}
-        <div className="sticky top-0 z-10 bg-white shadow-sm border-b border-gray-200">
+        <div className="sticky top-0 z-10 bg-white/80 backdrop-blur shadow-sm border-b border-gray-200">
           <div className="flex items-center justify-between h-16 px-4">
+            {/* Mobile: open drawer */}
             <button
               onClick={() => setSidebarOpen(true)}
               className="lg:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
             >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
+              <Menu className="w-6 h-6" />
             </button>
 
-            <div className="flex items-center space-x-4">
+            {/* Desktop: collapse / expand sidebar */}
+            <button
+              onClick={() => setCollapsed((v) => !v)}
+              className="hidden lg:inline-flex p-2 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+              title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {collapsed ? (
+                <PanelLeft className="w-5 h-5" />
+              ) : (
+                <PanelLeftClose className="w-5 h-5" />
+              )}
+            </button>
+
+            <div className="flex items-center gap-4 ml-auto">
               <span className="text-sm text-gray-600">
-                Welcome, {user?.username}
+                Welcome, <span className="font-medium">{user?.username}</span>
               </span>
             </div>
           </div>

@@ -94,7 +94,7 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
     files.forEach((file) => {
       const category = file.file_category || "general";
       const source = file.source;
-      const key = `${source}_${category}`;
+      const key = `${source}::${category}`;
 
       if (!groups[key]) {
         groups[key] = {
@@ -118,16 +118,16 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
     const fileGroups = groupFilesByCategory();
     const sortedEntries = Object.entries(fileGroups).sort(([keyA], [keyB]) => {
       // Split source and category
-      const [sourceA, categoryA] = keyA.split("_");
-      const [sourceB, categoryB] = keyB.split("_");
+      const [sourceA, categoryA] = keyA.split("::");
+      const [sourceB, categoryB] = keyB.split("::");
 
       // Sort supplier first, tour after
       if (sourceA !== sourceB) {
         return sourceA === "supplier" ? -1 : 1;
       }
 
-      // Sort by category: brochure, general, gallery
-      const order = ["brochure", "general", "gallery"];
+      // Sort by category: brochure, brochure_supplier, general, gallery
+      const order = ["brochure", "brochure_supplier", "general", "gallery"];
       return order.indexOf(categoryA) - order.indexOf(categoryB);
     });
 
@@ -180,16 +180,16 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
               </div>
             ) : files.length > 0 ? (
               <div className="space-y-8">
-                {Object.entries(fileGroups).map(([groupKey, group]) => (
+                {Object.entries(fileGroups).map(([groupKey, group]) => {
+                  const CategoryIcon = group.categoryInfo.icon;
+                  return (
                   <div key={groupKey}>
                     {/* Category Header */}
                     <div className="flex items-center mb-4">
                       <div
                         className={`inline-flex items-center px-3 py-2 rounded-lg ${group.categoryInfo.color} border`}
                       >
-                        <span className="mr-2 text-lg">
-                          {group.categoryInfo.icon}
-                        </span>
+                        <CategoryIcon className="mr-2 h-5 w-5" />
                         <span className="font-medium">
                           {group.categoryInfo.label}
                         </span>
@@ -327,7 +327,8 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
                       </div>
                     )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-8">

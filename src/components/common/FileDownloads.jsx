@@ -42,15 +42,16 @@ const FileDownloads = ({
 
       {Object.entries(groupedFiles).map(([categoryId, categoryFiles]) => {
         const categoryInfo = showCategory ? getCategoryInfo(categoryId) : null;
+        const CategoryIcon = categoryInfo?.icon;
 
         return (
           <div key={categoryId} className="space-y-2">
             {showCategory && categoryId !== "all" && (
               <h4
-                className={`text-xs font-medium px-2 py-1 rounded-full inline-block ${categoryInfo.color}`}
+                className={`text-xs font-medium px-2 py-1 rounded-full inline-flex items-center gap-1 ${categoryInfo.color}`}
               >
-                {categoryInfo.icon} {categoryInfo.label} ({categoryFiles.length}
-                )
+                <CategoryIcon className="h-3.5 w-3.5" /> {categoryInfo.label} (
+                {categoryFiles.length})
               </h4>
             )}
 

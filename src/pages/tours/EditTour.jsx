@@ -1,5 +1,19 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import {
+  ArrowLeft,
+  Building2,
+  Palmtree,
+  Map,
+  Paperclip,
+  Folder,
+  Link2,
+  FileText,
+  Image as ImageIcon,
+  Eye,
+  Trash2,
+  Save,
+} from "lucide-react";
 import { SupplierAutocomplete } from "../../components/suppliers";
 import { SupplierModal } from "../../components/suppliers";
 import {
@@ -377,9 +391,10 @@ const EditTour = () => {
         <h1 className="text-2xl font-bold text-gray-900">Edit Tour</h1>
         <button
           onClick={() => navigate("/")}
-          className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+          className="inline-flex items-center gap-1 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
         >
-          ← Back
+          <ArrowLeft className="h-4 w-4" />
+          Back
         </button>
       </div>
 
@@ -387,8 +402,9 @@ const EditTour = () => {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Supplier Section */}
         <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            🏢 Supplier
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
+            <Building2 className="h-5 w-5" />
+            Supplier
           </h2>
           <SupplierAutocomplete
             onSelect={handleSupplierSelect}
@@ -400,8 +416,9 @@ const EditTour = () => {
 
         {/* Tour Information */}
         <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            🏝️ Tour Information
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
+            <Palmtree className="h-5 w-5" />
+            Tour Information
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Tour Name */}
@@ -574,8 +591,9 @@ const EditTour = () => {
 
             {/* Map URL */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                🗺️ Google Maps URL
+              <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-2">
+                <Map className="h-4 w-4" />
+                Google Maps URL
               </label>
               <input
                 type="url"
@@ -628,8 +646,9 @@ const EditTour = () => {
           {/* Supplier Files */}
           {selectedSupplier && (
             <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                📎 Supplier files ({selectedSupplier.name})
+              <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
+                <Paperclip className="h-5 w-5" />
+                Supplier files ({selectedSupplier.name})
               </h2>
 
               <SupplierFileUpload
@@ -649,9 +668,11 @@ const EditTour = () => {
                         className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200"
                       >
                         <div className="flex items-center space-x-3">
-                          <span className="text-lg">
-                            {file.file_type === "pdf" ? "📄" : "🖼️"}
-                          </span>
+                          {file.file_type === "pdf" ? (
+                            <FileText className="h-5 w-5 text-gray-500" />
+                          ) : (
+                            <ImageIcon className="h-5 w-5 text-gray-500" />
+                          )}
                           <div>
                             <p className="text-sm font-medium text-gray-900">
                               {file.label || file.original_name}
@@ -665,16 +686,16 @@ const EditTour = () => {
                           <button
                             type="button"
                             onClick={() => handleViewFile(file, true)}
-                            className="px-2 py-1 text-blue-600 hover:bg-blue-100 rounded text-sm"
+                            className="inline-flex items-center gap-1 px-2 py-1 text-blue-600 hover:bg-blue-100 rounded text-sm"
                           >
-                            👁️ View
+                            <Eye className="h-4 w-4" /> View
                           </button>
                           <button
                             type="button"
                             onClick={() => handleDeleteSupplierFile(file.id)}
-                            className="px-2 py-1 text-red-600 hover:bg-red-50 rounded text-sm"
+                            className="inline-flex items-center gap-1 px-2 py-1 text-red-600 hover:bg-red-50 rounded text-sm"
                           >
-                            🗑️ Delete
+                            <Trash2 className="h-4 w-4" /> Delete
                           </button>
                         </div>
                       </div>
@@ -687,8 +708,9 @@ const EditTour = () => {
 
           {/* Tour Files */}
           <div className="bg-white rounded-lg shadow-sm border p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              📎 Files for this tour
+            <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
+              <Paperclip className="h-5 w-5" />
+              Files for this tour
             </h2>
 
             <TourFileUpload
@@ -706,8 +728,9 @@ const EditTour = () => {
                 {/* Own Files */}
                 {tourFiles.filter((file) => !file.isSharedFile).length > 0 && (
                   <div className="mb-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">
-                      📁 Files for this tour
+                    <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-2">
+                      <Folder className="h-4 w-4" />
+                      Files for this tour
                     </h4>
                     <div className="space-y-2">
                       {tourFiles
@@ -718,9 +741,11 @@ const EditTour = () => {
                             className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200"
                           >
                             <div className="flex items-center space-x-3">
-                              <span className="text-lg">
-                                {file.file_type === "pdf" ? "📄" : "🖼️"}
-                              </span>
+                              {file.file_type === "pdf" ? (
+                                <FileText className="h-5 w-5 text-gray-500" />
+                              ) : (
+                                <ImageIcon className="h-5 w-5 text-gray-500" />
+                              )}
                               <div>
                                 <p className="text-sm font-medium text-gray-900">
                                   {file.original_name}
@@ -735,16 +760,16 @@ const EditTour = () => {
                               <button
                                 type="button"
                                 onClick={() => handleViewFile(file, false)}
-                                className="px-2 py-1 text-blue-600 hover:bg-blue-100 rounded text-sm"
+                                className="inline-flex items-center gap-1 px-2 py-1 text-blue-600 hover:bg-blue-100 rounded text-sm"
                               >
-                                👁️ View
+                                <Eye className="h-4 w-4" /> View
                               </button>
                               <button
                                 type="button"
                                 onClick={() => handleDeleteTourFile(file.id)}
-                                className="px-2 py-1 text-red-600 hover:bg-red-50 rounded text-sm"
+                                className="inline-flex items-center gap-1 px-2 py-1 text-red-600 hover:bg-red-50 rounded text-sm"
                               >
-                                🗑️ Delete
+                                <Trash2 className="h-4 w-4" /> Delete
                               </button>
                             </div>
                           </div>
@@ -756,8 +781,9 @@ const EditTour = () => {
                 {/* Shared Gallery Groups */}
                 {Object.keys(sharedGalleryGroups).length > 0 && (
                   <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">
-                      🔗 Shared Gallery images
+                    <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-2">
+                      <Link2 className="h-4 w-4" />
+                      Shared Gallery images
                     </h4>
                     {Object.values(sharedGalleryGroups).map((group) => (
                       <SharedGalleryGroup
@@ -783,18 +809,20 @@ const EditTour = () => {
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium shadow-md"
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium shadow-md"
             >
-              {saving ? "Saving..." : "💾 Save changes"}
+              <Save className="h-4 w-4" />
+              {saving ? "Saving..." : "Save changes"}
             </button>
 
             <button
               type="button"
               onClick={handleDelete}
               disabled={saving}
-              className="flex-1 bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium shadow-md"
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium shadow-md"
             >
-              {saving ? "Deleting..." : "🗑️ Delete this tour"}
+              <Trash2 className="h-4 w-4" />
+              {saving ? "Deleting..." : "Delete this tour"}
             </button>
 
             <button

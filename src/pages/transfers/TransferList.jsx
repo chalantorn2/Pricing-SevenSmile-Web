@@ -1,61 +1,42 @@
+import { useParams } from "react-router-dom";
+
 const TransferList = () => {
+  const { province } = useParams();
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold text-gray-900">Transfer List</h1>
+        <div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-2xl font-semibold text-gray-900">Transfers</h1>
+            {province && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700">
+                📍 {province}
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-gray-500 mt-1">
+            Manage transfer service prices and information
+          </p>
+        </div>
       </div>
 
-      {/* Coming Soon Card */}
-      <div className="bg-white rounded-lg shadow-sm border p-12">
-        <div className="text-center space-y-6">
-          {/* Icon */}
-          <div className="mx-auto w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center">
+      {/* In development */}
+      <div className="bg-white rounded-xl shadow-sm ring-1 ring-black/5 p-12">
+        <div className="text-center space-y-5">
+          <div className="mx-auto w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center">
             <span className="text-4xl">🚐</span>
           </div>
-
-          {/* Title */}
           <div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              Transfer Management System
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              {province ? `Transfers — ${province}` : "Transfer Management"}
             </h2>
-            <p className="text-lg text-gray-600">
-              Manage Transfer Services prices and information
-            </p>
+            <p className="text-gray-500">This page is under development.</p>
           </div>
-
-          {/* Status */}
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-md mx-auto">
-            <div className="flex items-center justify-center space-x-2">
-              <span className="text-2xl">🚧</span>
-              <div>
-                <p className="font-semibold text-yellow-800">In development</p>
-                <p className="text-sm text-yellow-700">Coming Soon...</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Features Preview */}
-          <div className="max-w-2xl mx-auto">
-            <p className="text-sm text-gray-500 mb-4">Upcoming features:</p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
-              <div className="flex items-center space-x-2">
-                <span>📋</span>
-                <span>Manage Transfer prices</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span>🚗</span>
-                <span>Vehicle types</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span>📍</span>
-                <span>Routes</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span>💰</span>
-                <span>Net price</span>
-              </div>
-            </div>
+          <div className="inline-flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-2">
+            <span className="text-xl">🚧</span>
+            <span className="font-medium text-yellow-800">In development</span>
           </div>
         </div>
       </div>

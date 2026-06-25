@@ -1,10 +1,28 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  Building2,
+  Paperclip,
+  Palmtree,
+  ClipboardList,
+  CheckCircle2,
+  FolderOpen,
+  FileText,
+  Image as ImageIcon,
+  ArrowLeft,
+  ArrowRight,
+  Check,
+} from "lucide-react";
 import { TourMultiForm, ShareGalleryManager } from "../../components/tours";
 import { SupplierAutocomplete } from "../../components/suppliers";
 import { SupplierModal } from "../../components/suppliers";
 import SupplierFileUpload from "../../components/suppliers/SupplierFileUpload";
-import { toursService, supplierFilesService } from "../../services/api-service";
+import {
+  toursService,
+  supplierFilesService,
+  filesService,
+  authService,
+} from "../../services/api-service";
 
 const AddTour = () => {
   const navigate = useNavigate();
@@ -26,17 +44,17 @@ const AddTour = () => {
     {
       id: 1,
       name: "Select Supplier",
-      icon: "🏢",
+      Icon: Building2,
       description: "Select or create a Supplier",
     },
     {
       id: 2,
       name: "Upload files",
-      icon: "📎",
-      description: "Upload Contact Rate Files",
+      Icon: Paperclip,
+      description: "Upload Contract Rate Files",
     },
-    { id: 3, name: "Add tours", icon: "🏝️", description: "Add tour items" },
-    { id: 4, name: "Summary", icon: "📋", description: "Review and save" },
+    { id: 3, name: "Add tours", Icon: Palmtree, description: "Add tour items" },
+    { id: 4, name: "Summary", Icon: ClipboardList, description: "Review and save" },
   ];
 
   // Step 1: Supplier Selection
@@ -81,15 +99,26 @@ const AddTour = () => {
   const handleToursSubmit = async (toursData) => {
     setLoading(true);
 
+    // Pull staged per-tour files out before sending tour data to the API
+    const { tourFiles = [], ...toursPayload } = toursData;
+
     try {
-      const response = await toursService.addTours(toursData);
+      const response = await toursService.addTours(toursPayload);
       console.log("Tours created:", response);
 
-      alert(
-        `✅ Successfully created ${
-          Array.isArray(response) ? response.length : 1
-        } tours!`
-      );
+      // Normalize: API returns a single object for one tour, array for many
+      const createdTours = Array.isArray(response) ? response : [response];
+
+      // Upload staged files for each tour (index matches submission order)
+      const uploadResult = await uploadStagedFiles(createdTours, tourFiles);
+
+      if (uploadResult.failed > 0) {
+        alert(
+          `Created ${createdTours.length} tours, but ${uploadResult.failed} file(s) failed to upload. You can add them again from the edit page.`
+        );
+      } else {
+        alert(`Successfully created ${createdTours.length} tours!`);
+      }
       navigate("/");
     } catch (error) {
       console.error("Error creating tours:", error);
@@ -97,6 +126,53 @@ const AddTour = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Upload staged brochure/gallery files for each created tour
+  const uploadStagedFiles = async (createdTours, tourFiles) => {
+    const currentUser = authService.getCurrentUser();
+    const uploadedBy = currentUser?.username || "Unknown";
+    let failed = 0;
+
+    for (let i = 0; i < createdTours.length; i++) {
+      const tourId = createdTours[i]?.id;
+      const staged = tourFiles[i];
+      if (!tourId || !staged) continue;
+
+      const jobs = [
+        ...(staged.brochure || []).map((file) => ({
+          file,
+          category: "brochure",
+        })),
+        ...(staged.brochure_supplier || []).map((file) => ({
+          file,
+          category: "brochure_supplier",
+        })),
+        ...(staged.gallery || []).map((file) => ({
+          file,
+          category: "gallery",
+        })),
+      ];
+
+      for (const job of jobs) {
+        try {
+          await filesService.uploadTourFile(
+            tourId,
+            job.file,
+            job.category,
+            uploadedBy
+          );
+        } catch (err) {
+          console.error(
+            `Failed to upload ${job.category} file for tour ${tourId}:`,
+            err
+          );
+          failed++;
+        }
+      }
+    }
+
+    return { failed };
   };
 
   // Helper functions
@@ -146,14 +222,15 @@ const AddTour = () => {
             Add New Tour Prices
           </h1>
           <p className="text-gray-600 mt-1">
-            New flow: select Supplier → upload files → add multiple tours
+            Select Supplier, upload files, then add multiple tours
           </p>
         </div>
         <button
           onClick={() => navigate("/")}
-          className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+          className="flex items-center gap-1.5 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
         >
-          ← Back
+          <ArrowLeft className="w-4 h-4" />
+          Back
         </button>
       </div>
 
@@ -176,21 +253,9 @@ const AddTour = () => {
                 onClick={() => isStepAccessible(step.id) && goToStep(step.id)}
               >
                 {isStepCompleted(step.id) ? (
-                  <svg
-                    className="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
+                  <Check className="w-6 h-6" />
                 ) : (
-                  <span className="text-lg">{step.icon}</span>
+                  <step.Icon className="w-5 h-5" />
                 )}
               </div>
 
@@ -228,14 +293,12 @@ const AddTour = () => {
         <div className="p-6">
           {/* Step 1: Supplier Selection */}
           {currentStep === 1 && (
-            <div className="space-y-6">
-              <div className="text-center pb-6 border-b">
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                  🏢 Select or create a Supplier
+            <div className="space-y-5">
+              <div className="flex items-center gap-2 pb-4 border-b">
+                <Building2 className="w-5 h-5 text-blue-600" />
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Select or create a Supplier
                 </h2>
-                <p className="text-gray-600">
-                  Start by selecting the Supplier to add tours for
-                </p>
               </div>
 
               <div className="max-w-2xl mx-auto">
@@ -247,47 +310,58 @@ const AddTour = () => {
                 />
 
                 {selectedSupplier && (
-                  <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
-                    <h3 className="font-semibold text-green-800 mb-2">
-                      ✅ Selected Supplier:
-                    </h3>
-                    <div className="text-sm space-y-1">
-                      <p>
-                        <strong>Name:</strong> {selectedSupplier.name}
-                      </p>
-                      {selectedSupplier.phone && (
-                        <p>
-                          <strong>Phone:</strong> {selectedSupplier.phone}
+                  <div className="mt-4 flex items-center justify-between gap-3 bg-green-50 border border-green-200 rounded-lg px-4 py-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="font-medium text-gray-900 truncate">
+                          {selectedSupplier.name}
                         </p>
-                      )}
-                      {selectedSupplier.line && (
-                        <p>
-                          <strong>Line:</strong> {selectedSupplier.line}
-                        </p>
-                      )}
+                        {(selectedSupplier.phone || selectedSupplier.line) && (
+                          <p className="text-xs text-gray-500 truncate">
+                            {[
+                              selectedSupplier.phone,
+                              selectedSupplier.line &&
+                                `Line: ${selectedSupplier.line}`,
+                            ]
+                              .filter(Boolean)
+                              .join(" · ")}
+                          </p>
+                        )}
+                      </div>
                     </div>
                     <button
-                      onClick={nextStep}
-                      className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      onClick={() => setSelectedSupplier(null)}
+                      className="text-sm text-gray-500 hover:text-gray-700 shrink-0"
                     >
-                      Next: Upload files →
+                      Change
                     </button>
                   </div>
                 )}
               </div>
+
+              {selectedSupplier && (
+                <div className="flex justify-end pt-4 border-t">
+                  <button
+                    onClick={nextStep}
+                    className="flex items-center gap-1.5 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                  >
+                    Next: Upload files
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
           {/* Step 2: File Upload */}
           {currentStep === 2 && (
-            <div className="space-y-6">
-              <div className="text-center pb-6 border-b">
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                  📎 Upload Contact Rate Files
+            <div className="space-y-5">
+              <div className="flex items-center gap-2 pb-4 border-b">
+                <Paperclip className="w-5 h-5 text-blue-600" />
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Upload Contract Rate Files
                 </h2>
-                <p className="text-gray-600">
-                  Upload Contact Rate files and related documents
-                </p>
               </div>
 
               <SupplierFileUpload
@@ -297,8 +371,9 @@ const AddTour = () => {
 
               {uploadedFiles.length > 0 && (
                 <div className="space-y-4">
-                  <h3 className="font-semibold text-gray-900">
-                    📁 Uploaded files ({uploadedFiles.length} files)
+                  <h3 className="flex items-center gap-1.5 font-semibold text-gray-900">
+                    <FolderOpen className="w-4 h-4 text-gray-500" />
+                    Uploaded files ({uploadedFiles.length})
                   </h3>
                   <div className="space-y-2">
                     {uploadedFiles.map((file) => (
@@ -307,9 +382,11 @@ const AddTour = () => {
                         className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border"
                       >
                         <div className="flex items-center space-x-3">
-                          <span className="text-lg">
-                            {file.file_type === "pdf" ? "📄" : "🖼️"}
-                          </span>
+                          {file.file_type === "pdf" ? (
+                            <FileText className="w-5 h-5 text-gray-500" />
+                          ) : (
+                            <ImageIcon className="w-5 h-5 text-gray-500" />
+                          )}
                           <div>
                             <p className="text-sm font-medium text-gray-900">
                               {file.label || file.original_name}
@@ -329,15 +406,17 @@ const AddTour = () => {
                   <div className="flex space-x-3">
                     <button
                       onClick={prevStep}
-                      className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+                      className="flex items-center gap-1.5 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
                     >
-                      ← Back
+                      <ArrowLeft className="w-4 h-4" />
+                      Back
                     </button>
                     <button
                       onClick={nextStep}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                     >
-                      Next: Add tours →
+                      Next: Add tours
+                      <ArrowRight className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -347,9 +426,10 @@ const AddTour = () => {
                 <div className="text-center py-4">
                   <button
                     onClick={nextStep}
-                    className="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-colors"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-colors"
                   >
-                    Skip: Add tours first →
+                    Skip: Add tours first
+                    <ArrowRight className="w-4 h-4" />
                   </button>
                   <p className="text-xs text-gray-500 mt-2">
                     (You can upload files later)
@@ -361,14 +441,15 @@ const AddTour = () => {
 
           {/* Step 3: Tours Form */}
           {currentStep === 3 && (
-            <div className="space-y-6">
-              <div className="text-center pb-6 border-b">
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                  🏝️ Add tour items
+            <div className="space-y-5">
+              <div className="flex items-center gap-2 pb-4 border-b">
+                <Palmtree className="w-5 h-5 text-blue-600" />
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Add tour items
+                  <span className="ml-2 text-sm font-normal text-gray-500">
+                    for {selectedSupplier?.name}
+                  </span>
                 </h2>
-                <p className="text-gray-600">
-                  Add multiple tours for {selectedSupplier?.name}
-                </p>
               </div>
 
               {/* Share Gallery Manager - Show only if we have created tours */}
@@ -394,9 +475,10 @@ const AddTour = () => {
               <div className="flex space-x-3 pt-4 border-t">
                 <button
                   onClick={prevStep}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+                  className="flex items-center gap-1.5 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
                 >
-                  ← Back
+                  <ArrowLeft className="w-4 h-4" />
+                  Back
                 </button>
               </div>
             </div>

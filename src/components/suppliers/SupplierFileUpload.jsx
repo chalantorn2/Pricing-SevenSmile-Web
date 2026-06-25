@@ -1,9 +1,23 @@
 import { useState, useRef } from "react";
+import {
+  Wallet,
+  QrCode,
+  Paperclip,
+  AlertTriangle,
+  UploadCloud,
+} from "lucide-react";
 import { authService, supplierFilesService } from "../../services/api-service";
 import {
   SUPPLIER_FILE_CATEGORIES,
   getCategoryHints,
 } from "../../utils/file-categories";
+
+// Map category id -> lucide icon (keeps file-categories.js data untouched)
+const CATEGORY_ICONS = {
+  contact_rate: Wallet,
+  qr_code: QrCode,
+  general: Paperclip,
+};
 
 const SupplierFileUpload = ({
   supplierId,
@@ -135,7 +149,7 @@ const SupplierFileUpload = ({
       // Single file - ask for label
       const file = files[0];
       const label = prompt(
-        `Label for file "${file.name}" (category: ${categoryInfo.label}):\n(e.g. "Contact Rate Jan 2025", "Price List Update")`,
+        `Label for file "${file.name}" (category: ${categoryInfo.label}):\n(e.g. "Contract Rate Jan 2025", "Price List Update")`,
         ""
       );
 
@@ -150,9 +164,9 @@ const SupplierFileUpload = ({
       try {
         setUploading(true);
         await uploadFilesSequentially(files);
-        alert(`✅ Finished uploading ${files.length} files`);
+        alert(`Finished uploading ${files.length} files`);
       } catch (error) {
-        alert(`❌ An error occurred: ${error.message}`);
+        alert(`An error occurred: ${error.message}`);
       } finally {
         setUploading(false);
         // Reset file input
@@ -183,7 +197,7 @@ const SupplierFileUpload = ({
     if (files.length === 1) {
       const file = files[0];
       const label = prompt(
-        `Label for file "${file.name}" (category: ${categoryInfo.label}):\n(e.g. "Contact Rate Jan 2025")`,
+        `Label for file "${file.name}" (category: ${categoryInfo.label}):\n(e.g. "Contract Rate Jan 2025")`,
         ""
       );
 
@@ -196,9 +210,9 @@ const SupplierFileUpload = ({
       try {
         setUploading(true);
         await uploadFilesSequentially(files);
-        alert(`✅ Finished uploading ${files.length} files`);
+        alert(`Finished uploading ${files.length} files`);
       } catch (error) {
-        alert(`❌ An error occurred: ${error.message}`);
+        alert(`An error occurred: ${error.message}`);
       } finally {
         setUploading(false);
       }
@@ -231,9 +245,9 @@ const SupplierFileUpload = ({
 
   if (!supplierId) {
     return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-        <div className="flex items-center space-x-2">
-          <span className="text-yellow-600">⚠️</span>
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 text-yellow-600 shrink-0" />
           <p className="text-yellow-800 text-sm">
             Please select a Supplier before uploading files
           </p>
@@ -243,33 +257,37 @@ const SupplierFileUpload = ({
   }
 
   return (
-    <div className="supplier-file-upload">
-      {/* Category Selection */}
-      <div className="mb-4">
+    <div className="supplier-file-upload space-y-3">
+      {/* Category Selection — buttons so all options are visible */}
+      <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
           File category <span className="text-red-500">*</span>
         </label>
-        <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          disabled={disabled || uploading}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
-        >
-          {Object.values(SUPPLIER_FILE_CATEGORIES).map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.label}
-            </option>
-          ))}
-        </select>
-
-        {/* Category Description */}
-        <div className={`mt-2 p-3 rounded-lg ${categoryInfo.color} border`}>
-          <p className="text-sm font-medium mb-1">{categoryInfo.description}</p>
-          <p className="text-xs">
-            Supports: {categoryHints.allowedTypesText} | Examples:{" "}
-            {categoryHints.examples.slice(0, 2).join(", ")}
-          </p>
+        <div className="grid grid-cols-3 gap-2">
+          {Object.values(SUPPLIER_FILE_CATEGORIES).map((category) => {
+            const Icon = CATEGORY_ICONS[category.id] || Paperclip;
+            const active = selectedCategory === category.id;
+            return (
+              <button
+                key={category.id}
+                type="button"
+                onClick={() => setSelectedCategory(category.id)}
+                disabled={disabled || uploading}
+                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                  active
+                    ? `${category.color} border-current`
+                    : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                <span className="truncate">{category.label}</span>
+              </button>
+            );
+          })}
         </div>
+        <p className="mt-1.5 text-xs text-gray-500">
+          {categoryInfo.description} · Supports {categoryHints.allowedTypesText}
+        </p>
       </div>
 
       {/* Hidden File Input */}
@@ -283,9 +301,9 @@ const SupplierFileUpload = ({
         disabled={disabled}
       />
 
-      {/* Upload Area */}
+      {/* Upload Area — compact */}
       <div
-        className={`file-upload-area border-2 border-dashed rounded-lg p-6 text-center transition-all duration-200 ${
+        className={`file-upload-area border-2 border-dashed rounded-lg px-4 py-5 transition-all duration-200 ${
           dragOver
             ? "border-blue-400 bg-blue-50"
             : "border-gray-300 hover:border-gray-400"
@@ -300,57 +318,27 @@ const SupplierFileUpload = ({
         onClick={openFileDialog}
       >
         {uploading ? (
-          <div className="space-y-3">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="flex items-center justify-center gap-3">
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
             <p className="text-sm text-gray-600">
               Uploading to "{categoryInfo.label}"...
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {/* Category Icon */}
-            <div
-              className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center ${categoryInfo.color}`}
-            >
-              <span className="text-3xl">{categoryInfo.icon}</span>
-            </div>
-
+          <div className="flex items-center justify-center gap-3 text-center sm:text-left">
+            <UploadCloud className="w-7 h-7 text-gray-400 shrink-0" />
             <div>
-              <p className="text-lg font-medium text-gray-900 mb-2">
-                Upload files to "{categoryInfo.label}"
+              <p className="text-sm font-medium text-gray-900">
+                Drop files here or{" "}
+                <span className="text-blue-600">click to upload</span>
               </p>
-              <p className="text-sm text-gray-600 mb-2">
-                Click to select files or drag and drop them here
+              <p className="text-xs text-gray-500 mt-0.5">
+                {categoryHints.allowedTypesText} · max {maxFileSize}MB · multiple
+                files OK
               </p>
-              <p className="text-xs text-gray-500">
-                Supports {categoryHints.allowedTypesText} (max {maxFileSize}MB)
-              </p>
-            </div>
-
-            {/* Supported File Types */}
-            <div className="flex justify-center space-x-6 text-xs text-gray-400">
-              {categoryInfo.allowedTypes.includes("pdf") && (
-                <span className="flex items-center space-x-1">
-                  <span className="text-lg">📄</span>
-                  <span>PDF</span>
-                </span>
-              )}
-              {categoryInfo.allowedTypes.includes("image") && (
-                <span className="flex items-center space-x-1">
-                  <span className="text-lg">🖼️</span>
-                  <span>JPG, PNG, GIF, WebP</span>
-                </span>
-              )}
             </div>
           </div>
         )}
-      </div>
-
-      {/* Instructions */}
-      <div className="mt-3 text-xs text-gray-500 space-y-1">
-        <p>• You can upload multiple files at once</p>
-        <p>• A single file will prompt for a label; multiple files keep their original names</p>
-        <p>• Files will be stored in the "{categoryInfo.label}" category</p>
       </div>
     </div>
   );

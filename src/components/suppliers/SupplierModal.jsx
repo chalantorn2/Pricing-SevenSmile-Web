@@ -1,5 +1,15 @@
 import { useState, useEffect } from "react";
 import {
+  X,
+  Plus,
+  Trash2,
+  ChevronDown,
+  AlertTriangle,
+  User,
+  Phone,
+  FolderOpen,
+} from "lucide-react";
+import {
   suppliersService,
   supplierFilesService,
 } from "../../services/api-service";
@@ -32,6 +42,7 @@ const SupplierModal = ({
     facebook: "",
     whatsapp: "",
     website: "",
+    email: "", // Visual-only: no DB column yet
   });
 
   // Phone fields management for dynamic UI
@@ -57,6 +68,7 @@ const SupplierModal = ({
         facebook: supplier.facebook || "",
         whatsapp: supplier.whatsapp || "",
         website: supplier.website || "",
+        email: supplier.email || "",
       });
 
       // Calculate how many phone fields to show
@@ -89,6 +101,7 @@ const SupplierModal = ({
         facebook: "",
         whatsapp: "",
         website: "",
+        email: "",
       });
       setVisiblePhoneFields(1);
       setFiles([]);
@@ -249,6 +262,7 @@ const SupplierModal = ({
         facebook: "",
         whatsapp: "",
         website: "",
+        email: "",
       });
       setVisiblePhoneFields(1);
     }
@@ -267,7 +281,7 @@ const SupplierModal = ({
           <div className="modal-content bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh]">
             {/* Header */}
             <div className="modal-header border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-lg font-semibold text-gray-900">
                 {isEdit ? "Edit Supplier" : "Add New Supplier"}
               </h2>
               <button
@@ -275,36 +289,24 @@ const SupplierModal = ({
                 className="text-gray-400 hover:text-gray-600 transition-colors"
                 disabled={loading || deleteLoading}
               >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Content */}
             <div className="overflow-y-auto flex-1">
-              <form onSubmit={handleSubmit} className="p-6">
+              <form onSubmit={handleSubmit} className="p-6 space-y-6">
                 {/* Section 1: Basic Info */}
-                <div className="mb-8">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                    <span className="mr-2">📝</span>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-1.5">
+                    <User className="w-4 h-4 text-gray-500" />
                     Basic Information
                   </h3>
 
-                  <div className="bg-gray-50 rounded-lg p-4 space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
                           Supplier name <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -313,13 +315,13 @@ const SupplierModal = ({
                           value={formData.name}
                           onChange={handleChange}
                           required
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           placeholder="Enter Supplier name"
                         />
                       </div>
 
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
                           Address
                         </label>
                         <textarea
@@ -327,7 +329,7 @@ const SupplierModal = ({
                           value={formData.address}
                           onChange={handleChange}
                           rows={2}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           placeholder="Enter address"
                         />
                       </div>
@@ -336,9 +338,9 @@ const SupplierModal = ({
                 </div>
 
                 {/* Section 2: Contact Info - Enhanced Phone Fields */}
-                <div className="mb-8">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                    <span className="mr-2">📞</span>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-1.5">
+                    <Phone className="w-4 h-4 text-gray-500" />
                     Contact Channels
                   </h3>
 
@@ -348,22 +350,21 @@ const SupplierModal = ({
                       <div>
                         <div className="flex items-center justify-between mb-3">
                           <label className="block text-sm font-medium text-gray-700">
-                            Phone numbers
-                          </label>
-                          <div className="flex items-center space-x-2">
-                            {visiblePhoneFields < 5 && (
-                              <button
-                                type="button"
-                                onClick={addPhoneField}
-                                className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-lg hover:bg-blue-200 transition-colors"
-                              >
-                                ➕ Add phone
-                              </button>
-                            )}
-                            <span className="text-xs text-gray-500">
-                              ({visiblePhoneFields}/5 numbers)
+                            Phone numbers{" "}
+                            <span className="font-normal text-gray-400">
+                              ({visiblePhoneFields}/5)
                             </span>
-                          </div>
+                          </label>
+                          {visiblePhoneFields < 5 && (
+                            <button
+                              type="button"
+                              onClick={addPhoneField}
+                              className="flex items-center gap-1 px-2.5 py-1 bg-blue-100 text-blue-700 text-xs rounded-lg hover:bg-blue-200 transition-colors"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                              Add phone
+                            </button>
+                          )}
                         </div>
 
                         <div className="space-y-3">
@@ -380,7 +381,7 @@ const SupplierModal = ({
                                     name={field.key}
                                     value={formData[field.key]}
                                     onChange={handleChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                     placeholder={field.placeholder}
                                   />
                                 </div>
@@ -395,7 +396,7 @@ const SupplierModal = ({
                                       className="p-1 text-red-600 hover:bg-red-100 rounded transition-colors"
                                       title="Remove this phone"
                                     >
-                                      ❌
+                                      <Trash2 className="w-4 h-4" />
                                     </button>
                                   )}
                                 </div>
@@ -403,16 +404,28 @@ const SupplierModal = ({
                             ))}
                         </div>
 
-                        <div className="mt-2 text-xs text-gray-500">
-                          💡 You can enter up to 5 numbers; the primary number
-                          should be the easiest one to reach
-                        </div>
+                        <p className="mt-2 text-xs text-gray-500">
+                          Up to 5 numbers. Put the easiest one to reach first.
+                        </p>
                       </div>
 
                       {/* Other Contact Fields */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-4 border-t border-gray-200">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                            Email
+                          </label>
+                          <input
+                            type="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="name@example.com"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1.5">
                             Line ID
                           </label>
                           <input
@@ -420,12 +433,12 @@ const SupplierModal = ({
                             name="line"
                             value={formData.line}
                             onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             placeholder="Line ID"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-gray-700 mb-1.5">
                             WhatsApp
                           </label>
                           <input
@@ -433,12 +446,12 @@ const SupplierModal = ({
                             name="whatsapp"
                             value={formData.whatsapp}
                             onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             placeholder="WhatsApp number"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-gray-700 mb-1.5">
                             Facebook
                           </label>
                           <input
@@ -446,20 +459,20 @@ const SupplierModal = ({
                             name="facebook"
                             value={formData.facebook}
                             onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             placeholder="Facebook URL or Username"
                           />
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            🌐 Website
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                            Website
                           </label>
                           <input
                             type="url"
                             name="website"
                             value={formData.website}
                             onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             placeholder="https://example.com"
                           />
                         </div>
@@ -470,33 +483,23 @@ const SupplierModal = ({
 
                 {/* Section 3: File Management (Edit only) */}
                 {isEdit && supplier && (
-                  <div className="mb-8">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-medium text-gray-900 flex items-center">
-                        <span className="mr-2">📁</span>
-                        Manage documents ({files.length} files)
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-1.5">
+                        <FolderOpen className="w-4 h-4 text-gray-500" />
+                        Manage documents ({files.length})
                       </h3>
                       <button
                         type="button"
                         onClick={() => setFilesSectionOpen(!filesSectionOpen)}
-                        className="flex items-center space-x-2 px-3 py-1 text-blue-600 hover:text-blue-800 transition-colors"
+                        className="flex items-center gap-1.5 px-3 py-1 text-sm text-blue-600 hover:text-blue-800 transition-colors"
                       >
                         <span>{filesSectionOpen ? "Hide" : "Show"}</span>
-                        <svg
+                        <ChevronDown
                           className={`w-4 h-4 transition-transform ${
                             filesSectionOpen ? "rotate-180" : ""
                           }`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 9l-7 7-7-7"
-                          />
-                        </svg>
+                        />
                       </button>
                     </div>
 
@@ -556,9 +559,9 @@ const SupplierModal = ({
                     type="button"
                     onClick={handleDeleteClick}
                     disabled={loading || deleteLoading}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
-                    <span>🗑️</span>
+                    <Trash2 className="w-4 h-4" />
                     <span>Delete Supplier</span>
                   </button>
                 )}
@@ -602,7 +605,7 @@ const SupplierModal = ({
             <div className="p-6">
               <div className="flex items-center space-x-3 mb-4">
                 <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                  <span className="text-red-600 text-xl">⚠️</span>
+                  <AlertTriangle className="w-5 h-5 text-red-600" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">
@@ -650,7 +653,7 @@ const SupplierModal = ({
                     </>
                   ) : (
                     <>
-                      <span>🗑️</span>
+                      <Trash2 className="w-4 h-4" />
                       <span>Delete Supplier</span>
                     </>
                   )}

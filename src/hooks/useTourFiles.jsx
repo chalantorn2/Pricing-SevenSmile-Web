@@ -41,6 +41,7 @@ const useTourFiles = (tourId) => {
   const filesByCategory = useMemo(() => {
     const categories = {
       brochure: [],
+      brochure_supplier: [],
       general: [],
       gallery: [],
     };
@@ -114,6 +115,7 @@ const useTourFiles = (tourId) => {
   const documentFiles = useMemo(() => {
     return [
       ...(filesByCategory.brochure || []),
+      ...(filesByCategory.brochure_supplier || []),
       ...(filesByCategory.general || []),
     ];
   }, [filesByCategory]);

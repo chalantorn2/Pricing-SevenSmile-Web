@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Search, X, Phone, MessageCircle, ChevronRight, Plus } from "lucide-react";
 import { suppliersService } from "../../services/api-service";
 
 const SupplierAutocomplete = ({
@@ -83,25 +84,30 @@ const SupplierAutocomplete = ({
     }, 300);
   };
 
+  // Whether the "Create new" row is currently offered
+  const canCreate = !!onCreateNew && query.trim().length >= 2;
+  // Total navigable items = results + optional create row
+  const navCount = results.length + (canCreate ? 1 : 0);
+
   // Handle keyboard navigation
   const handleKeyDown = (e) => {
-    if (!isOpen || results.length === 0) return;
+    if (!isOpen || navCount === 0) return;
 
     switch (e.key) {
       case "ArrowDown":
         e.preventDefault();
-        setSelectedIndex((prev) => (prev + 1) % results.length);
+        setSelectedIndex((prev) => (prev + 1) % navCount);
         break;
       case "ArrowUp":
         e.preventDefault();
-        setSelectedIndex(
-          (prev) => (prev - 1 + results.length) % results.length
-        );
+        setSelectedIndex((prev) => (prev - 1 + navCount) % navCount);
         break;
       case "Enter":
         e.preventDefault();
         if (selectedIndex >= 0 && selectedIndex < results.length) {
           handleSelect(selectedIndex);
+        } else if (canCreate && selectedIndex === results.length) {
+          handleCreateNew();
         }
         break;
       case "Escape":
@@ -153,6 +159,7 @@ const SupplierAutocomplete = ({
     <div className="relative">
       {/* Input Field */}
       <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
         <input
           ref={inputRef}
           type="text"
@@ -163,26 +170,14 @@ const SupplierAutocomplete = ({
           placeholder={placeholder}
           disabled={disabled}
           required={required}
-          className={`w-full px-3 py-2 pr-20 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+          className={`w-full pl-9 pr-10 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
             disabled ? "bg-gray-100 cursor-not-allowed" : ""
           }`}
         />
 
-        {/* Create New Button */}
-        {onCreateNew && query.length >= 2 && (
-          <button
-            type="button"
-            onClick={handleCreateNew}
-            className="absolute right-12 top-1/2 transform -translate-y-1/2 px-2 py-1 bg-green-100 text-green-700 text-xs rounded hover:bg-green-200 transition-colors"
-            title="Create new Supplier"
-          >
-            ➕ New
-          </button>
-        )}
-
         {/* Loading Spinner */}
         {loading && (
-          <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
+          <div className="absolute right-9 top-1/2 -translate-y-1/2">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
           </div>
         )}
@@ -192,27 +187,15 @@ const SupplierAutocomplete = ({
           <button
             type="button"
             onClick={handleClear}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
           >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
+            <X className="w-4 h-4" />
           </button>
         )}
       </div>
 
       {/* Dropdown */}
-      {isOpen && (results.length > 0 || loading) && (
+      {isOpen && (results.length > 0 || loading || canCreate) && (
         <div
           ref={dropdownRef}
           className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
@@ -223,7 +206,7 @@ const SupplierAutocomplete = ({
               key={agent.id}
               onClick={() => handleMouseSelect(agent)}
               onMouseEnter={() => setSelectedIndex(index)}
-              className={`px-4 py-3 cursor-pointer transition-colors ${
+              className={`px-4 py-2.5 cursor-pointer transition-colors ${
                 selectedIndex === index
                   ? "bg-blue-50 text-blue-700"
                   : "hover:bg-gray-50"
@@ -232,7 +215,7 @@ const SupplierAutocomplete = ({
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium text-gray-900">{agent.name}</p>
-                  <div className="flex flex-wrap items-center gap-2 mt-1 text-sm text-gray-500">
+                  <div className="flex flex-wrap items-center gap-3 mt-0.5 text-xs text-gray-500">
                     {[
                       agent.phone,
                       agent.phone_2,
@@ -241,35 +224,21 @@ const SupplierAutocomplete = ({
                       agent.phone_5,
                     ]
                       .filter((phone) => phone) // keep only non-empty values
-                      .map((phone, index) => (
-                        <span key={index} className="flex items-center">
-                          <span className="mr-1">📞</span>
+                      .map((phone, i) => (
+                        <span key={i} className="flex items-center gap-1">
+                          <Phone className="w-3 h-3" />
                           {phone}
                         </span>
                       ))}
                     {agent.line && (
-                      <span className="flex items-center">
-                        <span className="mr-1">💬</span>
+                      <span className="flex items-center gap-1">
+                        <MessageCircle className="w-3 h-3" />
                         {agent.line}
                       </span>
                     )}
                   </div>
                 </div>
-                <div className="text-blue-600">
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </div>
+                <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
               </div>
             </div>
           ))}
@@ -277,17 +246,37 @@ const SupplierAutocomplete = ({
           {/* Loading State */}
           {loading && (
             <div className="px-4 py-3 text-center text-gray-500">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto mb-2"></div>
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mx-auto mb-2"></div>
               <p className="text-sm">Searching...</p>
             </div>
+          )}
+
+          {/* Create New row */}
+          {canCreate && !loading && (
+            <button
+              type="button"
+              onClick={handleCreateNew}
+              onMouseEnter={() => setSelectedIndex(results.length)}
+              className={`w-full flex items-center gap-2 px-4 py-2.5 text-left border-t transition-colors ${
+                selectedIndex === results.length
+                  ? "bg-green-50 text-green-700"
+                  : "text-green-700 hover:bg-green-50"
+              }`}
+            >
+              <Plus className="w-4 h-4 shrink-0" />
+              <span className="text-sm">
+                Create new supplier:{" "}
+                <span className="font-medium">"{query.trim()}"</span>
+              </span>
+            </button>
           )}
         </div>
       )}
 
       {/* Helper Text */}
       <div className="mt-1 text-xs text-gray-500">
-        Type at least 2 characters to search for a Supplier
-        {onCreateNew && " or click the ➕ New button to create one"}
+        Type at least 2 characters to search
+        {onCreateNew && ", or create a new one"}
       </div>
     </div>
   );

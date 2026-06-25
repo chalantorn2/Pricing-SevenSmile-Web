@@ -118,7 +118,7 @@ const SharedTour = () => {
           <div className="bg-gray-50 px-6 py-4 border-t">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="text-sm text-gray-500">
-                <p>Seven Smile Tour And Ticket</p>
+                <p>Contract Rate</p>
                 <p>Tour Price Management System</p>
               </div>
               <Link

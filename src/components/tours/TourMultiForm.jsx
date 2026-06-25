@@ -1,5 +1,32 @@
 import { useState, useEffect } from "react";
-import { AutocompleteInput } from "../common";
+import {
+  Plus,
+  Trash2,
+  Save,
+  X,
+  Lightbulb,
+  ChevronDown,
+  MapPin,
+  CalendarDays,
+  Ticket,
+  StickyNote,
+  Paperclip,
+} from "lucide-react";
+import { AutocompleteInput, ProvincePicker } from "../common";
+import { COMMON_PROVINCES } from "../../utils/provinces";
+
+// Visual-only metadata (not persisted yet — backend columns come later)
+const TOUR_TYPES = [
+  { value: "day_trip", label: "Day trip" },
+  { value: "multi_day", label: "Multi-day / Liveaboard" },
+  { value: "charter", label: "Charter (เหมาลำ)" },
+  { value: "land_tour", label: "Land / City tour" },
+  { value: "show_ticket", label: "Show / Attraction ticket" },
+];
+
+// Shared grid template so the header and every row stay aligned
+const ROW_GRID =
+  "grid grid-cols-[28px_minmax(0,1fr)_160px_96px_96px_64px] gap-2 items-center";
 
 const TourMultiForm = ({
   onSubmit,
@@ -9,6 +36,8 @@ const TourMultiForm = ({
 }) => {
   const [tours, setTours] = useState([]);
   const [errors, setErrors] = useState({});
+  // Which rows have their detail panel open, keyed by tour id
+  const [expanded, setExpanded] = useState({});
 
   // Initialize with one empty tour or provided tours
   useEffect(() => {
@@ -28,7 +57,9 @@ const TourMultiForm = ({
     return {
       id: Date.now() + Math.random(), // Temporary ID for tracking
       tour_name: "",
-      departure_from: "",
+      tour_type: "day_trip", // Visual-only (not persisted yet)
+      destinations: [], // Visual-only — provinces the tour actually visits
+      departure_from: "", // Sales zone / pickup area (persisted)
       pier: "",
       adult_price: "",
       child_price: "",
@@ -37,7 +68,12 @@ const TourMultiForm = ({
       no_end_date: false, // New field for optional end date
       notes: "",
       park_fee_included: false,
+      park_fee_adult: "", // Park fee per adult (frontend only — backend column later)
+      park_fee_child: "", // Park fee per child (frontend only — backend column later)
       map_url: "",
+      brochureFiles: [], // Our brochure - staged File objects (uploaded after tour is created)
+      supplierBrochureFiles: [], // Supplier brochure - staged File objects
+      galleryFiles: [], // Images - staged File objects
     };
   };
 
@@ -48,12 +84,19 @@ const TourMultiForm = ({
     // Phase 4: Copy from previous tour (if exists)
     if (tours.length > 0) {
       const lastTour = tours[tours.length - 1];
-      // Copy all fields except ID
+      // Copy all fields except ID and staged files (files are tour-specific)
       Object.keys(newTour).forEach((key) => {
-        if (key !== "id") {
+        if (
+          key !== "id" &&
+          key !== "brochureFiles" &&
+          key !== "supplierBrochureFiles" &&
+          key !== "galleryFiles"
+        ) {
           newTour[key] = lastTour[key];
         }
       });
+      // Clone array fields so siblings don't share the same reference
+      newTour.destinations = [...(lastTour.destinations || [])];
     }
 
     setTours((prev) => [...prev, newTour]);
@@ -74,6 +117,11 @@ const TourMultiForm = ({
     });
   };
 
+  // Toggle a row's detail panel
+  const toggleExpand = (tourId) => {
+    setExpanded((prev) => ({ ...prev, [tourId]: !prev[tourId] }));
+  };
+
   // Update tour field
   const updateTour = (tourId, field, value) => {
     setTours((prev) =>
@@ -92,6 +140,46 @@ const TourMultiForm = ({
         },
       }));
     }
+  };
+
+  // Add staged files to a tour (brochureFiles | galleryFiles)
+  const addFiles = (tourId, field, fileList) => {
+    const files = Array.from(fileList);
+    if (files.length === 0) return;
+    setTours((prev) =>
+      prev.map((tour) =>
+        tour.id === tourId
+          ? { ...tour, [field]: [...tour[field], ...files] }
+          : tour
+      )
+    );
+  };
+
+  // Remove a single staged file by index
+  const removeFile = (tourId, field, index) => {
+    setTours((prev) =>
+      prev.map((tour) =>
+        tour.id === tourId
+          ? { ...tour, [field]: tour[field].filter((_, i) => i !== index) }
+          : tour
+      )
+    );
+  };
+
+  // Count of optional detail items filled, shown as a hint on the row
+  const detailCount = (tour) => {
+    let n = 0;
+    if (tour.departure_from) n++;
+    if (tour.pier) n++;
+    if (tour.destinations.length) n++;
+    if (tour.map_url) n++;
+    if (tour.notes) n++;
+    const files =
+      tour.brochureFiles.length +
+      tour.supplierBrochureFiles.length +
+      tour.galleryFiles.length;
+    if (files) n++;
+    return n;
   };
 
   // Handle no end date toggle
@@ -154,6 +242,16 @@ const TourMultiForm = ({
     });
 
     setErrors(allErrors);
+
+    // Auto-open detail panels for rows whose error lives in the detail (dates)
+    const toOpen = {};
+    Object.entries(allErrors).forEach(([id, errs]) => {
+      if (errs.end_date) toOpen[id] = true;
+    });
+    if (Object.keys(toOpen).length > 0) {
+      setExpanded((prev) => ({ ...prev, ...toOpen }));
+    }
+
     return !hasErrors;
   };
 
@@ -166,287 +264,517 @@ const TourMultiForm = ({
       return;
     }
 
-    // Prepare data for submission
+    // Prepare data for submission. Strip temporary ID, staged files, and
+    // visual-only fields (tour_type/destinations) that have no DB column yet.
     const toursData = tours.map((tour) => {
-      const { id, ...tourData } = tour; // Remove temporary ID
+      const tourData = { ...tour };
+      delete tourData.id;
+      delete tourData.brochureFiles;
+      delete tourData.supplierBrochureFiles;
+      delete tourData.galleryFiles;
+      delete tourData.tour_type;
+      delete tourData.destinations;
       return {
         ...tourData,
         adult_price: parseFloat(tourData.adult_price) || 0,
         child_price: parseFloat(tourData.child_price) || 0,
+        // Frontend only for now — backend columns come later
+        park_fee_adult: parseFloat(tourData.park_fee_adult) || 0,
+        park_fee_child: parseFloat(tourData.park_fee_child) || 0,
         // Pass no_end_date flag to backend
         end_date: tour.no_end_date ? null : tourData.end_date,
       };
     });
 
+    // Staged files in the same order as toursData (uploaded after tours are created)
+    const tourFiles = tours.map((tour) => ({
+      brochure: tour.brochureFiles,
+      brochure_supplier: tour.supplierBrochureFiles,
+      gallery: tour.galleryFiles,
+    }));
+
     onSubmit({
       supplier_id: supplierId,
       tours: toursData,
+      tourFiles,
     });
   };
 
-  // Get error for specific field
-  const getFieldError = (tourId, field) => {
-    return errors[tourId]?.[field];
-  };
+  const hasFieldError = (tourId, field) => !!errors[tourId]?.[field];
 
-  // Check if field has error
-  const hasFieldError = (tourId, field) => {
-    return !!getFieldError(tourId, field);
-  };
+  const labelClass = "block text-sm font-medium text-gray-700 mb-1.5";
+  // Section heading base (color added per section). Color helps scan groups.
+  const sectionHead =
+    "flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide mb-2";
+  const sectionCard =
+    "bg-white rounded-lg border border-gray-200 border-l-4 p-3 grid grid-cols-1 gap-x-4 gap-y-3";
+  const inputClass =
+    "w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
+  const cellInput =
+    "w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Tours List */}
-      <div className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Tours table */}
+      <div className="border border-gray-200 rounded-lg overflow-hidden">
+        {/* Header */}
+        <div
+          className={`${ROW_GRID} px-3 py-2 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-500`}
+        >
+          <span className="text-center">#</span>
+          <span>Tour name</span>
+          <span>Type</span>
+          <span>Adult ฿</span>
+          <span>Child ฿</span>
+          <span className="text-center">Edit</span>
+        </div>
+
+        {/* Rows */}
         {tours.map((tour, index) => (
-          <div
-            key={tour.id}
-            className="bg-white border border-gray-200 rounded-lg p-6 relative"
-          >
-            {/* Tour Header */}
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Tour {index + 1}
-                {index > 0 && (
-                  <span className="ml-2 text-sm font-normal text-blue-600">
-                    (copied from previous tour)
-                  </span>
-                )}
-              </h3>
-              <div className="flex items-center space-x-2">
+          <div key={tour.id} className="border-b border-gray-100 last:border-0">
+            {/* Inline core fields */}
+            <div className={`${ROW_GRID} px-3 py-2 hover:bg-gray-50/60`}>
+              <span className="text-center text-sm text-gray-400">
+                {index + 1}
+              </span>
+
+              <input
+                type="text"
+                value={tour.tour_name}
+                onChange={(e) =>
+                  updateTour(tour.id, "tour_name", e.target.value)
+                }
+                placeholder="Tour name *"
+                className={`${cellInput} ${
+                  hasFieldError(tour.id, "tour_name")
+                    ? "border-red-500 ring-1 ring-red-500"
+                    : ""
+                }`}
+              />
+
+              <select
+                value={tour.tour_type}
+                onChange={(e) =>
+                  updateTour(tour.id, "tour_type", e.target.value)
+                }
+                className={cellInput}
+              >
+                {TOUR_TYPES.map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+
+              <input
+                type="number"
+                value={tour.adult_price}
+                onChange={(e) =>
+                  updateTour(tour.id, "adult_price", e.target.value)
+                }
+                min="0"
+                placeholder="0"
+                className={`${cellInput} text-right`}
+              />
+
+              <input
+                type="number"
+                value={tour.child_price}
+                onChange={(e) =>
+                  updateTour(tour.id, "child_price", e.target.value)
+                }
+                min="0"
+                placeholder="0"
+                className={`${cellInput} text-right`}
+              />
+
+              <div className="flex items-center justify-center gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => toggleExpand(tour.id)}
+                  className="relative p-1.5 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors"
+                  title="More details"
+                >
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform ${
+                      expanded[tour.id] ? "rotate-180" : ""
+                    }`}
+                  />
+                  {!expanded[tour.id] && detailCount(tour) > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-blue-500 rounded-full" />
+                  )}
+                </button>
                 {tours.length > 1 && (
                   <button
                     type="button"
                     onClick={() => removeTour(tour.id)}
-                    className="text-red-600 hover:text-red-800 p-2 hover:bg-red-50 rounded-lg transition-colors"
+                    className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
                     title="Remove this tour"
                   >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 )}
               </div>
             </div>
 
-            {/* Tour Fields */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Tour Name */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tour name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={tour.tour_name}
-                  onChange={(e) =>
-                    updateTour(tour.id, "tour_name", e.target.value)
-                  }
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    hasFieldError(tour.id, "tour_name")
-                      ? "border-red-500"
-                      : "border-gray-300"
-                  }`}
-                  placeholder="Enter tour name"
-                />
-                {hasFieldError(tour.id, "tour_name") && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {getFieldError(tour.id, "tour_name")}
-                  </p>
-                )}
-              </div>
-
-              {/* Departure From - with Autocomplete */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Departure from
-                </label>
-                <AutocompleteInput
-                  type="departure_from"
-                  value={tour.departure_from}
-                  onChange={(value) =>
-                    updateTour(tour.id, "departure_from", value)
-                  }
-                  placeholder="Province/departure location"
-                />
-              </div>
-
-              {/* Pier - with Autocomplete */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Pier
-                </label>
-                <AutocompleteInput
-                  type="pier"
-                  value={tour.pier}
-                  onChange={(value) => updateTour(tour.id, "pier", value)}
-                  placeholder="Pier name"
-                />
-              </div>
-
-              {/* Adult Price */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Adult price (THB)
-                </label>
-                <input
-                  type="number"
-                  value={tour.adult_price}
-                  onChange={(e) =>
-                    updateTour(tour.id, "adult_price", e.target.value)
-                  }
-                  min="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              {/* Child Price */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Child price (THB)
-                </label>
-                <input
-                  type="number"
-                  value={tour.child_price}
-                  onChange={(e) =>
-                    updateTour(tour.id, "child_price", e.target.value)
-                  }
-                  min="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              {/* Map URL - added this section */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  🗺️ Google Maps URL
-                </label>
-                <input
-                  type="url"
-                  value={tour.map_url}
-                  onChange={(e) =>
-                    updateTour(tour.id, "map_url", e.target.value)
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="https://maps.google.com/... or https://goo.gl/maps/..."
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Copy the URL from Google Maps and paste it here (optional)
-                </p>
-              </div>
-
-              {/* Start Date */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Start date
-                </label>
-                <input
-                  type="date"
-                  value={tour.start_date}
-                  onChange={(e) =>
-                    updateTour(tour.id, "start_date", e.target.value)
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              {/* End Date - with Optional Toggle */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  End date
-                </label>
-
-                {/* End Date Input - conditionally shown */}
-                {!tour.no_end_date && (
-                  <input
-                    type="date"
-                    value={tour.end_date}
-                    onChange={(e) =>
-                      updateTour(tour.id, "end_date", e.target.value)
-                    }
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      hasFieldError(tour.id, "end_date")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
-                  />
-                )}
-
-                {/* No End Date Checkbox */}
-                <div className="mt-2">
-                  <label className="inline-flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={tour.no_end_date}
-                      onChange={(e) =>
-                        handleNoEndDateToggle(tour.id, e.target.checked)
+            {/* Detail panel */}
+            {expanded[tour.id] && (
+              <div className="px-4 py-4 bg-gray-50 border-t border-gray-100 space-y-5">
+                {/* Route & pickup */}
+                <section>
+                  <h5 className={`${sectionHead} text-blue-500`}>
+                    <MapPin className="w-3.5 h-3.5" /> Route &amp; pickup
+                  </h5>
+                  <div className={`${sectionCard} border-l-blue-400 md:grid-cols-2`}>
+                  {/* Departure from */}
+                  <div>
+                    <label className={labelClass}>
+                      Departure from{" "}
+                      <span className="font-normal text-gray-400">
+                        — can be more than one
+                      </span>
+                    </label>
+                    <ProvincePicker
+                      multiple
+                      quickPicks={COMMON_PROVINCES}
+                      value={
+                        tour.departure_from
+                          ? tour.departure_from
+                              .split(",")
+                              .map((s) => s.trim())
+                              .filter(Boolean)
+                          : []
                       }
-                      className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                      onChange={(arr) =>
+                        updateTour(tour.id, "departure_from", arr.join(", "))
+                      }
+                      placeholder="Type a province"
                     />
-                    <span className="ml-2 text-sm text-orange-700">
-                      No end date (valid until changed)
-                    </span>
-                  </label>
-                </div>
+                  </div>
 
-                {/* End Date in Disabled State */}
-                {tour.no_end_date && (
-                  <input
-                    type="text"
-                    value="Not specified"
-                    disabled
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-orange-50 text-orange-700 cursor-not-allowed"
-                  />
-                )}
+                  {/* Destination (single province) */}
+                  <div>
+                    <label className={labelClass}>
+                      Destination{" "}
+                      <span className="font-normal text-gray-400">
+                        — one province
+                      </span>
+                    </label>
+                    <ProvincePicker
+                      quickPicks={COMMON_PROVINCES}
+                      value={tour.destinations[0] || ""}
+                      onChange={(val) =>
+                        updateTour(tour.id, "destinations", val ? [val] : [])
+                      }
+                      placeholder="Type a province"
+                    />
+                  </div>
 
-                {hasFieldError(tour.id, "end_date") && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {getFieldError(tour.id, "end_date")}
-                  </p>
-                )}
+                  {/* Pier */}
+                  <div>
+                    <label className={labelClass}>Pier</label>
+                    <AutocompleteInput
+                      type="pier"
+                      value={tour.pier}
+                      onChange={(value) => updateTour(tour.id, "pier", value)}
+                      placeholder="Pier name"
+                    />
+                  </div>
+
+                  {/* Map URL */}
+                  <div>
+                    <label className={labelClass}>Google Maps URL</label>
+                    <input
+                      type="url"
+                      value={tour.map_url}
+                      onChange={(e) =>
+                        updateTour(tour.id, "map_url", e.target.value)
+                      }
+                      className={inputClass}
+                      placeholder="https://maps.app.goo.gl/..."
+                    />
+                  </div>
+                  </div>
+                </section>
+
+                {/* Schedule */}
+                <section>
+                  <h5 className={`${sectionHead} text-indigo-500`}>
+                    <CalendarDays className="w-3.5 h-3.5" /> Schedule
+                  </h5>
+                  <div className={`${sectionCard} border-l-indigo-400 md:grid-cols-2`}>
+                  {/* Start Date */}
+                  <div>
+                    <label className={labelClass}>Start date</label>
+                    <input
+                      type="date"
+                      value={tour.start_date}
+                      onChange={(e) =>
+                        updateTour(tour.id, "start_date", e.target.value)
+                      }
+                      className={inputClass}
+                    />
+                  </div>
+
+                  {/* End Date */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-sm font-medium text-gray-700">
+                        End date
+                      </label>
+                      <label className="inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={tour.no_end_date}
+                          onChange={(e) =>
+                            handleNoEndDateToggle(tour.id, e.target.checked)
+                          }
+                          className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                        />
+                        <span className="ml-1.5 text-xs text-orange-700">
+                          No end date
+                        </span>
+                      </label>
+                    </div>
+                    {!tour.no_end_date ? (
+                      <input
+                        type="date"
+                        value={tour.end_date}
+                        onChange={(e) =>
+                          updateTour(tour.id, "end_date", e.target.value)
+                        }
+                        className={`w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          hasFieldError(tour.id, "end_date")
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        }`}
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        value="Not specified"
+                        disabled
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-orange-50 text-orange-700 cursor-not-allowed"
+                      />
+                    )}
+                    {hasFieldError(tour.id, "end_date") && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors[tour.id].end_date}
+                      </p>
+                    )}
+                  </div>
+                  </div>
+                </section>
+
+                {/* Park fee */}
+                <section>
+                  <h5 className={`${sectionHead} text-amber-500`}>
+                    <Ticket className="w-3.5 h-3.5" /> Park fee
+                  </h5>
+                  <div className={`${sectionCard} border-l-amber-400 md:grid-cols-3 md:items-end`}>
+                  {/* Park fee — adult */}
+                  <div>
+                    <label className={labelClass}>
+                      Park fee{" "}
+                      <span className="font-normal text-gray-400">/ adult ฿</span>
+                    </label>
+                    <input
+                      type="number"
+                      value={tour.park_fee_adult}
+                      onChange={(e) =>
+                        updateTour(tour.id, "park_fee_adult", e.target.value)
+                      }
+                      min="0"
+                      placeholder="0"
+                      className={`${inputClass} text-right`}
+                    />
+                  </div>
+
+                  {/* Park fee — child */}
+                  <div>
+                    <label className={labelClass}>
+                      Park fee{" "}
+                      <span className="font-normal text-gray-400">/ child ฿</span>
+                    </label>
+                    <input
+                      type="number"
+                      value={tour.park_fee_child}
+                      onChange={(e) =>
+                        updateTour(tour.id, "park_fee_child", e.target.value)
+                      }
+                      min="0"
+                      placeholder="0"
+                      className={`${inputClass} text-right`}
+                    />
+                  </div>
+
+                  {/* Park fee included */}
+                  <div className="flex items-center md:pb-2">
+                    <label className="inline-flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={tour.park_fee_included}
+                        onChange={(e) =>
+                          updateTour(
+                            tour.id,
+                            "park_fee_included",
+                            e.target.checked
+                          )
+                        }
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">
+                        Net price includes park fee
+                      </span>
+                    </label>
+                  </div>
+                  </div>
+                </section>
+
+                {/* Notes */}
+                <section>
+                  <h5 className={`${sectionHead} text-slate-500`}>
+                    <StickyNote className="w-3.5 h-3.5" /> Notes
+                  </h5>
+                  <div className={`${sectionCard} border-l-slate-400`}>
+                    <label className="sr-only">Notes specific to this tour</label>
+                    <textarea
+                      value={tour.notes}
+                      onChange={(e) =>
+                        updateTour(tour.id, "notes", e.target.value)
+                      }
+                      rows={2}
+                      className={inputClass}
+                      placeholder="Additional notes for this tour..."
+                    />
+                  </div>
+                </section>
+
+                {/* Attachments */}
+                <section>
+                  <h5 className={`${sectionHead} text-emerald-500`}>
+                    <Paperclip className="w-3.5 h-3.5" /> Attachments
+                  </h5>
+                  <div className={`${sectionCard} border-l-emerald-400 md:grid-cols-3`}>
+                    {/* Our Brochure */}
+                    <div>
+                      <label className={labelClass}>Our brochure</label>
+                      <input
+                        type="file"
+                        multiple
+                        accept=".pdf,.jpg,.jpeg,.png,.gif,.webp"
+                        onChange={(e) => {
+                          addFiles(tour.id, "brochureFiles", e.target.files);
+                          e.target.value = "";
+                        }}
+                        className="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-green-100 file:text-green-700 hover:file:bg-green-200"
+                      />
+                      {tour.brochureFiles.length > 0 && (
+                        <ul className="mt-2 space-y-1">
+                          {tour.brochureFiles.map((file, i) => (
+                            <li
+                              key={i}
+                              className="flex items-center justify-between text-xs bg-green-50 border border-green-200 rounded px-2 py-1"
+                            >
+                              <span className="truncate">{file.name}</span>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  removeFile(tour.id, "brochureFiles", i)
+                                }
+                                className="ml-2 text-red-600 hover:text-red-800 shrink-0"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+
+                    {/* Supplier Brochure */}
+                    <div>
+                      <label className={labelClass}>Supplier brochure</label>
+                      <input
+                        type="file"
+                        multiple
+                        accept=".pdf,.jpg,.jpeg,.png,.gif,.webp"
+                        onChange={(e) => {
+                          addFiles(
+                            tour.id,
+                            "supplierBrochureFiles",
+                            e.target.files
+                          );
+                          e.target.value = "";
+                        }}
+                        className="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-amber-100 file:text-amber-700 hover:file:bg-amber-200"
+                      />
+                      {tour.supplierBrochureFiles.length > 0 && (
+                        <ul className="mt-2 space-y-1">
+                          {tour.supplierBrochureFiles.map((file, i) => (
+                            <li
+                              key={i}
+                              className="flex items-center justify-between text-xs bg-amber-50 border border-amber-200 rounded px-2 py-1"
+                            >
+                              <span className="truncate">{file.name}</span>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  removeFile(
+                                    tour.id,
+                                    "supplierBrochureFiles",
+                                    i
+                                  )
+                                }
+                                className="ml-2 text-red-600 hover:text-red-800 shrink-0"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+
+                    {/* Images / Gallery */}
+                    <div>
+                      <label className={labelClass}>Images</label>
+                      <input
+                        type="file"
+                        multiple
+                        accept=".jpg,.jpeg,.png,.gif,.webp"
+                        onChange={(e) => {
+                          addFiles(tour.id, "galleryFiles", e.target.files);
+                          e.target.value = "";
+                        }}
+                        className="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200"
+                      />
+                      {tour.galleryFiles.length > 0 && (
+                        <ul className="mt-2 space-y-1">
+                          {tour.galleryFiles.map((file, i) => (
+                            <li
+                              key={i}
+                              className="flex items-center justify-between text-xs bg-blue-50 border border-blue-200 rounded px-2 py-1"
+                            >
+                              <span className="truncate">{file.name}</span>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  removeFile(tour.id, "galleryFiles", i)
+                                }
+                                className="ml-2 text-red-600 hover:text-red-800 shrink-0"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                </section>
               </div>
-
-              {/* Park Fee Included */}
-              <div className="md:col-span-2">
-                <label className="inline-flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={tour.park_fee_included}
-                    onChange={(e) =>
-                      updateTour(tour.id, "park_fee_included", e.target.checked)
-                    }
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="ml-2 text-sm text-gray-700">
-                    This Net price includes the park fee
-                  </span>
-                </label>
-              </div>
-
-              {/* Notes */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Notes specific to this tour
-                </label>
-                <textarea
-                  value={tour.notes}
-                  onChange={(e) => updateTour(tour.id, "notes", e.target.value)}
-                  rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Additional notes for this tour..."
-                />
-              </div>
-            </div>
+            )}
           </div>
         ))}
       </div>
@@ -456,53 +784,42 @@ const TourMultiForm = ({
         <button
           type="button"
           onClick={addTour}
-          className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
         >
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
+          <Plus className="w-4 h-4" />
           <span>Add another tour</span>
         </button>
       </div>
 
       {/* Submit Section */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-        <div className="flex items-center justify-between">
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+        <div className="flex items-center justify-between gap-4">
           <div>
             <h4 className="font-medium text-gray-900">
-              Ready to save {tours.length} tours
+              Ready to save {tours.length} tour{tours.length > 1 ? "s" : ""}
             </h4>
-            <p className="text-sm text-gray-500 mt-1">
-              Make sure all information is complete before saving
-            </p>
             {tours.length > 1 && (
-              <p className="text-xs text-blue-600 mt-1">
-                💡 Tip: New tours automatically copy data from the previous tour
+              <p className="flex items-center gap-1.5 text-xs text-blue-600 mt-1">
+                <Lightbulb className="w-3.5 h-3.5" />
+                New rows copy all fields from the previous row
               </p>
             )}
           </div>
           <button
             type="submit"
             disabled={loading || tours.length === 0}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
           >
             {loading ? (
-              <div className="flex items-center space-x-2">
+              <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                 <span>Saving...</span>
-              </div>
+              </>
             ) : (
-              `💾 Save all tours (${tours.length})`
+              <>
+                <Save className="w-4 h-4" />
+                <span>Save all tours ({tours.length})</span>
+              </>
             )}
           </button>
         </div>
