@@ -38,7 +38,7 @@ const Sidebar = ({ onNavigate, collapsed = false, onSetCollapsed }) => {
   const lgHide = collapsed ? "lg:hidden" : "";
   const lgCenter = collapsed ? "lg:justify-center lg:px-0" : "";
 
-  // Fetch distinct tour provinces from DB (departure_from)
+  // Fetch distinct tour provinces from DB (destination)
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -48,7 +48,7 @@ const Sidebar = ({ onNavigate, collapsed = false, onSetCollapsed }) => {
         const distinct = [
           ...new Set(
             (tours || [])
-              .map((t) => (t.departure_from || "").trim())
+              .map((t) => (t.destination || "").trim())
               .filter(Boolean)
           ),
         ].sort((a, b) => a.localeCompare(b));
@@ -81,10 +81,13 @@ const Sidebar = ({ onNavigate, collapsed = false, onSetCollapsed }) => {
         key: "hotels",
         label: "Hotels",
         icon: Hotel,
-        children: STATIC_PROVINCES.map((p) => ({
-          label: p,
-          to: `/hotel/${encodeURIComponent(p)}`,
-        })),
+        children: [
+          { label: "All Hotels", to: "/hotel", end: true },
+          ...STATIC_PROVINCES.map((p) => ({
+            label: p,
+            to: `/hotel/${encodeURIComponent(p)}`,
+          })),
+        ],
       },
       {
         key: "transfers",

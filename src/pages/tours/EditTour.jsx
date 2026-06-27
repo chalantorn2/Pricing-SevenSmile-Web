@@ -22,6 +22,7 @@ import {
   SharedGalleryGroup,
 } from "../../components/tours";
 import { AutocompleteInput } from "../../components/common";
+import { TOUR_TYPES } from "../../utils/tour-types";
 import SupplierFileUpload from "../../components/suppliers/SupplierFileUpload";
 import {
   toursService,
@@ -59,7 +60,9 @@ const EditTour = () => {
   // Form data
   const [formData, setFormData] = useState({
     tour_name: "",
+    tour_type: "one_day_trip",
     departure_from: "",
+    destination: "",
     pier: "",
     adult_price: "",
     child_price: "",
@@ -68,6 +71,8 @@ const EditTour = () => {
     no_end_date: false,
     notes: "",
     park_fee_included: false,
+    park_fee_adult: "",
+    park_fee_child: "",
     map_url: "",
   });
 
@@ -101,7 +106,9 @@ const EditTour = () => {
 
         setFormData({
           tour_name: tourData.tour_name || "",
+          tour_type: tourData.tour_type || "one_day_trip",
           departure_from: tourData.departure_from || "",
+          destination: tourData.destination || "",
           pier: tourData.pier || "",
           adult_price: tourData.adult_price
             ? parseFloat(tourData.adult_price).toString()
@@ -114,6 +121,14 @@ const EditTour = () => {
           no_end_date: hasNoEndDate,
           notes: tourData.notes || "",
           park_fee_included: tourData.park_fee_included || false,
+          park_fee_adult:
+            tourData.park_fee_adult != null && tourData.park_fee_adult !== ""
+              ? parseFloat(tourData.park_fee_adult).toString()
+              : "",
+          park_fee_child:
+            tourData.park_fee_child != null && tourData.park_fee_child !== ""
+              ? parseFloat(tourData.park_fee_child).toString()
+              : "",
           map_url: tourData.map_url || "",
         });
 
@@ -343,6 +358,15 @@ const EditTour = () => {
         supplier_id: selectedSupplier?.id || null,
         adult_price: parseFloat(formData.adult_price) || 0,
         child_price: parseFloat(formData.child_price) || 0,
+        // Keep empty string so the backend stores NULL instead of 0
+        park_fee_adult:
+          formData.park_fee_adult === ""
+            ? ""
+            : parseFloat(formData.park_fee_adult) || 0,
+        park_fee_child:
+          formData.park_fee_child === ""
+            ? ""
+            : parseFloat(formData.park_fee_child) || 0,
         end_date: formData.no_end_date ? null : formData.end_date,
       };
 
@@ -442,6 +466,25 @@ const EditTour = () => {
               )}
             </div>
 
+            {/* Tour Type */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tour type
+              </label>
+              <select
+                name="tour_type"
+                value={formData.tour_type}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                {TOUR_TYPES.map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {/* Departure From - with Autocomplete */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -461,6 +504,21 @@ const EditTour = () => {
                   {errors.departure_from}
                 </p>
               )}
+            </div>
+
+            {/* Destination */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Destination
+              </label>
+              <AutocompleteInput
+                type="departure_from"
+                value={formData.destination}
+                onChange={(value) =>
+                  handleAutocompleteChange("destination", value)
+                }
+                placeholder="Destination province"
+              />
             </div>
 
             {/* Pier - with Autocomplete */}
@@ -606,6 +664,40 @@ const EditTour = () => {
               <p className="text-xs text-gray-500 mt-1">
                 Copy the URL from Google Maps and paste it here (optional)
               </p>
+            </div>
+
+            {/* Park Fee — Adult */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Park fee / adult (THB)
+              </label>
+              <input
+                type="number"
+                name="park_fee_adult"
+                value={formData.park_fee_adult}
+                onChange={handleChange}
+                min="0"
+                step="1"
+                placeholder="0"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            {/* Park Fee — Child */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Park fee / child (THB)
+              </label>
+              <input
+                type="number"
+                name="park_fee_child"
+                value={formData.park_fee_child}
+                onChange={handleChange}
+                min="0"
+                step="1"
+                placeholder="0"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
             </div>
 
             {/* Park Fee Included */}

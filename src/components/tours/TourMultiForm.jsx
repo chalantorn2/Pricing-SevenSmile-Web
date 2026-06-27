@@ -14,15 +14,7 @@ import {
 } from "lucide-react";
 import { AutocompleteInput, ProvincePicker } from "../common";
 import { COMMON_PROVINCES } from "../../utils/provinces";
-
-// Visual-only metadata (not persisted yet — backend columns come later)
-const TOUR_TYPES = [
-  { value: "day_trip", label: "Day trip" },
-  { value: "multi_day", label: "Multi-day / Liveaboard" },
-  { value: "charter", label: "Charter (เหมาลำ)" },
-  { value: "land_tour", label: "Land / City tour" },
-  { value: "show_ticket", label: "Show / Attraction ticket" },
-];
+import { TOUR_TYPES } from "../../utils/tour-types";
 
 // Shared grid template so the header and every row stay aligned
 const ROW_GRID =
@@ -33,6 +25,7 @@ const TourMultiForm = ({
   loading = false,
   supplierId = null,
   initialTours = null,
+  submitLabel = null,
 }) => {
   const [tours, setTours] = useState([]);
   const [errors, setErrors] = useState({});
@@ -57,8 +50,8 @@ const TourMultiForm = ({
     return {
       id: Date.now() + Math.random(), // Temporary ID for tracking
       tour_name: "",
-      tour_type: "day_trip", // Visual-only (not persisted yet)
-      destinations: [], // Visual-only — provinces the tour actually visits
+      tour_type: "one_day_trip",
+      destinations: [], // Single province kept in an array for the ProvincePicker; flattened to `destination` on submit
       departure_from: "", // Sales zone / pickup area (persisted)
       pier: "",
       adult_price: "",
@@ -68,8 +61,8 @@ const TourMultiForm = ({
       no_end_date: false, // New field for optional end date
       notes: "",
       park_fee_included: false,
-      park_fee_adult: "", // Park fee per adult (frontend only — backend column later)
-      park_fee_child: "", // Park fee per child (frontend only — backend column later)
+      park_fee_adult: "", // Park fee per adult
+      park_fee_child: "", // Park fee per child
       map_url: "",
       brochureFiles: [], // Our brochure - staged File objects (uploaded after tour is created)
       supplierBrochureFiles: [], // Supplier brochure - staged File objects
@@ -264,23 +257,23 @@ const TourMultiForm = ({
       return;
     }
 
-    // Prepare data for submission. Strip temporary ID, staged files, and
-    // visual-only fields (tour_type/destinations) that have no DB column yet.
+    // Prepare data for submission. Strip temporary ID and staged files;
+    // flatten the destinations array down to a single `destination` string.
     const toursData = tours.map((tour) => {
       const tourData = { ...tour };
       delete tourData.id;
       delete tourData.brochureFiles;
       delete tourData.supplierBrochureFiles;
       delete tourData.galleryFiles;
-      delete tourData.tour_type;
       delete tourData.destinations;
       return {
         ...tourData,
+        destination: tour.destinations?.[0] || null,
         adult_price: parseFloat(tourData.adult_price) || 0,
         child_price: parseFloat(tourData.child_price) || 0,
-        // Frontend only for now — backend columns come later
-        park_fee_adult: parseFloat(tourData.park_fee_adult) || 0,
-        park_fee_child: parseFloat(tourData.park_fee_child) || 0,
+        // Send empty string when blank so the backend stores NULL instead of 0
+        park_fee_adult: tourData.park_fee_adult === "" ? "" : parseFloat(tourData.park_fee_adult) || 0,
+        park_fee_child: tourData.park_fee_child === "" ? "" : parseFloat(tourData.park_fee_child) || 0,
         // Pass no_end_date flag to backend
         end_date: tour.no_end_date ? null : tourData.end_date,
       };
@@ -818,7 +811,9 @@ const TourMultiForm = ({
             ) : (
               <>
                 <Save className="w-4 h-4" />
-                <span>Save all tours ({tours.length})</span>
+                <span>
+                  {submitLabel || `Save all tours (${tours.length})`}
+                </span>
               </>
             )}
           </button>

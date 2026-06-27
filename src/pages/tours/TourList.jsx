@@ -54,6 +54,7 @@ const TourList = () => {
     { key: "id", label: "No.", sortable: false },
     { key: "tour_name", label: "Tour name", sortable: true },
     { key: "departure_from", label: "Departure from", sortable: true },
+    { key: "destination", label: "Destination", sortable: true },
     { key: "pier", label: "Pier", sortable: true },
     { key: "adult_price", label: "Adult price", sortable: true },
     { key: "child_price", label: "Child price", sortable: true },
@@ -66,6 +67,7 @@ const TourList = () => {
     id: true,
     tour_name: true,
     departure_from: true,
+    destination: false,
     pier: false,
     adult_price: true,
     child_price: true,
@@ -107,10 +109,10 @@ const TourList = () => {
   const filterAndSortTours = () => {
     const searchLower = searchTerm.toLowerCase().trim();
     let filtered = tours.filter((tour) => {
-      // Province filter (from sidebar submenu)
+      // Province filter (from sidebar submenu) — by destination
       if (
         activeProvince &&
-        (tour.departure_from || "").trim().toLowerCase() !==
+        (tour.destination || "").trim().toLowerCase() !==
           activeProvince.trim().toLowerCase()
       ) {
         return false;
@@ -200,6 +202,7 @@ const TourList = () => {
       "Tour name": tour.tour_name,
       Supplier: tour.supplier_name,
       "Departure from": tour.departure_from,
+      Destination: tour.destination,
       Pier: tour.pier,
       "Adult price": tour.adult_price,
       "Child price": tour.child_price,
@@ -282,7 +285,7 @@ const TourList = () => {
           </div>
           <p className="text-sm text-gray-500 mt-1">
             {activeProvince
-              ? `Showing tours departing from ${activeProvince}`
+              ? `Showing tours in ${activeProvince}`
               : "Manage all tour prices and details in the system"}
           </p>
         </div>
@@ -461,6 +464,13 @@ const TourList = () => {
                     {showColumn("departure_from") && (
                       <td className="px-6 py-3 whitespace-nowrap text-gray-900">
                         {tour.departure_from || "-"}
+                      </td>
+                    )}
+
+                    {/* Destination */}
+                    {showColumn("destination") && (
+                      <td className="px-6 py-3 whitespace-nowrap text-gray-900">
+                        {tour.destination || "-"}
                       </td>
                     )}
 

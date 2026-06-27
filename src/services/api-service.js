@@ -814,3 +814,47 @@ export const packageToursService = {
     }
   },
 };
+
+export const hotelsService = {
+  // Get hotels (stored in our DB, synced from indosmilesouthservices.com)
+  async getAllHotels(filters = {}) {
+    try {
+      const params = new URLSearchParams();
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+          params.append(key, value);
+        }
+      });
+      const query = params.toString();
+      const response = await apiCall(`/hotels.php${query ? `?${query}` : ""}`);
+      return response;
+    } catch (error) {
+      console.error("❌ Failed to fetch hotels:", error);
+      throw new Error("An error occurred while loading hotels: " + error.message);
+    }
+  },
+
+  // Get one hotel by slug
+  async getHotelBySlug(slug) {
+    try {
+      const response = await apiCall(`/hotels.php?slug=${encodeURIComponent(slug)}`);
+      return response.data;
+    } catch (error) {
+      console.error("❌ Failed to fetch hotel:", error);
+      throw new Error("An error occurred while loading the hotel: " + error.message);
+    }
+  },
+
+  // Pull/refresh hotels from indosmilesouthservices.com into our DB
+  async syncHotels() {
+    try {
+      console.log("🔄 Syncing hotels from source...");
+      const response = await apiCall("/hotels-sync.php", { method: "POST" });
+      console.log("✅ Hotels synced:", response);
+      return response;
+    } catch (error) {
+      console.error("❌ Failed to sync hotels:", error);
+      throw new Error("An error occurred while syncing hotels: " + error.message);
+    }
+  },
+};

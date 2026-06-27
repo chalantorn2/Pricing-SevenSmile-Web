@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Migrate Tour Departure</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      margin: 0; background: #f3f4f6; color: #111827;
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 16px 120px; }
+    h1 { font-size: 22px; margin: 0 0 4px; }
+    .sub { color: #6b7280; font-size: 14px; margin: 0 0 20px; }
+    .card { background: #fff; border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,.06); padding: 16px; margin-bottom: 16px; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    label { font-size: 13px; font-weight: 600; color: #374151; }
+    input[type=text], select {
+      padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; min-width: 160px;
+    }
+    input:focus, select:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,.2); }
+    button {
+      padding: 9px 16px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
+    }
+    .btn-primary { background: #2563eb; color: #fff; }
+    .btn-primary:disabled { background: #9ca3af; cursor: not-allowed; }
+    .btn-ghost { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
+    .btn-sync { background: #16a34a; color: #fff; }
+    .btn-sync:disabled { background: #9ca3af; cursor: not-allowed; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #f0f0f0; }
+    th { background: #f9fafb; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #6b7280; position: sticky; top: 0; }
+    tr:hover td { background: #f9fafb; }
+    .table-scroll { max-height: 480px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 12px; margin: 1px; background: #dbeafe; color: #1e40af; }
+    .pill.empty { background: #fef9c3; color: #854d0e; }
+    .pill.bad { background: #fee2e2; color: #991b1b; }
+    .muted { color: #9ca3af; }
+    .bar {
+      position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid #e5e7eb;
+      padding: 12px 16px; display: flex; gap: 14px; align-items: center; justify-content: center; flex-wrap: wrap;
+    }
+    .count { font-weight: 700; color: #2563eb; }
+    .prov-box { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .prov-box label { font-weight: 500; display: inline-flex; align-items: center; gap: 4px; }
+    #log, #syncLog { font-size: 13px; }
+    .ok { color: #166534; }
+    .err { color: #b91c1c; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Migrate Tour Departure</h1>
+    <p class="sub">เครื่องมือชั่วคราว — 1 ทัวร์มีได้หลาย departure (เก็บแบบ comma-separated ใน departure_from)</p>
+
+    <div class="card">
+      <div class="row">
+        <label for="apiBase">API base</label>
+        <input id="apiBase" type="text" value="https://contactrate.sevensmiletourandticket.com/api" style="min-width:360px;" />
+        <button class="btn-ghost" onclick="loadTours()">โหลดทัวร์ใหม่</button>
+        <span id="status" class="muted"></span>
+      </div>
+      <div class="row" style="margin-top: 12px;">
+        <button id="syncBtn" class="btn-sync" onclick="autoSync()">⚡ Auto Sync (normalize ค่าเดิมที่เป็นจังหวัด)</button>
+        <span id="syncLog" class="muted"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="margin-bottom: 12px;">
+        <input id="search" type="text" placeholder="ค้นหา: ชื่อทัวร์ / supplier / departure" style="flex:1; min-width: 260px;" oninput="render()" />
+        <label><input type="checkbox" id="onlyEmpty" onchange="render()" /> เฉพาะที่ departure ยังไม่ใช่จังหวัด</label>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:36px;"><input type="checkbox" id="checkAll" onchange="toggleAll(this)" /></th>
+              <th>ID</th>
+              <th>Tour name</th>
+              <th>Supplier</th>
+              <th>Departure from (ปัจจุบัน)</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="bar">
+    <span>เลือกแล้ว <span id="selCount" class="count">0</span> ทัวร์</span>
+    <div class="prov-box" id="provBox">
+      <label><input type="checkbox" class="prov" value="Krabi" /> Krabi</label>
+      <label><input type="checkbox" class="prov" value="Phuket" /> Phuket</label>
+      <label><input type="checkbox" class="prov" value="Phang Nga" /> Phang Nga</label>
+      <label><input type="checkbox" class="prov" value="Samui" /> Samui</label>
+      <label><input type="checkbox" class="prov" value="Bangkok" /> Bangkok</label>
+      <label><input type="checkbox" class="prov" value="Hua Hin" /> Hua Hin</label>
+    </div>
+    <select id="mode">
+      <option value="replace">แทนที่ของเดิม</option>
+      <option value="append">เพิ่มต่อท้าย (ไม่ลบเดิม)</option>
+    </select>
+    <button id="saveBtn" class="btn-primary" onclick="save()">บันทึก</button>
+    <span id="log"></span>
+  </div>
+
+  <script>
+    let tours = [];
+    const selected = new Set();
+    const PROVINCES = ["Krabi", "Phuket", "Phang Nga", "Samui", "Bangkok", "Hua Hin"];
+
+    const PROVINCE_ALIASES = {
+      "krabi": "Krabi",
+      "phuket": "Phuket",
+      "phang nga": "Phang Nga", "phangnga": "Phang Nga", "phang-nga": "Phang Nga", "phangna": "Phang Nga",
+      "samui": "Samui", "koh samui": "Samui", "kohsamui": "Samui",
+      "bangkok": "Bangkok", "bkk": "Bangkok",
+      "hua hin": "Hua Hin", "huahin": "Hua Hin",
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const apiBase = () => $("apiBase").value.replace(/\/$/, "");
+
+    function resolveProvince(token) {
+      const key = (token || "").trim().toLowerCase();
+      return PROVINCE_ALIASES[key] || null;
+    }
+
+    // Split a departure_from string into trimmed tokens
+    function splitDeparture(s) {
+      return (s || "").split(",").map((x) => x.trim()).filter(Boolean);
+    }
+
+    // Normalize an existing departure_from to canonical province names (recognized tokens only)
+    function normalizeDeparture(s) {
+      const out = [];
+      splitDeparture(s).forEach((tok) => {
+        const p = resolveProvince(tok);
+        if (p && !out.includes(p)) out.push(p);
+      });
+      return out.join(", ");
+    }
+
+    // Does departure_from already consist only of recognized provinces?
+    function isClean(s) {
+      const toks = splitDeparture(s);
+      if (toks.length === 0) return false;
+      return toks.every((t) => resolveProvince(t));
+    }
+
+    async function loadTours() {
+      $("status").textContent = "กำลังโหลด...";
+      try {
+        const res = await fetch(apiBase() + "/tours.php");
+        const data = await res.json();
+        tours = data.data || [];
+        selected.clear();
+        $("status").textContent = "โหลด " + tours.length + " ทัวร์";
+        render();
+      } catch (err) {
+        $("status").textContent = "โหลดไม่สำเร็จ: " + err.message;
+        $("status").className = "err";
+      }
+    }
+
+    function visibleTours() {
+      const q = $("search").value.toLowerCase().trim();
+      const onlyEmpty = $("onlyEmpty").checked;
+      return tours.filter((t) => {
+        if (onlyEmpty && isClean(t.departure_from)) return false;
+        if (!q) return true;
+        return (
+          (t.tour_name || "").toLowerCase().includes(q) ||
+          (t.supplier_name || "").toLowerCase().includes(q) ||
+          (t.departure_from || "").toLowerCase().includes(q)
+        );
+      });
+    }
+
+    function departurePills(s) {
+      const toks = splitDeparture(s);
+      if (toks.length === 0) return '<span class="pill empty">ว่าง</span>';
+      return toks.map((t) => {
+        const ok = resolveProvince(t);
+        return '<span class="pill' + (ok ? "" : " bad") + '">' + escapeHtml(t) + "</span>";
+      }).join(" ");
+    }
+
+    function render() {
+      const list = visibleTours();
+      const tbody = $("tbody");
+      tbody.innerHTML = list.map((t) => (
+        '<tr>' +
+        '<td><input type="checkbox" data-id="' + t.id + '" ' + (selected.has(String(t.id)) ? "checked" : "") + ' onchange="toggleOne(this)"></td>' +
+        "<td>" + t.id + "</td>" +
+        '<td>' + escapeHtml(t.tour_name || "-") + "</td>" +
+        '<td class="muted">' + escapeHtml(t.supplier_name || "-") + "</td>" +
+        "<td>" + departurePills(t.departure_from) + "</td>" +
+        "</tr>"
+      )).join("");
+      $("selCount").textContent = selected.size;
+      const visIds = list.map((t) => String(t.id));
+      $("checkAll").checked = visIds.length > 0 && visIds.every((id) => selected.has(id));
+    }
+
+    function toggleOne(cb) {
+      const id = cb.getAttribute("data-id");
+      if (cb.checked) selected.add(id); else selected.delete(id);
+      $("selCount").textContent = selected.size;
+    }
+
+    function toggleAll(cb) {
+      visibleTours().forEach((t) => {
+        if (cb.checked) selected.add(String(t.id)); else selected.delete(String(t.id));
+      });
+      render();
+    }
+
+    function chosenProvinces() {
+      return [...document.querySelectorAll(".prov:checked")].map((c) => c.value);
+    }
+
+    // Send one bulk_departure request for a group of tours sharing the same target string
+    async function pushGroup(ids, departure) {
+      const res = await fetch(apiBase() + "/tours.php?action=bulk_departure", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids, departure, updated_by: "migration-tool" }),
+      });
+      const json = await res.json();
+      if (!res.ok || json.success === false) throw new Error(json.error || "HTTP " + res.status);
+      const idSet = new Set(ids.map(String));
+      tours.forEach((t) => { if (idSet.has(String(t.id))) t.departure_from = departure; });
+      return json.updated ?? ids.length;
+    }
+
+    async function save() {
+      const provs = chosenProvinces();
+      const mode = $("mode").value;
+      if (selected.size === 0) { alert("ยังไม่ได้เลือกทัวร์"); return; }
+      if (provs.length === 0) { alert("ยังไม่ได้เลือกจังหวัด"); return; }
+
+      // Compute per-tour target, then group by identical target string
+      const byId = Object.fromEntries(tours.map((t) => [String(t.id), t]));
+      const groups = {}; // target string -> [ids]
+      [...selected].forEach((id) => {
+        const t = byId[id];
+        let toks;
+        if (mode === "append") {
+          toks = splitDeparture(t.departure_from);
+          provs.forEach((p) => { if (!toks.includes(p)) toks.push(p); });
+        } else {
+          toks = [...provs];
+        }
+        const target = toks.join(", ");
+        (groups[target] = groups[target] || []).push(Number(id));
+      });
+
+      const targets = Object.keys(groups);
+      if (!confirm("อัปเดต departure ให้ " + selected.size + " ทัวร์ (" + mode + ")?\n\n" +
+        targets.map((tg) => "→ " + tg + ": " + groups[tg].length).join("\n"))) return;
+
+      const btn = $("saveBtn");
+      btn.disabled = true;
+      let done = 0, fail = 0;
+      for (let i = 0; i < targets.length; i++) {
+        $("log").textContent = "บันทึก " + (i + 1) + "/" + targets.length + "...";
+        try { done += await pushGroup(groups[targets[i]], targets[i]); }
+        catch (err) { console.error(err); fail += groups[targets[i]].length; }
+      }
+      btn.disabled = false;
+      selected.clear();
+      $("log").innerHTML = '<span class="ok">สำเร็จ ' + done + "</span>" + (fail ? ' <span class="err">/ ล้มเหลว ' + fail + "</span>" : "");
+      render();
+    }
+
+    async function autoSync() {
+      // Normalize existing departure_from values that contain recognizable provinces
+      const groups = {}; // normalized string -> [ids]
+      let matched = 0;
+      tours.forEach((t) => {
+        const norm = normalizeDeparture(t.departure_from);
+        if (!norm) return; // nothing recognizable -> manual
+        if (norm === (t.departure_from || "").trim()) return; // already clean
+        (groups[norm] = groups[norm] || []).push(t.id);
+        matched++;
+      });
+
+      if (matched === 0) {
+        $("syncLog").innerHTML = '<span class="ok">ไม่มีอะไรต้อง normalize (ค่าที่รู้จักสะอาดหมดแล้ว)</span>';
+        return;
+      }
+
+      const targets = Object.keys(groups);
+      if (!confirm("Normalize " + matched + " ทัวร์?\n\n" +
+        targets.slice(0, 20).map((tg) => "→ " + tg + ": " + groups[tg].length).join("\n") +
+        (targets.length > 20 ? "\n..." : ""))) return;
+
+      const btn = $("syncBtn");
+      btn.disabled = true;
+      let done = 0, fail = 0;
+      for (let i = 0; i < targets.length; i++) {
+        $("syncLog").textContent = "Sync " + (i + 1) + "/" + targets.length + "...";
+        try { done += await pushGroup(groups[targets[i]], targets[i]); }
+        catch (err) { console.error(err); fail += groups[targets[i]].length; }
+      }
+      btn.disabled = false;
+      $("syncLog").innerHTML = '<span class="ok">Normalize สำเร็จ ' + done + "</span>" + (fail ? ' <span class="err">/ ล้มเหลว ' + fail + "</span>" : "");
+      render();
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    loadTours();
+  </script>
+</body>
+</html>

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Migrate Tour Destination</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      margin: 0; background: #f3f4f6; color: #111827;
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 16px 80px; }
+    h1 { font-size: 22px; margin: 0 0 4px; }
+    .sub { color: #6b7280; font-size: 14px; margin: 0 0 20px; }
+    .card { background: #fff; border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,.06); padding: 16px; margin-bottom: 16px; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    label { font-size: 13px; font-weight: 600; color: #374151; }
+    input[type=text], select {
+      padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; min-width: 200px;
+    }
+    input:focus, select:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,.2); }
+    button {
+      padding: 9px 16px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
+    }
+    .btn-primary { background: #2563eb; color: #fff; }
+    .btn-primary:disabled { background: #9ca3af; cursor: not-allowed; }
+    .btn-ghost { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
+    .btn-sync { background: #16a34a; color: #fff; }
+    .btn-sync:disabled { background: #9ca3af; cursor: not-allowed; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #f0f0f0; }
+    th { background: #f9fafb; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #6b7280; position: sticky; top: 0; }
+    tr:hover td { background: #f9fafb; }
+    .table-scroll { max-height: 520px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 12px; background: #e5e7eb; color: #374151; }
+    .pill.set { background: #dcfce7; color: #166534; }
+    .pill.empty { background: #fef9c3; color: #854d0e; }
+    .muted { color: #9ca3af; }
+    .bar {
+      position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid #e5e7eb;
+      padding: 12px 16px; display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap;
+    }
+    .count { font-weight: 700; color: #2563eb; }
+    #log { font-size: 13px; }
+    .ok { color: #166534; }
+    .err { color: #b91c1c; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Migrate Tour Destination</h1>
+    <p class="sub">เครื่องมือชั่วคราว — เลือกหลายทัวร์ แล้วกำหนด Destination (จังหวัด) พร้อมกัน</p>
+
+    <div class="card">
+      <div class="row">
+        <label for="apiBase">API base</label>
+        <input id="apiBase" type="text" value="https://contactrate.sevensmiletourandticket.com/api" />
+        <button class="btn-ghost" onclick="loadTours()">โหลดทัวร์ใหม่</button>
+        <span id="status" class="muted"></span>
+      </div>
+      <div class="row" style="margin-top: 12px;">
+        <button id="syncBtn" class="btn-sync" onclick="autoSync()">⚡ Auto Sync จาก Departure</button>
+        <label><input type="checkbox" id="overwrite" /> เขียนทับ destination ที่มีอยู่แล้ว</label>
+        <span id="syncLog" class="muted"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="margin-bottom: 12px;">
+        <input id="search" type="text" placeholder="ค้นหา: ชื่อทัวร์ / supplier / departure / destination" style="flex:1; min-width: 260px;" oninput="render()" />
+        <label><input type="checkbox" id="onlyEmpty" onchange="render()" /> เฉพาะที่ยังไม่มี destination</label>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:36px;"><input type="checkbox" id="checkAll" onchange="toggleAll(this)" /></th>
+              <th>ID</th>
+              <th>Tour name</th>
+              <th>Supplier</th>
+              <th>Departure from</th>
+              <th>Destination (ปัจจุบัน)</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="bar">
+    <span>เลือกแล้ว <span id="selCount" class="count">0</span> ทัวร์</span>
+    <label for="province">→ Destination</label>
+    <select id="province">
+      <option value="">-- เลือกจังหวัด --</option>
+      <option>Krabi</option>
+      <option>Phuket</option>
+      <option>Phang Nga</option>
+      <option>Samui</option>
+      <option>Bangkok</option>
+      <option>Hua Hin</option>
+      <option value="__custom__">อื่นๆ (พิมพ์เอง)…</option>
+    </select>
+    <input id="customProvince" type="text" placeholder="พิมพ์จังหวัด" style="display:none;" />
+    <button id="saveBtn" class="btn-primary" onclick="save()">บันทึก</button>
+    <span id="log"></span>
+  </div>
+
+  <script>
+    let tours = [];
+    const selected = new Set();
+
+    const $ = (id) => document.getElementById(id);
+    const apiBase = () => $("apiBase").value.replace(/\/$/, "");
+
+    document.getElementById("province").addEventListener("change", (e) => {
+      $("customProvince").style.display = e.target.value === "__custom__" ? "inline-block" : "none";
+    });
+
+    async function loadTours() {
+      $("status").textContent = "กำลังโหลด...";
+      try {
+        const res = await fetch(apiBase() + "/tours.php");
+        const data = await res.json();
+        tours = data.data || [];
+        selected.clear();
+        $("status").textContent = "โหลด " + tours.length + " ทัวร์";
+        render();
+      } catch (err) {
+        $("status").textContent = "โหลดไม่สำเร็จ: " + err.message;
+        $("status").className = "err";
+      }
+    }
+
+    function visibleTours() {
+      const q = $("search").value.toLowerCase().trim();
+      const onlyEmpty = $("onlyEmpty").checked;
+      return tours.filter((t) => {
+        if (onlyEmpty && (t.destination || "").trim()) return false;
+        if (!q) return true;
+        return (
+          (t.tour_name || "").toLowerCase().includes(q) ||
+          (t.supplier_name || "").toLowerCase().includes(q) ||
+          (t.departure_from || "").toLowerCase().includes(q) ||
+          (t.destination || "").toLowerCase().includes(q)
+        );
+      });
+    }
+
+    function render() {
+      const list = visibleTours();
+      const tbody = $("tbody");
+      tbody.innerHTML = list.map((t) => {
+        const dest = (t.destination || "").trim();
+        const pill = dest
+          ? '<span class="pill set">' + escapeHtml(dest) + "</span>"
+          : '<span class="pill empty">ว่าง</span>';
+        return (
+          '<tr>' +
+          '<td><input type="checkbox" data-id="' + t.id + '" ' + (selected.has(String(t.id)) ? "checked" : "") + ' onchange="toggleOne(this)"></td>' +
+          "<td>" + t.id + "</td>" +
+          '<td>' + escapeHtml(t.tour_name || "-") + "</td>" +
+          '<td class="muted">' + escapeHtml(t.supplier_name || "-") + "</td>" +
+          "<td>" + escapeHtml(t.departure_from || "-") + "</td>" +
+          "<td>" + pill + "</td>" +
+          "</tr>"
+        );
+      }).join("");
+      $("selCount").textContent = selected.size;
+      const visIds = list.map((t) => String(t.id));
+      $("checkAll").checked = visIds.length > 0 && visIds.every((id) => selected.has(id));
+    }
+
+    function toggleOne(cb) {
+      const id = cb.getAttribute("data-id");
+      if (cb.checked) selected.add(id); else selected.delete(id);
+      $("selCount").textContent = selected.size;
+    }
+
+    function toggleAll(cb) {
+      visibleTours().forEach((t) => {
+        if (cb.checked) selected.add(String(t.id)); else selected.delete(String(t.id));
+      });
+      render();
+    }
+
+    function chosenProvince() {
+      const v = $("province").value;
+      if (v === "__custom__") return $("customProvince").value.trim();
+      return v;
+    }
+
+    async function save() {
+      const province = chosenProvince();
+      if (selected.size === 0) { alert("ยังไม่ได้เลือกทัวร์"); return; }
+      if (!province) { alert("ยังไม่ได้เลือก destination"); return; }
+      if (!confirm("ตั้ง destination = \"" + province + "\" ให้ " + selected.size + " ทัวร์?")) return;
+
+      const btn = $("saveBtn");
+      btn.disabled = true;
+      const ids = [...selected].map(Number);
+      $("log").textContent = "กำลังบันทึก...";
+
+      try {
+        const res = await fetch(apiBase() + "/tours.php?action=bulk_destination", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids, destination: province, updated_by: "migration-tool" }),
+        });
+        const json = await res.json();
+        if (!res.ok || json.success === false) throw new Error(json.error || "HTTP " + res.status);
+
+        // reflect locally
+        const idSet = new Set(ids.map(String));
+        tours.forEach((t) => { if (idSet.has(String(t.id))) t.destination = province; });
+        selected.clear();
+        $("log").innerHTML = '<span class="ok">สำเร็จ ' + (json.updated ?? ids.length) + " ทัวร์</span>";
+      } catch (err) {
+        console.error("Bulk update failed", err);
+        $("log").innerHTML = '<span class="err">ล้มเหลว: ' + escapeHtml(err.message) + "</span>";
+      }
+
+      btn.disabled = false;
+      render();
+    }
+
+    // Map a departure_from value to a canonical province, or null if it isn't one.
+    const PROVINCE_ALIASES = {
+      "krabi": "Krabi",
+      "phuket": "Phuket",
+      "phang nga": "Phang Nga", "phangnga": "Phang Nga", "phang-nga": "Phang Nga", "phangna": "Phang Nga",
+      "samui": "Samui", "koh samui": "Samui", "kohsamui": "Samui",
+      "bangkok": "Bangkok", "bkk": "Bangkok",
+      "hua hin": "Hua Hin", "huahin": "Hua Hin",
+    };
+
+    function resolveProvince(departure) {
+      const key = (departure || "").trim().toLowerCase();
+      return PROVINCE_ALIASES[key] || null;
+    }
+
+    async function autoSync() {
+      const overwrite = $("overwrite").checked;
+      // Group matched tour IDs by canonical province
+      const groups = {};
+      let matched = 0;
+      tours.forEach((t) => {
+        const prov = resolveProvince(t.departure_from);
+        if (!prov) return;
+        if (!overwrite && (t.destination || "").trim()) return;
+        (groups[prov] = groups[prov] || []).push(t.id);
+        matched++;
+      });
+
+      if (matched === 0) {
+        $("syncLog").innerHTML = '<span class="err">ไม่พบทัวร์ที่ departure เป็นจังหวัด' + (overwrite ? "" : " (และยังว่าง)") + "</span>";
+        return;
+      }
+
+      const breakdown = Object.entries(groups).map(([p, ids]) => p + ": " + ids.length).join("\n");
+      if (!confirm("Auto Sync " + matched + " ทัวร์ ตาม departure_from?\n\n" + breakdown)) return;
+
+      const btn = $("syncBtn");
+      btn.disabled = true;
+      let done = 0, fail = 0;
+      const provinces = Object.keys(groups);
+      for (let i = 0; i < provinces.length; i++) {
+        const prov = provinces[i];
+        const ids = groups[prov];
+        $("syncLog").textContent = "Sync " + prov + " (" + (i + 1) + "/" + provinces.length + ")...";
+        try {
+          const res = await fetch(apiBase() + "/tours.php?action=bulk_destination", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ids, destination: prov, updated_by: "auto-sync" }),
+          });
+          const json = await res.json();
+          if (!res.ok || json.success === false) throw new Error(json.error || "HTTP " + res.status);
+          const idSet = new Set(ids.map(String));
+          tours.forEach((t) => { if (idSet.has(String(t.id))) t.destination = prov; });
+          done += json.updated ?? ids.length;
+        } catch (err) {
+          console.error("Auto sync failed for", prov, err);
+          fail += ids.length;
+        }
+      }
+
+      btn.disabled = false;
+      $("syncLog").innerHTML =
+        '<span class="ok">Sync สำเร็จ ' + done + " ทัวร์</span>" +
+        (fail ? ' <span class="err">/ ล้มเหลว ' + fail + "</span>" : "");
+      render();
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    loadTours();
+  </script>
+</body>
+</html>

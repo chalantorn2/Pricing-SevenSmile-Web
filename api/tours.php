@@ -123,21 +123,25 @@ try {
                         throw new Exception("Please enter a tour name");
                     }
 
-                    $sql = "INSERT INTO tours (supplier_id, tour_name, departure_from, pier, adult_price, child_price, start_date, end_date, notes, park_fee_included, map_url, updated_by) 
-                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    $sql = "INSERT INTO tours (supplier_id, tour_name, departure_from, destination, pier, tour_type, adult_price, child_price, start_date, end_date, notes, park_fee_included, park_fee_adult, park_fee_child, map_url, updated_by)
+                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
                     $stmt = $pdo->prepare($sql);
                     $result = $stmt->execute(array(
                         $supplier_id,
                         $tour['tour_name'],
                         isset($tour['departure_from']) ? $tour['departure_from'] : null,
+                        isset($tour['destination']) ? $tour['destination'] : null,
                         isset($tour['pier']) ? $tour['pier'] : null,
+                        isset($tour['tour_type']) ? $tour['tour_type'] : null,
                         isset($tour['adult_price']) ? $tour['adult_price'] : 0,
                         isset($tour['child_price']) ? $tour['child_price'] : 0,
                         isset($tour['start_date']) && $tour['start_date'] ? $tour['start_date'] : null,
                         isset($tour['end_date']) && $tour['end_date'] && !$tour['no_end_date'] ? $tour['end_date'] : null,
                         isset($tour['notes']) ? $tour['notes'] : null,
                         isset($tour['park_fee_included']) && $tour['park_fee_included'] ? 1 : 0,
+                        isset($tour['park_fee_adult']) && $tour['park_fee_adult'] !== '' ? $tour['park_fee_adult'] : null,
+                        isset($tour['park_fee_child']) && $tour['park_fee_child'] !== '' ? $tour['park_fee_child'] : null,
                         isset($tour['map_url']) ? $tour['map_url'] : null, // New field
                         $updated_by
                     ));
@@ -179,6 +183,76 @@ try {
             break;
 
         case 'PUT':
+            // Bulk update destination (migration tool) - one request for many tours
+            if (isset($_GET['action']) && $_GET['action'] === 'bulk_destination') {
+                $input = file_get_contents('php://input');
+                $data = json_decode($input, true);
+
+                $ids = isset($data['ids']) && is_array($data['ids']) ? $data['ids'] : array();
+                $destination = isset($data['destination']) ? $data['destination'] : null;
+                $updated_by = isset($data['updated_by']) ? $data['updated_by'] : 'Unknown';
+
+                // Keep only valid integer IDs
+                $ids = array_values(array_filter(array_map('intval', $ids), function ($v) {
+                    return $v > 0;
+                }));
+
+                if (empty($ids)) {
+                    throw new Exception("No tours selected");
+                }
+                if ($destination === null || $destination === '') {
+                    throw new Exception("Destination is required");
+                }
+
+                // Parameterized IN clause from the selected IDs
+                $placeholders = implode(',', array_fill(0, count($ids), '?'));
+                $sql = "UPDATE tours SET destination = ?, updated_by = ?, updated_at = NOW() WHERE id IN ($placeholders)";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute(array_merge(array($destination, $updated_by), $ids));
+
+                echo json_encode(array(
+                    'success' => true,
+                    'message' => 'Destination updated for ' . $stmt->rowCount() . ' tour(s)',
+                    'updated' => $stmt->rowCount()
+                ));
+                break;
+            }
+
+            // Bulk update departure_from (migration tool) - one request for many tours
+            if (isset($_GET['action']) && $_GET['action'] === 'bulk_departure') {
+                $input = file_get_contents('php://input');
+                $data = json_decode($input, true);
+
+                $ids = isset($data['ids']) && is_array($data['ids']) ? $data['ids'] : array();
+                $departure = isset($data['departure']) ? $data['departure'] : null;
+                $updated_by = isset($data['updated_by']) ? $data['updated_by'] : 'Unknown';
+
+                // Keep only valid integer IDs
+                $ids = array_values(array_filter(array_map('intval', $ids), function ($v) {
+                    return $v > 0;
+                }));
+
+                if (empty($ids)) {
+                    throw new Exception("No tours selected");
+                }
+                if ($departure === null || $departure === '') {
+                    throw new Exception("Departure is required");
+                }
+
+                // Parameterized IN clause from the selected IDs
+                $placeholders = implode(',', array_fill(0, count($ids), '?'));
+                $sql = "UPDATE tours SET departure_from = ?, updated_by = ?, updated_at = NOW() WHERE id IN ($placeholders)";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute(array_merge(array($departure, $updated_by), $ids));
+
+                echo json_encode(array(
+                    'success' => true,
+                    'message' => 'Departure updated for ' . $stmt->rowCount() . ' tour(s)',
+                    'updated' => $stmt->rowCount()
+                ));
+                break;
+            }
+
             // Update tour
             $id = isset($_GET['id']) ? $_GET['id'] : null;
             if (!$id) {
@@ -189,8 +263,8 @@ try {
             $data = json_decode($input, true);
 
             // ✅ Add this line to support map_url
-            $sql = "UPDATE tours 
-           SET supplier_id=?, tour_name=?, departure_from=?, pier=?, adult_price=?, child_price=?, start_date=?, end_date=?, notes=?, park_fee_included=?, map_url=?, updated_by=?, updated_at=NOW() 
+            $sql = "UPDATE tours
+           SET supplier_id=?, tour_name=?, departure_from=?, destination=?, pier=?, tour_type=?, adult_price=?, child_price=?, start_date=?, end_date=?, notes=?, park_fee_included=?, park_fee_adult=?, park_fee_child=?, map_url=?, updated_by=?, updated_at=NOW()
            WHERE id=?";
 
             $stmt = $pdo->prepare($sql);
@@ -198,13 +272,17 @@ try {
                 isset($data['supplier_id']) ? $data['supplier_id'] : null,
                 $data['tour_name'],
                 isset($data['departure_from']) ? $data['departure_from'] : null,
+                isset($data['destination']) ? $data['destination'] : null,
                 isset($data['pier']) ? $data['pier'] : null,
+                isset($data['tour_type']) ? $data['tour_type'] : null,
                 isset($data['adult_price']) ? $data['adult_price'] : 0,
                 isset($data['child_price']) ? $data['child_price'] : 0,
                 isset($data['start_date']) && $data['start_date'] ? $data['start_date'] : null,
                 isset($data['end_date']) && $data['end_date'] && !$data['no_end_date'] ? $data['end_date'] : null,
                 isset($data['notes']) ? $data['notes'] : null,
                 isset($data['park_fee_included']) && $data['park_fee_included'] ? 1 : 0,
+                isset($data['park_fee_adult']) && $data['park_fee_adult'] !== '' ? $data['park_fee_adult'] : null,
+                isset($data['park_fee_child']) && $data['park_fee_child'] !== '' ? $data['park_fee_child'] : null,
                 isset($data['map_url']) ? $data['map_url'] : null, // ✅ Add this line
                 isset($data['updated_by']) ? $data['updated_by'] : 'Unknown',
                 $id

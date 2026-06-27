@@ -23,6 +23,7 @@ import {
   filesService,
   authService,
 } from "../../services/api-service";
+import { getTourTypeLabel } from "../../utils/tour-types";
 
 const AddTour = () => {
   const navigate = useNavigate();
@@ -34,7 +35,11 @@ const AddTour = () => {
   // Data states
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [supplierTours, setSupplierTours] = useState([]);
+  const [loadingSupplierTours, setLoadingSupplierTours] = useState(false);
   const [loading, setLoading] = useState(false);
+  // Tours staged in step 3, reviewed in step 4 before the final save
+  const [pendingTours, setPendingTours] = useState(null);
 
   // Modal states
   const [showSupplierModal, setShowSupplierModal] = useState(false);
@@ -95,12 +100,41 @@ const AddTour = () => {
     }
   };
 
-  // Step 3: Tours Submission
-  const handleToursSubmit = async (toursData) => {
+  // Load the supplier's existing tours so users can reference them while
+  // adding new ones (read-only — Add Tour only ever creates new records).
+  const loadSupplierTours = async () => {
+    if (!selectedSupplier) return;
+
+    setLoadingSupplierTours(true);
+    try {
+      const allTours = await toursService.getAllTours();
+      const tours = (allTours || []).filter(
+        (t) => String(t.supplier_id) === String(selectedSupplier.id)
+      );
+      setSupplierTours(tours);
+    } catch (error) {
+      console.error("Error loading supplier tours:", error);
+      setSupplierTours([]);
+    } finally {
+      setLoadingSupplierTours(false);
+    }
+  };
+
+  // Step 3: stage the tours and move to the summary instead of saving directly
+  const handleToursReview = (toursData) => {
+    setPendingTours(toursData);
+    markStepCompleted(3);
+    setCurrentStep(4);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // Step 4: confirm and save the staged tours
+  const handleConfirmSave = async () => {
+    if (!pendingTours) return;
     setLoading(true);
 
     // Pull staged per-tour files out before sending tour data to the API
-    const { tourFiles = [], ...toursPayload } = toursData;
+    const { tourFiles = [], ...toursPayload } = pendingTours;
 
     try {
       const response = await toursService.addTours(toursPayload);
@@ -206,10 +240,13 @@ const AddTour = () => {
     return completedSteps.includes(stepId);
   };
 
-  // Load files when supplier changes
+  // Load files and existing tours when supplier changes
   useEffect(() => {
     if (selectedSupplier) {
       loadSupplierFiles();
+      loadSupplierTours();
+    } else {
+      setSupplierTours([]);
     }
   }, [selectedSupplier]);
 
@@ -439,9 +476,9 @@ const AddTour = () => {
             </div>
           )}
 
-          {/* Step 3: Tours Form */}
-          {currentStep === 3 && (
-            <div className="space-y-5">
+          {/* Step 3: Tours Form (kept mounted on step 4 so going Back preserves input) */}
+          {(currentStep === 3 || currentStep === 4) && (
+            <div className={`space-y-5 ${currentStep === 4 ? "hidden" : ""}`}>
               <div className="flex items-center gap-2 pb-4 border-b">
                 <Palmtree className="w-5 h-5 text-blue-600" />
                 <h2 className="text-lg font-semibold text-gray-900">
@@ -451,6 +488,53 @@ const AddTour = () => {
                   </span>
                 </h2>
               </div>
+
+              {/* Existing tours for this supplier (read-only reference) */}
+              {loadingSupplierTours ? (
+                <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-50 border rounded-lg px-4 py-3">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400" />
+                  Loading existing tours...
+                </div>
+              ) : (
+                supplierTours.length > 0 && (
+                  <div className="border border-blue-200 bg-blue-50/50 rounded-lg overflow-hidden">
+                    <div className="flex items-center gap-2 px-4 py-2.5 bg-blue-50 border-b border-blue-200">
+                      <Palmtree className="w-4 h-4 text-blue-600" />
+                      <h3 className="text-sm font-semibold text-gray-800">
+                        Existing tours for {selectedSupplier?.name} (
+                        {supplierTours.length})
+                      </h3>
+                      <span className="ml-auto text-xs text-gray-500">
+                        Reference only — does not affect the new tours below
+                      </span>
+                    </div>
+                    <div className="max-h-56 overflow-y-auto divide-y divide-blue-100">
+                      {supplierTours.map((tour) => (
+                        <div
+                          key={tour.id}
+                          className="flex items-center gap-3 px-4 py-2 text-sm"
+                        >
+                          <span className="font-medium text-gray-900 truncate flex-1">
+                            {tour.tour_name}
+                          </span>
+                          <span className="shrink-0 text-xs px-2 py-0.5 rounded-full bg-white border text-gray-600">
+                            {getTourTypeLabel(tour.tour_type)}
+                          </span>
+                          {tour.destination && (
+                            <span className="shrink-0 text-xs text-gray-500 hidden sm:inline">
+                              {tour.destination}
+                            </span>
+                          )}
+                          <span className="shrink-0 text-xs text-gray-600 tabular-nums w-28 text-right">
+                            ฿{Number(tour.adult_price || 0).toLocaleString()} /
+                            ฿{Number(tour.child_price || 0).toLocaleString()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              )}
 
               {/* Share Gallery Manager - Show only if we have created tours */}
               {completedSteps.includes(3) && (
@@ -467,9 +551,10 @@ const AddTour = () => {
               )}
 
               <TourMultiForm
-                onSubmit={handleToursSubmit}
+                onSubmit={handleToursReview}
                 loading={loading}
                 supplierId={selectedSupplier?.id}
+                submitLabel="Review & continue"
               />
 
               <div className="flex space-x-3 pt-4 border-t">
@@ -479,6 +564,149 @@ const AddTour = () => {
                 >
                   <ArrowLeft className="w-4 h-4" />
                   Back
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Summary */}
+          {currentStep === 4 && pendingTours && (
+            <div className="space-y-5">
+              <div className="flex items-center gap-2 pb-4 border-b">
+                <ClipboardList className="w-5 h-5 text-blue-600" />
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Review and save
+                </h2>
+              </div>
+
+              {/* Supplier */}
+              <div className="flex items-center gap-3 bg-gray-50 border rounded-lg px-4 py-3">
+                <Building2 className="w-5 h-5 text-blue-600 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs text-gray-500">Supplier</p>
+                  <p className="font-medium text-gray-900 truncate">
+                    {selectedSupplier?.name}
+                  </p>
+                </div>
+              </div>
+
+              {/* Contract rate files */}
+              <div className="flex items-center gap-3 bg-gray-50 border rounded-lg px-4 py-3">
+                <Paperclip className="w-5 h-5 text-blue-600 shrink-0" />
+                <div>
+                  <p className="text-xs text-gray-500">Contract rate files</p>
+                  <p className="font-medium text-gray-900">
+                    {uploadedFiles.length} file
+                    {uploadedFiles.length !== 1 ? "s" : ""}
+                  </p>
+                </div>
+              </div>
+
+              {/* Tours — one card each for easy review */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Palmtree className="w-4 h-4 text-blue-600" />
+                  <h3 className="text-sm font-semibold text-gray-800">
+                    Tours to create ({pendingTours.tours.length})
+                  </h3>
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                  {pendingTours.tours.map((tour, index) => {
+                    const parkFee = tour.park_fee_included
+                      ? "Included in price"
+                      : tour.park_fee_adult || tour.park_fee_child
+                      ? `฿${Number(
+                          tour.park_fee_adult || 0
+                        ).toLocaleString()} / ฿${Number(
+                          tour.park_fee_child || 0
+                        ).toLocaleString()}`
+                      : "—";
+                    return (
+                      <div
+                        key={index}
+                        className="border border-gray-200 rounded-lg p-4 space-y-2.5"
+                      >
+                        {/* Title row */}
+                        <div className="flex items-start gap-2">
+                          <span className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-blue-50 text-blue-600 text-xs font-semibold">
+                            {index + 1}
+                          </span>
+                          <p className="font-semibold text-gray-900 flex-1 break-words">
+                            {tour.tour_name}
+                          </p>
+                          <span className="shrink-0 text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                            {getTourTypeLabel(tour.tour_type)}
+                          </span>
+                        </div>
+
+                        {/* Detail grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-sm pl-8">
+                          <div className="flex items-center gap-2 text-gray-700">
+                            <span className="text-gray-400 w-28 shrink-0">
+                              Price
+                            </span>
+                            <span className="font-medium tabular-nums">
+                              ฿{Number(tour.adult_price || 0).toLocaleString()} /
+                              ฿{Number(tour.child_price || 0).toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-gray-700">
+                            <span className="text-gray-400 w-28 shrink-0">
+                              Park fee
+                            </span>
+                            <span className="truncate">{parkFee}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-gray-700">
+                            <span className="text-gray-400 w-28 shrink-0">
+                              Departure from
+                            </span>
+                            <span className="truncate">
+                              {tour.departure_from || "—"}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-gray-700">
+                            <span className="text-gray-400 w-28 shrink-0">
+                              Destination
+                            </span>
+                            <span className="truncate">
+                              {tour.destination || "—"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex space-x-3 pt-4 border-t">
+                <button
+                  onClick={prevStep}
+                  disabled={loading}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 transition-colors"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Back
+                </button>
+                <button
+                  onClick={handleConfirmSave}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                >
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      <span>
+                        Save all tours ({pendingTours.tours.length})
+                      </span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>

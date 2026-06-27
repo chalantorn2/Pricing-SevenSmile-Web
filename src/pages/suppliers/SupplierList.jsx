@@ -72,7 +72,9 @@ const SupplierList = () => {
       setTours(toursData);
     } catch (error) {
       console.error("Error fetching data:", error);
-      setError(error.message || "An error occurred while loading Suppliers data");
+      setError(
+        error.message || "An error occurred while loading Suppliers data",
+      );
     } finally {
       setLoading(false);
     }
@@ -82,7 +84,7 @@ const SupplierList = () => {
     let filtered = suppliers.map((supplier) => {
       // Count tours for each supplier
       const supplierTours = tours.filter(
-        (tour) => tour.supplier_id === supplier.id
+        (tour) => tour.supplier_id === supplier.id,
       );
       const tourCount = supplierTours.length;
 
@@ -111,7 +113,7 @@ const SupplierList = () => {
           supplier.phone_4?.toLowerCase().includes(searchLower) ||
           supplier.phone_5?.toLowerCase().includes(searchLower) ||
           supplier.line?.toLowerCase().includes(searchLower) ||
-          supplier.address?.toLowerCase().includes(searchLower)
+          supplier.address?.toLowerCase().includes(searchLower),
       );
     }
 
@@ -122,11 +124,11 @@ const SupplierList = () => {
           switch (filterId) {
             case "expiring_soon":
               const supplierTours = tours.filter(
-                (tour) => tour.supplier_id === supplier.id
+                (tour) => tour.supplier_id === supplier.id,
               );
               const now = new Date();
               const thirtyDaysLater = new Date(
-                now.getTime() + 30 * 24 * 60 * 60 * 1000
+                now.getTime() + 30 * 24 * 60 * 60 * 1000,
               );
               return supplierTours.some((tour) => {
                 if (!tour.end_date || tour.end_date === "0000-00-00")
@@ -144,7 +146,7 @@ const SupplierList = () => {
             case "has_active_promo":
               const promoTours = tours.filter(
                 (tour) =>
-                  tour.supplier_id === supplier.id && tour.park_fee_included
+                  tour.supplier_id === supplier.id && tour.park_fee_included,
               );
               return promoTours.length > 0;
 
@@ -289,7 +291,7 @@ const SupplierList = () => {
         : filteredSuppliers;
 
     const exportData = dataToExport.map((supplier, index) => ({
-      "oo.": index + 1,
+      "No.": index + 1,
       "Supplier name": supplier.name,
       "Primary phone": supplier.phone || "-",
       "Phone 2": supplier.phone_2 || "-",
@@ -312,7 +314,7 @@ const SupplierList = () => {
     const filename =
       selectedSuppliers.length > 0
         ? `Suppliers_List_Selected_${new Date().toLocaleDateString(
-            "en-US"
+            "en-US",
           )}.xlsx`
         : `Suppliers_List_${new Date().toLocaleDateString("en-US")}.xlsx`;
 
@@ -361,7 +363,7 @@ const SupplierList = () => {
               incompleteContacts.length
             } Suppliers with incomplete contact info:\n${incompleteContacts
               .map((s) => s.name)
-              .join(", ")}`
+              .join(", ")}`,
           );
         } else {
           alert("The selected Suppliers have complete contact information");
@@ -506,7 +508,7 @@ const SupplierList = () => {
               <p className="text-2xl font-bold text-green-600">
                 {
                   suppliers.filter((s) =>
-                    tours.some((t) => t.supplier_id === s.id)
+                    tours.some((t) => t.supplier_id === s.id),
                   ).length
                 }
               </p>
@@ -522,7 +524,7 @@ const SupplierList = () => {
               <p className="text-2xl font-bold text-yellow-600">
                 {
                   suppliers.filter(
-                    (s) => !tours.some((t) => t.supplier_id === s.id)
+                    (s) => !tours.some((t) => t.supplier_id === s.id),
                   ).length
                 }
               </p>
@@ -534,7 +536,9 @@ const SupplierList = () => {
         <div className="bg-white p-4 rounded-lg shadow-sm border">
           <div className="flex items-center">
             <div className="flex-1">
-              <p className="text-sm font-medium text-gray-600">Incomplete info</p>
+              <p className="text-sm font-medium text-gray-600">
+                Incomplete info
+              </p>
               <p className="text-2xl font-bold text-red-600">
                 {suppliers.filter((s) => !s.phone && !s.line).length}
               </p>
@@ -610,7 +614,7 @@ const SupplierList = () => {
         columns={[
           {
             key: "index",
-            label: "oo.",
+            label: "No.",
             render: (item, index) => (
               <div className="text-center font-medium">{index + 1}</div>
             ),

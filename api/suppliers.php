@@ -121,8 +121,8 @@ try {
                 throw new Exception("This Supplier name already exists");
             }
 
-            $sql = "INSERT INTO suppliers (name, address, phone, phone_2, phone_3, phone_4, phone_5, line, facebook, whatsapp, website) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $sql = "INSERT INTO suppliers (name, address, phone, phone_2, phone_3, phone_4, phone_5, line, facebook, whatsapp, website, email)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             $stmt = $pdo->prepare($sql);
             $result = $stmt->execute(array(
@@ -136,7 +136,8 @@ try {
                 isset($data['line']) ? $data['line'] : null,
                 isset($data['facebook']) ? $data['facebook'] : null,
                 isset($data['whatsapp']) ? $data['whatsapp'] : null,
-                isset($data['website']) ? $data['website'] : null
+                isset($data['website']) ? $data['website'] : null,
+                isset($data['email']) ? $data['email'] : null
             ));
 
             if ($result) {
@@ -177,8 +178,8 @@ try {
                 throw new Exception("This Supplier name already exists");
             }
 
-            $sql = "UPDATE suppliers 
-                    SET name=?, address=?, phone=?, phone_2=?, phone_3=?, phone_4=?, phone_5=?, line=?, facebook=?, whatsapp=?, website=?, updated_at=NOW() 
+            $sql = "UPDATE suppliers
+                    SET name=?, address=?, phone=?, phone_2=?, phone_3=?, phone_4=?, phone_5=?, line=?, facebook=?, whatsapp=?, website=?, email=?, updated_at=NOW()
                     WHERE id=?";
 
             $stmt = $pdo->prepare($sql);
@@ -194,6 +195,7 @@ try {
                 isset($data['facebook']) ? $data['facebook'] : null,
                 isset($data['whatsapp']) ? $data['whatsapp'] : null,
                 isset($data['website']) ? $data['website'] : null,
+                isset($data['email']) ? $data['email'] : null,
                 $id
             ));
 

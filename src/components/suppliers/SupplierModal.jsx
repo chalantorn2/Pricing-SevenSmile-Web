@@ -42,7 +42,7 @@ const SupplierModal = ({
     facebook: "",
     whatsapp: "",
     website: "",
-    email: "", // Visual-only: no DB column yet
+    email: "",
   });
 
   // Phone fields management for dynamic UI

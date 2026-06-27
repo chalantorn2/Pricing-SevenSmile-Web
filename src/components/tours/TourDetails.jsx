@@ -4,6 +4,7 @@ import { MapLink, FileDownloads } from "../common";
 import { filesService } from "../../services/api-service";
 import { useTourFiles } from "../../hooks";
 import { getTourCategoryInfo } from "../../utils/file-categories";
+import { getTourTypeLabel } from "../../utils/tour-types";
 import {
   Pencil,
   Share2,
@@ -112,6 +113,10 @@ const TourDetails = ({
     tour.end_date !== "0000-00-00" &&
     new Date(tour.end_date) < new Date();
 
+  // Show the park-fee breakdown only when an actual amount was entered
+  const hasParkFee =
+    Number(tour.park_fee_adult) > 0 || Number(tour.park_fee_child) > 0;
+
   const getNotes = (tour) => {
     const base = tour.park_fee_included
       ? "This Net price includes the park fee"
@@ -194,6 +199,11 @@ const TourDetails = ({
               </h2>
 
               <div className="mt-2 flex flex-wrap items-center gap-2">
+                {!!tour.tour_type && (
+                  <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-200">
+                    {getTourTypeLabel(tour.tour_type)}
+                  </span>
+                )}
                 {!!tour.pier && (
                   <span className="inline-flex items-center rounded-full bg-gray-50 px-3 py-1 text-xs text-gray-700 ring-1 ring-inset ring-gray-200">
                     Pier: {tour.pier}
@@ -289,6 +299,26 @@ const TourDetails = ({
                 </span>
               </div>
             </div>
+            {hasParkFee && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex items-center justify-between rounded-lg bg-amber-50 px-3 py-2 ring-1 ring-amber-100">
+                  <span className="text-xs font-medium text-amber-700">
+                    Park fee / adult
+                  </span>
+                  <span className="text-sm font-medium text-amber-800">
+                    THB {formatPrice(tour.park_fee_adult)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-amber-50 px-3 py-2 ring-1 ring-amber-100">
+                  <span className="text-xs font-medium text-amber-700">
+                    Park fee / child
+                  </span>
+                  <span className="text-sm font-medium text-amber-800">
+                    THB {formatPrice(tour.park_fee_child)}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         </AccordionSection>
 
@@ -301,7 +331,13 @@ const TourDetails = ({
         >
           <dl className="divide-y divide-gray-100">
             <Row label="Tour name">{tour.tour_name}</Row>
+            {!!tour.tour_type && (
+              <Row label="Tour type">{getTourTypeLabel(tour.tour_type)}</Row>
+            )}
             <Row label="Departure from">{tour.departure_from}</Row>
+            {!!tour.destination && (
+              <Row label="Destination">{tour.destination}</Row>
+            )}
             <Row label="Pier">{tour.pier}</Row>
           </dl>
           {tour.map_url && (
