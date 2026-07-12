@@ -12,6 +12,8 @@ import AddTour from "./pages/tours/AddTour";
 import TransferList from "./pages/transfers/TransferList";
 import HotelList from "./pages/hotels/HotelList";
 import HotelDetail from "./pages/hotels/HotelDetail";
+import HotelRateEditor from "./pages/hotels/HotelRateEditor";
+import HotelNoticeEditor from "./pages/hotels/HotelNoticeEditor";
 import UserManagement from "./pages/users/UserManagement";
 import SupplierList from "./pages/suppliers/SupplierList";
 import SupplierDetail from "./pages/suppliers/SupplierDetail";
@@ -95,6 +97,8 @@ const AppRoutes = () => {
         {/* Hotel Routes */}
         <Route path="hotel" element={<HotelList />} />
         <Route path="hotel/view/:slug" element={<HotelDetail />} />
+        <Route path="hotel/rates/:slug" element={<HotelRateEditor />} />
+        <Route path="hotel/notices/:slug" element={<HotelNoticeEditor />} />
         <Route path="hotel/:province" element={<HotelList />} />
 
         {/* User Management Routes */}

@@ -39,6 +39,54 @@ function shapeHotel($row)
     return $row;
 }
 
+// Fetch active rate rows for one hotel, ordered for display.
+// Returns [] if the hotel_rates table doesn't exist yet (pre-migration).
+function fetchRates($pdo, $hotelId)
+{
+    try {
+        $stmt = $pdo->prepare(
+            'SELECT id, room_type, period_label, period_start, period_end, meal_plan,
+                    price, currency, sort_order
+             FROM hotel_rates
+             WHERE hotel_id = ? AND is_active = 1
+             ORDER BY sort_order ASC, id ASC'
+        );
+        $stmt->execute(array($hotelId));
+        $rows = $stmt->fetchAll();
+        foreach ($rows as &$r) {
+            $r['price'] = (float) $r['price'];
+            $r['sort_order'] = (int) $r['sort_order'];
+        }
+        return $rows;
+    } catch (PDOException $e) {
+        return array(); // table not migrated yet — degrade gracefully
+    }
+}
+
+// Fetch active Stop Sale / Promotion notices for one hotel that haven't ended
+// yet (date_end today or later). Returns [] if the table isn't migrated.
+function fetchNotices($pdo, $hotelId)
+{
+    try {
+        $today = date('Y-m-d');
+        $stmt = $pdo->prepare(
+            'SELECT id, type, room_type, date_start, date_end, title, detail,
+                    promo_price, currency
+             FROM hotel_notices
+             WHERE hotel_id = ? AND is_active = 1 AND date_end >= ?
+             ORDER BY date_start ASC, id ASC'
+        );
+        $stmt->execute(array($hotelId, $today));
+        $rows = $stmt->fetchAll();
+        foreach ($rows as &$r) {
+            $r['promo_price'] = $r['promo_price'] !== null ? (float) $r['promo_price'] : null;
+        }
+        return $rows;
+    } catch (PDOException $e) {
+        return array();
+    }
+}
+
 try {
     $dsn = "mysql:host=$host;dbname=$dbname;charset=utf8mb4";
     $pdo = new PDO($dsn, $username, $password, array(
@@ -56,7 +104,10 @@ try {
             echo json_encode(array('success' => false, 'error' => 'Hotel not found'));
             exit;
         }
-        echo json_encode(array('success' => true, 'data' => shapeHotel($row)), JSON_UNESCAPED_UNICODE);
+        $hotel = shapeHotel($row);
+        $hotel['rates'] = fetchRates($pdo, $row['id']);
+        $hotel['notices'] = fetchNotices($pdo, $row['id']);
+        echo json_encode(array('success' => true, 'data' => $hotel), JSON_UNESCAPED_UNICODE);
         exit;
     }
     if (isset($_GET['id']) && $_GET['id'] !== '') {
@@ -68,7 +119,10 @@ try {
             echo json_encode(array('success' => false, 'error' => 'Hotel not found'));
             exit;
         }
-        echo json_encode(array('success' => true, 'data' => shapeHotel($row)), JSON_UNESCAPED_UNICODE);
+        $hotel = shapeHotel($row);
+        $hotel['rates'] = fetchRates($pdo, $row['id']);
+        $hotel['notices'] = fetchNotices($pdo, $row['id']);
+        echo json_encode(array('success' => true, 'data' => $hotel), JSON_UNESCAPED_UNICODE);
         exit;
     }
 

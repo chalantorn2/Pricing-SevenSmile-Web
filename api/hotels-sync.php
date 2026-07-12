@@ -19,6 +19,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+// Syncing downloads up to ~1500 gallery images on the first run, so give it
+// room. Downloads are idempotent (existing files are skipped), so if a gateway
+// timeout cuts the request, clicking Sync again resumes quickly.
+@set_time_limit(0);
+@ini_set('max_execution_time', '0');
+
 // --- Source API (indosmilesouthservices.com) ---
 $SOURCE_BASE = 'https://indosmilesouthservices.com';
 $SOURCE_API  = $SOURCE_BASE . '/backend/api/public_hotels.php';
@@ -183,18 +189,26 @@ try {
             $mainSrc = absUrl(isset($h['main_image']) ? $h['main_image'] : null, $SOURCE_BASE);
             $mainLocal = localizeImage($mainSrc, $sourceId, $UPLOAD_DIR, $LOCAL_BASE);
 
-            // Download each gallery image (if any).
+            // Download each gallery image, keeping the original object shape
+            // (image_url, category, caption, sort_order) so the detail page can
+            // group images by category / room type just like the source site.
             $localImages = array();
             if (isset($h['images']) && is_array($h['images'])) {
                 foreach ($h['images'] as $img) {
-                    // image entry may be a string path or an object with a url/path field
-                    $imgPath = is_array($img)
-                        ? (isset($img['url']) ? $img['url'] : (isset($img['path']) ? $img['path'] : null))
-                        : $img;
-                    $imgSrc = absUrl($imgPath, $SOURCE_BASE);
-                    $imgLocal = localizeImage($imgSrc, $sourceId, $UPLOAD_DIR, $LOCAL_BASE);
-                    if ($imgLocal !== null) {
-                        $localImages[] = $imgLocal;
+                    if (is_array($img)) {
+                        $imgPath = isset($img['image_url']) ? $img['image_url']
+                            : (isset($img['url']) ? $img['url']
+                            : (isset($img['path']) ? $img['path'] : null));
+                        $imgSrc = absUrl($imgPath, $SOURCE_BASE);
+                        $imgLocal = localizeImage($imgSrc, $sourceId, $UPLOAD_DIR, $LOCAL_BASE);
+                        $img['image_url'] = $imgLocal !== null ? $imgLocal : $imgSrc;
+                        $localImages[] = $img;
+                    } else {
+                        $imgSrc = absUrl($img, $SOURCE_BASE);
+                        $imgLocal = localizeImage($imgSrc, $sourceId, $UPLOAD_DIR, $LOCAL_BASE);
+                        if ($imgLocal !== null) {
+                            $localImages[] = array('image_url' => $imgLocal, 'category' => 'Uncategorized', 'caption' => '');
+                        }
                     }
                 }
             }

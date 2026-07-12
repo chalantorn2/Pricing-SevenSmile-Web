@@ -1,4 +1,5 @@
-// Fixed list of all 77 Thai provinces (English names).
+// Fixed list of the 77 Thai provinces plus Pattaya (a common tour hub in
+// Chonburi) — English names.
 // Using a fixed list keeps Departure from / Destination values consistent
 // and prevents typos — users pick from autocomplete instead of free text.
 export const THAI_PROVINCES = [
@@ -40,6 +41,7 @@ export const THAI_PROVINCES = [
   "Nonthaburi",
   "Pathum Thani",
   "Pattani",
+  "Pattaya",
   "Phang Nga",
   "Phatthalung",
   "Phayao",

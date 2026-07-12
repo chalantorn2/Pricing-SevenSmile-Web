@@ -21,8 +21,9 @@ import {
   ShareGalleryManager,
   SharedGalleryGroup,
 } from "../../components/tours";
-import { AutocompleteInput } from "../../components/common";
+import { AutocompleteInput, ProvincePicker } from "../../components/common";
 import { TOUR_TYPES } from "../../utils/tour-types";
+import { COMMON_PROVINCES } from "../../utils/provinces";
 import SupplierFileUpload from "../../components/suppliers/SupplierFileUpload";
 import {
   toursService,
@@ -95,7 +96,7 @@ const EditTour = () => {
 
       // Fetch tour data
       const tours = await toursService.getAllTours();
-      const tourData = tours.find((t) => t.id === id);
+      const tourData = tours.find((t) => String(t.id) === String(id));
 
       if (tourData) {
         setTour(tourData);
@@ -485,19 +486,29 @@ const EditTour = () => {
               </select>
             </div>
 
-            {/* Departure From - with Autocomplete */}
+            {/* Departure From - province picker (can be more than one) */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Departure from
+                Departure from{" "}
+                <span className="font-normal text-gray-400">
+                  — can be more than one
+                </span>
               </label>
-              <AutocompleteInput
-                type="departure_from"
-                value={formData.departure_from}
-                onChange={(value) =>
-                  handleAutocompleteChange("departure_from", value)
+              <ProvincePicker
+                multiple
+                quickPicks={COMMON_PROVINCES}
+                value={
+                  formData.departure_from
+                    ? formData.departure_from
+                        .split(",")
+                        .map((s) => s.trim())
+                        .filter(Boolean)
+                    : []
                 }
-                placeholder="Province/departure location"
-                className={errors.departure_from ? "border-red-500" : ""}
+                onChange={(arr) =>
+                  handleAutocompleteChange("departure_from", arr.join(", "))
+                }
+                placeholder="Type a province"
               />
               {errors.departure_from && (
                 <p className="text-red-500 text-xs mt-1">
@@ -506,18 +517,21 @@ const EditTour = () => {
               )}
             </div>
 
-            {/* Destination */}
+            {/* Destination - single province */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Destination
+                Destination{" "}
+                <span className="font-normal text-gray-400">
+                  — one province
+                </span>
               </label>
-              <AutocompleteInput
-                type="departure_from"
-                value={formData.destination}
-                onChange={(value) =>
-                  handleAutocompleteChange("destination", value)
+              <ProvincePicker
+                quickPicks={COMMON_PROVINCES}
+                value={formData.destination || ""}
+                onChange={(val) =>
+                  handleAutocompleteChange("destination", val || "")
                 }
-                placeholder="Destination province"
+                placeholder="Type a province"
               />
             </div>
 

@@ -857,4 +857,84 @@ export const hotelsService = {
       throw new Error("An error occurred while syncing hotels: " + error.message);
     }
   },
+
+  // Net rates + free-text conditions for one hotel (for the rate editor)
+  async getHotelRates(hotelId) {
+    try {
+      const response = await apiCall(`/hotel-rates.php?hotel_id=${encodeURIComponent(hotelId)}`);
+      return response.data; // { rates:[...], conditions:{...} }
+    } catch (error) {
+      console.error("❌ Failed to fetch hotel rates:", error);
+      throw new Error("An error occurred while loading hotel rates: " + error.message);
+    }
+  },
+
+  // Bulk replace all rates for a hotel (and optionally its conditions)
+  async saveHotelRates(hotelId, rates, conditions) {
+    try {
+      const body = { hotel_id: hotelId, rates };
+      if (conditions) body.conditions = conditions;
+      const response = await apiCall("/hotel-rates.php", {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+      return response;
+    } catch (error) {
+      console.error("❌ Failed to save hotel rates:", error);
+      throw new Error("An error occurred while saving hotel rates: " + error.message);
+    }
+  },
+
+  // Stop Sale / Promotion notices for one hotel
+  async getHotelNotices(hotelId) {
+    try {
+      const response = await apiCall(
+        `/hotel-notices.php?hotel_id=${encodeURIComponent(hotelId)}`
+      );
+      return response.data || [];
+    } catch (error) {
+      console.error("❌ Failed to fetch hotel notices:", error);
+      throw new Error("An error occurred while loading hotel notices: " + error.message);
+    }
+  },
+
+  // Create one notice; returns the new id
+  async createHotelNotice(hotelId, notice) {
+    try {
+      const response = await apiCall("/hotel-notices.php", {
+        method: "POST",
+        body: JSON.stringify({ hotel_id: hotelId, ...notice }),
+      });
+      return response.id;
+    } catch (error) {
+      console.error("❌ Failed to create hotel notice:", error);
+      throw new Error("An error occurred while saving the notice: " + error.message);
+    }
+  },
+
+  // Update one notice
+  async updateHotelNotice(id, notice) {
+    try {
+      const response = await apiCall("/hotel-notices.php", {
+        method: "PUT",
+        body: JSON.stringify({ id, ...notice }),
+      });
+      return response;
+    } catch (error) {
+      console.error("❌ Failed to update hotel notice:", error);
+      throw new Error("An error occurred while updating the notice: " + error.message);
+    }
+  },
+
+  // Delete one notice
+  async deleteHotelNotice(id) {
+    try {
+      await apiCall(`/hotel-notices.php?id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+    } catch (error) {
+      console.error("❌ Failed to delete hotel notice:", error);
+      throw new Error("An error occurred while deleting the notice: " + error.message);
+    }
+  },
 };

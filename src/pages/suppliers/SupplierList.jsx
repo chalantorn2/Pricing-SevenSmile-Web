@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { suppliersService, toursService } from "../../services/api-service";
 import SupplierFilters from "../../components/suppliers/SupplierFilters";
-import SupplierDashboard from "../../components/suppliers/SupplierDashboard";
 import {
   TableSkeleton,
   CardSkeleton,
@@ -431,15 +430,6 @@ const SupplierList = () => {
 
   return (
     <div className="space-y-6">
-      {/* Dashboard Section */}
-      {showDashboard && (
-        <SupplierDashboard
-          suppliers={suppliers}
-          tours={tours}
-          loading={loading}
-        />
-      )}
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -465,7 +455,7 @@ const SupplierList = () => {
               className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors inline-flex items-center justify-center gap-2"
             >
               <Home className="w-4 h-4" />
-              Back to Dashboard
+              Clear filters
             </button>
           )}
           <button
