@@ -192,8 +192,8 @@ const PackageTourForm = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-3"></div>
-          <p className="text-gray-600">Loading data...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500 mx-auto mb-3"></div>
+          <p className="text-gray-500">Loading data...</p>
         </div>
       </div>
     );
@@ -214,7 +214,7 @@ const PackageTourForm = () => {
         <button
           type="button"
           onClick={() => navigate("/packages")}
-          className="px-4 py-2 text-gray-600 hover:text-gray-900"
+          className="px-4 py-2 text-gray-500 hover:text-gray-900"
         >
           ← Back
         </button>
@@ -234,7 +234,7 @@ const PackageTourForm = () => {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                 placeholder="e.g. Phuket Tour 3 Days 2 Nights"
                 required
               />
@@ -251,7 +251,7 @@ const PackageTourForm = () => {
                   max="30"
                   value={days}
                   onChange={(e) => handleDaysChange(parseInt(e.target.value) || 1)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                   required
                 />
               </div>
@@ -266,7 +266,7 @@ const PackageTourForm = () => {
                   max="30"
                   value={nights}
                   onChange={(e) => handleNightsChange(parseInt(e.target.value) || 0)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                   required
                 />
               </div>
@@ -281,16 +281,16 @@ const PackageTourForm = () => {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
               placeholder="Additional package details"
             />
           </div>
 
           <div className="flex items-center gap-4 pt-2">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-500">
               Total Cost:
             </div>
-            <div className="text-lg font-bold text-emerald-700">
+            <div className="text-lg font-bold text-success-700">
               THB {calculateTotalCost().toLocaleString("en-US", { minimumFractionDigits: 2 })}
             </div>
           </div>
@@ -328,7 +328,7 @@ const PackageTourForm = () => {
                         <div className="space-y-2">
                           {/* Select Tour or Custom */}
                           <div>
-                            <label className="block text-xs text-gray-600 mb-1">
+                            <label className="block text-xs text-gray-500 mb-1">
                               Select Tour
                             </label>
                             <select
@@ -336,7 +336,7 @@ const PackageTourForm = () => {
                               onChange={(e) =>
                                 updateItem(day, slot.key, "tour_id", e.target.value)
                               }
-                              className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+                              className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-brand-500"
                             >
                               <option value="">-- Select from database --</option>
                               {allTours.map((tour) => (
@@ -350,7 +350,7 @@ const PackageTourForm = () => {
                           {/* Custom Name */}
                           {!getItemValue(day, slot.key, "tour_id") && (
                             <div>
-                              <label className="block text-xs text-gray-600 mb-1">
+                              <label className="block text-xs text-gray-500 mb-1">
                                 Or enter manually
                               </label>
                               <input
@@ -359,7 +359,7 @@ const PackageTourForm = () => {
                                 onChange={(e) =>
                                   updateItem(day, slot.key, "custom_name", e.target.value)
                                 }
-                                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+                                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-brand-500"
                                 placeholder="Place / activity name"
                               />
                             </div>
@@ -367,7 +367,7 @@ const PackageTourForm = () => {
 
                           {/* Price */}
                           <div>
-                            <label className="block text-xs text-gray-600 mb-1">
+                            <label className="block text-xs text-gray-500 mb-1">
                               Price / Cost (HHB)
                             </label>
                             <input
@@ -377,14 +377,14 @@ const PackageTourForm = () => {
                               onChange={(e) =>
                                 updateItem(day, slot.key, "price", e.target.value)
                               }
-                              className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+                              className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-brand-500"
                               placeholder="0.00"
                             />
                           </div>
 
                           {/* Unit */}
                           <div>
-                            <label className="block text-xs text-gray-600 mb-1">
+                            <label className="block text-xs text-gray-500 mb-1">
                               Unit
                             </label>
                             <input
@@ -393,14 +393,14 @@ const PackageTourForm = () => {
                               onChange={(e) =>
                                 updateItem(day, slot.key, "unit", e.target.value)
                               }
-                              className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+                              className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-brand-500"
                               placeholder="e.g. person, day, group"
                             />
                           </div>
 
                           {/* Notes */}
                           <div>
-                            <label className="block text-xs text-gray-600 mb-1">
+                            <label className="block text-xs text-gray-500 mb-1">
                               Notes
                             </label>
                             <textarea
@@ -409,7 +409,7 @@ const PackageTourForm = () => {
                                 updateItem(day, slot.key, "notes", e.target.value)
                               }
                               rows={2}
-                              className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+                              className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-brand-500"
                               placeholder="Additional details"
                             />
                           </div>
@@ -435,7 +435,7 @@ const PackageTourForm = () => {
           </button>
           <button
             type="submit"
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:scale-[.98] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 active:scale-[.98] disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={saving}
           >
             {saving ? "Saving..." : isEditMode ? "Save Changes" : "Create Package"}

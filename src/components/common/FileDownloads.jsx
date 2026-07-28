@@ -89,7 +89,7 @@ const FileDownloads = ({
 
                   <button
                     onClick={() => handleFileView(file)}
-                    className="flex-shrink-0 px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors text-sm"
+                    className="flex-shrink-0 px-3 py-1 bg-brand-100 text-brand-700 rounded hover:bg-brand-100 transition-colors text-sm"
                   >
                     {file.file_type === "pdf" ? "Open" : "View"}
                   </button>

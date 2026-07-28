@@ -46,14 +46,14 @@ const SharedGalleryGroup = ({
   };
 
   return (
-    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+    <div className="bg-brand-50 border border-brand-200 rounded-lg p-4 mb-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center space-x-3">
           <button
             type="button"
             onClick={handleToggleExpand}
-            className="flex items-center space-x-2 text-blue-700 hover:text-blue-800 transition-colors"
+            className="flex items-center space-x-2 text-brand-700 hover:text-brand-800 transition-colors"
           >
             <span className="text-lg">{isExpanded ? "🔽" : "▶️"}</span>
             <span className="font-medium">
@@ -66,14 +66,14 @@ const SharedGalleryGroup = ({
           <button
             type="button"
             onClick={handleToggleExpand}
-            className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            className="px-3 py-1 text-sm bg-brand-600 text-white rounded hover:bg-brand-700 transition-colors"
           >
             {isExpanded ? "Collapse" : "View images"}
           </button>
           <button
             type="button"
             onClick={handleUnshareAll}
-            className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+            className="px-3 py-1 text-sm bg-danger-600 text-white rounded hover:bg-danger-700 transition-colors"
           >
             🗑️ Remove all
           </button>
@@ -82,7 +82,7 @@ const SharedGalleryGroup = ({
 
       {/* Expanded Content */}
       {isExpanded && (
-        <div className="space-y-2 border-t border-blue-200 pt-3">
+        <div className="space-y-2 border-t border-brand-200 pt-3">
           {files.map((file) => (
             <div
               key={file.id}
@@ -103,14 +103,14 @@ const SharedGalleryGroup = ({
                 <button
                   type="button"
                   onClick={(e) => handleViewFile(e, file)}
-                  className="px-2 py-1 text-blue-600 hover:bg-blue-100 rounded text-sm"
+                  className="px-2 py-1 text-brand-600 hover:bg-brand-100 rounded text-sm"
                 >
                   👁️ View
                 </button>
                 <button
                   type="button"
                   onClick={(e) => handleUnshareFile(e, file)}
-                  className="px-2 py-1 text-red-600 hover:bg-red-50 rounded text-sm"
+                  className="px-2 py-1 text-danger-600 hover:bg-danger-50 rounded text-sm"
                 >
                   🗑️ Remove
                 </button>

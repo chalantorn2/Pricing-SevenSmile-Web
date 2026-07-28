@@ -286,7 +286,7 @@ const SupplierModal = ({
               </h2>
               <button
                 onClick={handleClose}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 hover:text-gray-500 transition-colors"
                 disabled={loading || deleteLoading}
               >
                 <X className="w-5 h-5" />
@@ -307,7 +307,7 @@ const SupplierModal = ({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                          Supplier name <span className="text-red-500">*</span>
+                          Supplier name <span className="text-danger-600">*</span>
                         </label>
                         <input
                           type="text"
@@ -315,7 +315,7 @@ const SupplierModal = ({
                           value={formData.name}
                           onChange={handleChange}
                           required
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                           placeholder="Enter Supplier name"
                         />
                       </div>
@@ -329,7 +329,7 @@ const SupplierModal = ({
                           value={formData.address}
                           onChange={handleChange}
                           rows={2}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                           placeholder="Enter address"
                         />
                       </div>
@@ -359,7 +359,7 @@ const SupplierModal = ({
                             <button
                               type="button"
                               onClick={addPhoneField}
-                              className="flex items-center gap-1 px-2.5 py-1 bg-blue-100 text-blue-700 text-xs rounded-lg hover:bg-blue-200 transition-colors"
+                              className="flex items-center gap-1 px-2.5 py-1 bg-brand-100 text-brand-700 text-xs rounded-lg hover:bg-brand-100 transition-colors"
                             >
                               <Plus className="w-3.5 h-3.5" />
                               Add phone
@@ -381,7 +381,7 @@ const SupplierModal = ({
                                     name={field.key}
                                     value={formData[field.key]}
                                     onChange={handleChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                                     placeholder={field.placeholder}
                                   />
                                 </div>
@@ -393,7 +393,7 @@ const SupplierModal = ({
                                     <button
                                       type="button"
                                       onClick={() => removePhoneField(index)}
-                                      className="p-1 text-red-600 hover:bg-red-100 rounded transition-colors"
+                                      className="p-1 text-danger-600 hover:bg-danger-100 rounded transition-colors"
                                       title="Remove this phone"
                                     >
                                       <Trash2 className="w-4 h-4" />
@@ -420,7 +420,7 @@ const SupplierModal = ({
                             name="email"
                             value={formData.email}
                             onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                             placeholder="name@example.com"
                           />
                         </div>
@@ -433,7 +433,7 @@ const SupplierModal = ({
                             name="line"
                             value={formData.line}
                             onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                             placeholder="Line ID"
                           />
                         </div>
@@ -446,7 +446,7 @@ const SupplierModal = ({
                             name="whatsapp"
                             value={formData.whatsapp}
                             onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                             placeholder="WhatsApp number"
                           />
                         </div>
@@ -459,7 +459,7 @@ const SupplierModal = ({
                             name="facebook"
                             value={formData.facebook}
                             onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                             placeholder="Facebook URL or Username"
                           />
                         </div>
@@ -472,7 +472,7 @@ const SupplierModal = ({
                             name="website"
                             value={formData.website}
                             onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                             placeholder="https://example.com"
                           />
                         </div>
@@ -492,7 +492,7 @@ const SupplierModal = ({
                       <button
                         type="button"
                         onClick={() => setFilesSectionOpen(!filesSectionOpen)}
-                        className="flex items-center gap-1.5 px-3 py-1 text-sm text-blue-600 hover:text-blue-800 transition-colors"
+                        className="flex items-center gap-1.5 px-3 py-1 text-sm text-brand-600 hover:text-brand-800 transition-colors"
                       >
                         <span>{filesSectionOpen ? "Hide" : "Show"}</span>
                         <ChevronDown
@@ -524,8 +524,8 @@ const SupplierModal = ({
                           </h4>
                           {filesLoading ? (
                             <div className="text-center py-4">
-                              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                              <p className="text-sm text-gray-600">
+                              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-brand-500 mx-auto mb-2"></div>
+                              <p className="text-sm text-gray-500">
                                 Loading files...
                               </p>
                             </div>
@@ -559,7 +559,7 @@ const SupplierModal = ({
                     type="button"
                     onClick={handleDeleteClick}
                     disabled={loading || deleteLoading}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-4 py-2 bg-danger-600 text-white rounded-lg hover:bg-danger-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     <Trash2 className="w-4 h-4" />
                     <span>Delete Supplier</span>
@@ -573,7 +573,7 @@ const SupplierModal = ({
                   type="button"
                   onClick={handleClose}
                   disabled={loading || deleteLoading}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors disabled:opacity-50"
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>
@@ -581,7 +581,7 @@ const SupplierModal = ({
                   type="submit"
                   onClick={handleSubmit}
                   disabled={loading || deleteLoading || !formData.name.trim()}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <div className="flex items-center space-x-2">
@@ -604,30 +604,30 @@ const SupplierModal = ({
           <div className="mx-4 w-full max-w-md rounded-2xl bg-white shadow-2xl ring-1 ring-black/5">
             <div className="p-6">
               <div className="flex items-center space-x-3 mb-4">
-                <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                  <AlertTriangle className="w-5 h-5 text-red-600" />
+                <div className="flex-shrink-0 w-10 h-10 bg-danger-100 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5 text-danger-600" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">
                     Confirm Supplier deletion
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-500">
                     This action cannot be undone
                   </p>
                 </div>
               </div>
 
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                <p className="text-sm text-red-800">
+              <div className="bg-danger-50 border border-danger-200 rounded-lg p-4 mb-4">
+                <p className="text-sm text-danger-800">
                   You are about to delete <strong>"{supplier?.name}"</strong>
                 </p>
-                <p className="text-sm text-red-700 mt-1">
+                <p className="text-sm text-danger-700 mt-1">
                   • The Supplier data will be permanently deleted
                 </p>
-                <p className="text-sm text-red-700">
+                <p className="text-sm text-danger-700">
                   • Related document files will be deleted
                 </p>
-                <p className="text-sm text-red-700">
+                <p className="text-sm text-danger-700">
                   • Tours linked to this Supplier cannot be deleted
                   (delete the tours first)
                 </p>
@@ -637,14 +637,14 @@ const SupplierModal = ({
                 <button
                   onClick={handleDeleteCancel}
                   disabled={deleteLoading}
-                  className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleDeleteConfirm}
                   disabled={deleteLoading}
-                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                  className="flex-1 px-4 py-2 bg-danger-600 text-white rounded-lg hover:bg-danger-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                 >
                   {deleteLoading ? (
                     <>

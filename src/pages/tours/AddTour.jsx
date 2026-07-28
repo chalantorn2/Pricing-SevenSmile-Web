@@ -258,13 +258,13 @@ const AddTour = () => {
           <h1 className="text-2xl font-bold text-gray-900">
             Add New Tour Prices
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-gray-500 mt-1">
             Select Supplier, upload files, then add multiple tours
           </p>
         </div>
         <button
           onClick={() => navigate("/")}
-          className="flex items-center gap-1.5 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+          className="flex items-center gap-1.5 px-4 py-2 text-gray-500 hover:text-gray-900 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Back
@@ -280,11 +280,11 @@ const AddTour = () => {
               <div
                 className={`flex items-center justify-center w-12 h-12 rounded-full border-2 transition-colors cursor-pointer ${
                   currentStep === step.id
-                    ? "border-blue-500 bg-blue-500 text-white"
+                    ? "border-brand-500 bg-brand-600 text-white"
                     : isStepCompleted(step.id)
-                    ? "border-green-500 bg-green-500 text-white"
+                    ? "border-success-500 bg-success-600 text-white"
                     : isStepAccessible(step.id)
-                    ? "border-gray-300 bg-white text-gray-700 hover:border-blue-300"
+                    ? "border-gray-300 bg-white text-gray-700 hover:border-brand-200"
                     : "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
                 }`}
                 onClick={() => isStepAccessible(step.id) && goToStep(step.id)}
@@ -301,9 +301,9 @@ const AddTour = () => {
                 <p
                   className={`text-sm font-medium ${
                     currentStep === step.id
-                      ? "text-blue-600"
+                      ? "text-brand-600"
                       : isStepCompleted(step.id)
-                      ? "text-green-600"
+                      ? "text-success-600"
                       : "text-gray-500"
                   }`}
                 >
@@ -316,7 +316,7 @@ const AddTour = () => {
               {index < steps.length - 1 && (
                 <div
                   className={`flex-1 h-0.5 mx-4 ${
-                    isStepCompleted(step.id) ? "bg-green-500" : "bg-gray-200"
+                    isStepCompleted(step.id) ? "bg-success-600" : "bg-gray-200"
                   }`}
                 />
               )}
@@ -332,7 +332,7 @@ const AddTour = () => {
           {currentStep === 1 && (
             <div className="space-y-5">
               <div className="flex items-center gap-2 pb-4 border-b">
-                <Building2 className="w-5 h-5 text-blue-600" />
+                <Building2 className="w-5 h-5 text-brand-600" />
                 <h2 className="text-lg font-semibold text-gray-900">
                   Select or create a Supplier
                 </h2>
@@ -347,9 +347,9 @@ const AddTour = () => {
                 />
 
                 {selectedSupplier && (
-                  <div className="mt-4 flex items-center justify-between gap-3 bg-green-50 border border-green-200 rounded-lg px-4 py-3">
+                  <div className="mt-4 flex items-center justify-between gap-3 bg-success-50 border border-success-200 rounded-lg px-4 py-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
+                      <CheckCircle2 className="w-5 h-5 text-success-600 shrink-0" />
                       <div className="min-w-0">
                         <p className="font-medium text-gray-900 truncate">
                           {selectedSupplier.name}
@@ -381,7 +381,7 @@ const AddTour = () => {
                 <div className="flex justify-end pt-4 border-t">
                   <button
                     onClick={nextStep}
-                    className="flex items-center gap-1.5 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                    className="flex items-center gap-1.5 px-5 py-2.5 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium"
                   >
                     Next: Upload files
                     <ArrowRight className="w-4 h-4" />
@@ -395,7 +395,7 @@ const AddTour = () => {
           {currentStep === 2 && (
             <div className="space-y-5">
               <div className="flex items-center gap-2 pb-4 border-b">
-                <Paperclip className="w-5 h-5 text-blue-600" />
+                <Paperclip className="w-5 h-5 text-brand-600" />
                 <h2 className="text-lg font-semibold text-gray-900">
                   Upload Contract Rate Files
                 </h2>
@@ -443,14 +443,14 @@ const AddTour = () => {
                   <div className="flex space-x-3">
                     <button
                       onClick={prevStep}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                      className="flex items-center gap-1.5 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                     >
                       <ArrowLeft className="w-4 h-4" />
                       Back
                     </button>
                     <button
                       onClick={nextStep}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      className="flex items-center gap-1.5 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
                     >
                       Next: Add tours
                       <ArrowRight className="w-4 h-4" />
@@ -480,7 +480,7 @@ const AddTour = () => {
           {(currentStep === 3 || currentStep === 4) && (
             <div className={`space-y-5 ${currentStep === 4 ? "hidden" : ""}`}>
               <div className="flex items-center gap-2 pb-4 border-b">
-                <Palmtree className="w-5 h-5 text-blue-600" />
+                <Palmtree className="w-5 h-5 text-brand-600" />
                 <h2 className="text-lg font-semibold text-gray-900">
                   Add tour items
                   <span className="ml-2 text-sm font-normal text-gray-500">
@@ -492,15 +492,15 @@ const AddTour = () => {
               {/* Existing tours for this supplier (read-only reference) */}
               {loadingSupplierTours ? (
                 <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-50 border rounded-lg px-4 py-3">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400" />
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-300" />
                   Loading existing tours...
                 </div>
               ) : (
                 supplierTours.length > 0 && (
-                  <div className="border border-blue-200 bg-blue-50/50 rounded-lg overflow-hidden">
-                    <div className="flex items-center gap-2 px-4 py-2.5 bg-blue-50 border-b border-blue-200">
-                      <Palmtree className="w-4 h-4 text-blue-600" />
-                      <h3 className="text-sm font-semibold text-gray-800">
+                  <div className="border border-brand-200 bg-brand-50/50 rounded-lg overflow-hidden">
+                    <div className="flex items-center gap-2 px-4 py-2.5 bg-brand-50 border-b border-brand-200">
+                      <Palmtree className="w-4 h-4 text-brand-600" />
+                      <h3 className="text-sm font-semibold text-gray-900">
                         Existing tours for {selectedSupplier?.name} (
                         {supplierTours.length})
                       </h3>
@@ -508,7 +508,7 @@ const AddTour = () => {
                         Reference only — does not affect the new tours below
                       </span>
                     </div>
-                    <div className="max-h-56 overflow-y-auto divide-y divide-blue-100">
+                    <div className="max-h-56 overflow-y-auto divide-y divide-brand-200">
                       {supplierTours.map((tour) => (
                         <div
                           key={tour.id}
@@ -517,7 +517,7 @@ const AddTour = () => {
                           <span className="font-medium text-gray-900 truncate flex-1">
                             {tour.tour_name}
                           </span>
-                          <span className="shrink-0 text-xs px-2 py-0.5 rounded-full bg-white border text-gray-600">
+                          <span className="shrink-0 text-xs px-2 py-0.5 rounded-full bg-white border text-gray-500">
                             {getTourTypeLabel(tour.tour_type)}
                           </span>
                           {tour.destination && (
@@ -525,7 +525,7 @@ const AddTour = () => {
                               {tour.destination}
                             </span>
                           )}
-                          <span className="shrink-0 text-xs text-gray-600 tabular-nums w-28 text-right">
+                          <span className="shrink-0 text-xs text-gray-500 tabular-nums w-28 text-right">
                             ฿{Number(tour.adult_price || 0).toLocaleString()} /
                             ฿{Number(tour.child_price || 0).toLocaleString()}
                           </span>
@@ -560,7 +560,7 @@ const AddTour = () => {
               <div className="flex space-x-3 pt-4 border-t">
                 <button
                   onClick={prevStep}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                  className="flex items-center gap-1.5 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   Back
@@ -573,7 +573,7 @@ const AddTour = () => {
           {currentStep === 4 && pendingTours && (
             <div className="space-y-5">
               <div className="flex items-center gap-2 pb-4 border-b">
-                <ClipboardList className="w-5 h-5 text-blue-600" />
+                <ClipboardList className="w-5 h-5 text-brand-600" />
                 <h2 className="text-lg font-semibold text-gray-900">
                   Review and save
                 </h2>
@@ -581,7 +581,7 @@ const AddTour = () => {
 
               {/* Supplier */}
               <div className="flex items-center gap-3 bg-gray-50 border rounded-lg px-4 py-3">
-                <Building2 className="w-5 h-5 text-blue-600 shrink-0" />
+                <Building2 className="w-5 h-5 text-brand-600 shrink-0" />
                 <div className="min-w-0">
                   <p className="text-xs text-gray-500">Supplier</p>
                   <p className="font-medium text-gray-900 truncate">
@@ -592,7 +592,7 @@ const AddTour = () => {
 
               {/* Contract rate files */}
               <div className="flex items-center gap-3 bg-gray-50 border rounded-lg px-4 py-3">
-                <Paperclip className="w-5 h-5 text-blue-600 shrink-0" />
+                <Paperclip className="w-5 h-5 text-brand-600 shrink-0" />
                 <div>
                   <p className="text-xs text-gray-500">Contract rate files</p>
                   <p className="font-medium text-gray-900">
@@ -605,8 +605,8 @@ const AddTour = () => {
               {/* Tours — one card each for easy review */}
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <Palmtree className="w-4 h-4 text-blue-600" />
-                  <h3 className="text-sm font-semibold text-gray-800">
+                  <Palmtree className="w-4 h-4 text-brand-600" />
+                  <h3 className="text-sm font-semibold text-gray-900">
                     Tours to create ({pendingTours.tours.length})
                   </h3>
                 </div>
@@ -628,13 +628,13 @@ const AddTour = () => {
                       >
                         {/* Title row */}
                         <div className="flex items-start gap-2">
-                          <span className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-blue-50 text-blue-600 text-xs font-semibold">
+                          <span className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-brand-50 text-brand-600 text-xs font-semibold">
                             {index + 1}
                           </span>
                           <p className="font-semibold text-gray-900 flex-1 break-words">
                             {tour.tour_name}
                           </p>
-                          <span className="shrink-0 text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                          <span className="shrink-0 text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
                             {getTourTypeLabel(tour.tour_type)}
                           </span>
                         </div>
@@ -684,7 +684,7 @@ const AddTour = () => {
                 <button
                   onClick={prevStep}
                   disabled={loading}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 transition-colors"
+                  className="flex items-center gap-1.5 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   Back
@@ -692,7 +692,7 @@ const AddTour = () => {
                 <button
                   onClick={handleConfirmSave}
                   disabled={loading}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                  className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
                 >
                   {loading ? (
                     <>

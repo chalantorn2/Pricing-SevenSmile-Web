@@ -46,7 +46,7 @@ const ShareGalleryManager = ({ currentTourId, onGalleryShared }) => {
         currentTourId
       );
 
-      alert(`✅ Gallery images added successfully: ${result.shared_count} images`);
+      alert(`Gallery images added successfully: ${result.shared_count} images`);
 
       if (onGalleryShared) {
         onGalleryShared();
@@ -65,8 +65,7 @@ const ShareGalleryManager = ({ currentTourId, onGalleryShared }) => {
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
-        <span className="mr-2">🔗</span>
+      <h3 className="text-lg font-semibold text-gray-900 mb-3">
         Use Gallery images from another tour
       </h3>
 
@@ -81,7 +80,7 @@ const ShareGalleryManager = ({ currentTourId, onGalleryShared }) => {
             setSearchTerm(term);
             setTimeout(() => handleSearch(term), 500);
           }}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
           autoFocus
         />
       </div>
@@ -90,7 +89,7 @@ const ShareGalleryManager = ({ currentTourId, onGalleryShared }) => {
       {searchResults.length > 0 && (
         <div className="space-y-2">
           <p className="text-sm text-gray-700 mb-2">
-            🎯 Found tours with Gallery images: {searchResults.length} tours
+            Found tours with Gallery images: {searchResults.length} tours
           </p>
 
           {searchResults.map((tour) => (
@@ -103,11 +102,11 @@ const ShareGalleryManager = ({ currentTourId, onGalleryShared }) => {
                   <h4 className="font-medium text-gray-900">
                     {tour.tour_name}
                   </h4>
-                  <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
-                    <span>📸 Gallery: {tour.gallery_count} images</span>
-                    {tour.supplier_name && <span>🏢 {tour.supplier_name}</span>}
+                  <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
+                    <span>Gallery: {tour.gallery_count} images</span>
+                    {tour.supplier_name && <span>{tour.supplier_name}</span>}
                     <span>
-                      📅 {new Date(tour.updated_at).toLocaleDateString("en-US")}
+                      {new Date(tour.updated_at).toLocaleDateString("en-US")}
                     </span>
                   </div>
                 </div>
@@ -115,7 +114,7 @@ const ShareGalleryManager = ({ currentTourId, onGalleryShared }) => {
                 <button
                   onClick={() => handleShareGallery(tour)}
                   disabled={sharing}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  className="px-4 py-2 bg-success-600 text-white rounded-lg hover:bg-success-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                 >
                   {sharing ? "Adding..." : "Select this tour"}
                 </button>
@@ -127,7 +126,7 @@ const ShareGalleryManager = ({ currentTourId, onGalleryShared }) => {
 
       {searchTerm.length >= 2 && !loading && searchResults.length === 0 && (
         <div className="text-center py-4 text-gray-500">
-          😔 No tours with Gallery images found for "{searchTerm}"
+          No tours with Gallery images found for "{searchTerm}"
         </div>
       )}
     </div>

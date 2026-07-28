@@ -103,8 +103,8 @@ const PackageTourList = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-3"></div>
-          <p className="text-gray-600">Loading data...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500 mx-auto mb-3"></div>
+          <p className="text-gray-500">Loading data...</p>
         </div>
       </div>
     );
@@ -131,7 +131,7 @@ const PackageTourList = () => {
         </div>
         <Link
           to="/packages/create"
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700 active:scale-[.98] shadow-sm"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white bg-brand-600 hover:bg-brand-700 active:scale-[.98] shadow-sm"
         >
           <span>➕</span>
           <span>Create New Package</span>
@@ -152,7 +152,7 @@ const PackageTourList = () => {
                 placeholder="Search: package name, description..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"
               />
               <svg
                 className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400"
@@ -171,7 +171,7 @@ const PackageTourList = () => {
             </div>
           </div>
 
-          <div className="text-sm text-gray-600 flex items-center">
+          <div className="text-sm text-gray-500 flex items-center">
             Showing <span className="mx-1 font-medium">{filteredPackages.length}</span> of{" "}
             <span className="mx-1 font-medium">{packages.length}</span> items
           </div>
@@ -182,7 +182,7 @@ const PackageTourList = () => {
       <div className="bg-white rounded-xl shadow-sm ring-1 ring-black/5 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
-            <thead className="bg-gray-50 text-gray-600 sticky top-0 z-10">
+            <thead className="bg-gray-50 text-gray-500 sticky top-0 z-10">
               <tr className="border-b border-gray-200">
                 {columns.map((column) => {
                   const active = sortConfig.key === column.key;
@@ -198,7 +198,7 @@ const PackageTourList = () => {
                       <div className="inline-flex items-center gap-1">
                         <span>{column.label}</span>
                         {column.sortable && (
-                          <span className={`${active ? "text-gray-800" : "text-gray-400"}`}>
+                          <span className={`${active ? "text-gray-900" : "text-gray-400"}`}>
                             {active ? (sortConfig.direction === "asc" ? "↑" : "↓") : "↕"}
                           </span>
                         )}
@@ -221,7 +221,7 @@ const PackageTourList = () => {
                       {pkg.name}
                     </div>
                     {pkg.description && (
-                      <div className="mt-1 text-xs text-gray-600 line-clamp-2">
+                      <div className="mt-1 text-xs text-gray-500 line-clamp-2">
                         {pkg.description}
                       </div>
                     )}
@@ -232,8 +232,8 @@ const PackageTourList = () => {
                   </td>
 
                   <td className="px-6 py-3 whitespace-nowrap">
-                    <div className="inline-flex items-baseline gap-1 rounded-md bg-emerald-50 px-2 py-1 ring-1 ring-emerald-200">
-                      <span className="font-semibold text-emerald-700">
+                    <div className="inline-flex items-baseline gap-1 rounded-md bg-success-50 px-2 py-1 ring-1 ring-success-200">
+                      <span className="font-semibold text-success-700">
                         THB {formatPrice(pkg.total_cost)}
                       </span>
                     </div>
@@ -247,7 +247,7 @@ const PackageTourList = () => {
                     <div className="flex items-center gap-2">
                       <Link
                         to={`/packages/edit/${pkg.id}`}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200 hover:bg-blue-100 active:scale-[.98] text-xs"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-200 hover:bg-brand-100 active:scale-[.98] text-xs"
                         title="Edit"
                       >
                         <span aria-hidden>✏️</span>
@@ -255,7 +255,7 @@ const PackageTourList = () => {
                       </Link>
                       <Link
                         to={`/packages/view/${pkg.id}`}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-green-50 text-green-700 ring-1 ring-inset ring-green-200 hover:bg-green-100 active:scale-[.98] text-xs"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-success-50 text-success-700 ring-1 ring-inset ring-success-200 hover:bg-success-100 active:scale-[.98] text-xs"
                         title="Customer View"
                       >
                         <span aria-hidden>👁️</span>
@@ -263,7 +263,7 @@ const PackageTourList = () => {
                       </Link>
                       <button
                         onClick={() => handleDelete(pkg.id)}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-50 text-red-700 ring-1 ring-inset ring-red-200 hover:bg-red-100 active:scale-[.98] text-xs"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-danger-50 text-danger-700 ring-1 ring-inset ring-danger-200 hover:bg-danger-100 active:scale-[.98] text-xs"
                         title="Delete"
                       >
                         <span aria-hidden>🗑️</span>

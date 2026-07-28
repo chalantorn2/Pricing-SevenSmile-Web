@@ -3,6 +3,8 @@ export const TOUR_TYPES = [
   { value: "one_day_trip", label: "One Day Trip" },
   { value: "private", label: "Private" },
   { value: "show_ticket", label: "Show / Ticket" },
+  { value: "activity", label: "Activity" },
+  { value: "package", label: "Package" },
 ];
 
 // Human-readable label for a stored tour_type value (falls back to the raw value).

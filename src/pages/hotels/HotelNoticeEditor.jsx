@@ -199,8 +199,8 @@ export default function HotelNoticeEditor() {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
-          <p className="mt-4 text-gray-600">Loading notices…</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500" />
+          <p className="mt-4 text-gray-500">Loading notices…</p>
         </div>
       </div>
     );
@@ -209,14 +209,14 @@ export default function HotelNoticeEditor() {
   if (error || !hotel) {
     return (
       <div className="space-y-4">
-        <Link to="/hotel" className="text-blue-600 hover:underline text-sm">
+        <Link to="/hotel" className="text-brand-600 hover:underline text-sm">
           ← Back to hotels
         </Link>
         <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-12 text-center space-y-4">
           <h2 className="text-2xl font-semibold text-gray-900">Hotel not found</h2>
           <button
             onClick={load}
-            className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700"
+            className="px-5 py-2.5 bg-brand-600 text-white rounded-xl font-medium hover:bg-brand-700"
           >
             Try again
           </button>
@@ -233,7 +233,7 @@ export default function HotelNoticeEditor() {
       <div className="mb-6">
         <Link
           to={`/hotel/view/${slug}`}
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-blue-700 mb-2"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-brand-700 mb-2"
         >
           <ArrowLeft size={16} /> Back to {hotel.name}
         </Link>
@@ -283,15 +283,15 @@ export default function HotelNoticeEditor() {
                   <span
                     className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold shrink-0 ${
                       stop
-                        ? "bg-red-50 text-red-600"
-                        : "bg-emerald-50 text-emerald-600"
+                        ? "bg-danger-50 text-danger-600"
+                        : "bg-success-50 text-success-600"
                     }`}
                   >
                     {stop ? <Ban size={13} /> : <Tag size={13} />}
                     {stop ? "Stop Sale" : "Promo"}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm text-gray-800 font-medium truncate">
+                    <div className="text-sm text-gray-900 font-medium truncate">
                       {n.date_start} → {n.date_end}
                       {n.room_type ? (
                         <span className="text-gray-400 font-normal"> · {n.room_type}</span>
@@ -303,7 +303,7 @@ export default function HotelNoticeEditor() {
                       <div className="text-xs text-gray-500 truncate">
                         {n.title}
                         {n.promo_price != null && (
-                          <span className="text-emerald-600 font-medium">
+                          <span className="text-success-600 font-medium">
                             {n.title ? " · " : ""}฿{Number(n.promo_price).toLocaleString()}
                           </span>
                         )}
@@ -312,14 +312,14 @@ export default function HotelNoticeEditor() {
                   </div>
                   <button
                     onClick={() => startEdit(n)}
-                    className="p-1.5 text-gray-400 hover:text-blue-600"
+                    className="p-1.5 text-gray-400 hover:text-brand-600"
                     title="Edit"
                   >
                     <Pencil size={16} />
                   </button>
                   <button
                     onClick={() => handleDelete(n.id)}
-                    className="p-1.5 text-gray-400 hover:text-red-600"
+                    className="p-1.5 text-gray-400 hover:text-danger-600"
                     title="Delete"
                   >
                     <Trash2 size={16} />
@@ -343,7 +343,7 @@ export default function HotelNoticeEditor() {
             onClick={() => setForm((f) => ({ ...f, type: "stop_sale" }))}
             className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium border transition ${
               form.type === "stop_sale"
-                ? "bg-red-50 border-red-300 text-red-600"
+                ? "bg-danger-50 border-danger-200 text-danger-600"
                 : "bg-white border-gray-200 text-gray-500 hover:border-gray-300"
             }`}
           >
@@ -353,7 +353,7 @@ export default function HotelNoticeEditor() {
             onClick={() => setForm((f) => ({ ...f, type: "promotion" }))}
             className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium border transition ${
               form.type === "promotion"
-                ? "bg-emerald-50 border-emerald-300 text-emerald-600"
+                ? "bg-success-50 border-success-200 text-success-600"
                 : "bg-white border-gray-200 text-gray-500 hover:border-gray-300"
             }`}
           >
@@ -371,7 +371,7 @@ export default function HotelNoticeEditor() {
               <select
                 value={form.room_type}
                 onChange={(e) => setForm((f) => ({ ...f, room_type: e.target.value }))}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 outline-none bg-white"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none bg-white"
               >
                 <option value="">All rooms</option>
                 {roomOptions.map((r) => (
@@ -393,7 +393,7 @@ export default function HotelNoticeEditor() {
                     const p = periodOptions.find((o) => o.key === e.target.value);
                     if (p) setForm((f) => ({ ...f, date_start: p.start, date_end: p.end }));
                   }}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 outline-none bg-white"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none bg-white"
                 >
                   <option value="">Custom dates…</option>
                   {periodOptions.map((p) => (
@@ -417,7 +417,7 @@ export default function HotelNoticeEditor() {
                   value={form.promo_price}
                   onChange={(e) => setForm((f) => ({ ...f, promo_price: e.target.value }))}
                   placeholder="0"
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 outline-none"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
                 />
               </div>
             )}
@@ -430,7 +430,7 @@ export default function HotelNoticeEditor() {
                 type="date"
                 value={form.date_start}
                 onChange={(e) => setForm((f) => ({ ...f, date_start: e.target.value }))}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
               />
             </div>
             <div>
@@ -441,7 +441,7 @@ export default function HotelNoticeEditor() {
                 type="date"
                 value={form.date_end}
                 onChange={(e) => setForm((f) => ({ ...f, date_end: e.target.value }))}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
               />
             </div>
           </div>
@@ -458,7 +458,7 @@ export default function HotelNoticeEditor() {
                   ? "e.g. Fully booked / owner block"
                   : "e.g. Early bird 2026"
               }
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 outline-none"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
             />
           </div>
           <div>
@@ -470,7 +470,7 @@ export default function HotelNoticeEditor() {
               value={form.detail}
               onChange={(e) => setForm((f) => ({ ...f, detail: e.target.value }))}
               placeholder="Conditions, min nights, notes…"
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 outline-none text-sm leading-relaxed"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-sm leading-relaxed"
             />
           </div>
         </div>
@@ -479,7 +479,7 @@ export default function HotelNoticeEditor() {
           {form.id && (
             <button
               onClick={resetForm}
-              className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-medium hover:bg-gray-50"
+              className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-500 font-medium hover:bg-gray-50"
             >
               Cancel edit
             </button>
@@ -487,7 +487,7 @@ export default function HotelNoticeEditor() {
           <button
             onClick={handleSubmit}
             disabled={saving}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-60"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-600 text-white font-medium hover:bg-brand-700 disabled:opacity-60"
           >
             <Plus size={18} />
             {saving ? "Saving…" : form.id ? "Update notice" : "Add notice"}

@@ -145,8 +145,8 @@ export default function HotelRateEditor() {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
-          <p className="mt-4 text-gray-600">Loading rates…</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500" />
+          <p className="mt-4 text-gray-500">Loading rates…</p>
         </div>
       </div>
     );
@@ -155,14 +155,14 @@ export default function HotelRateEditor() {
   if (error || !hotel) {
     return (
       <div className="space-y-4">
-        <Link to="/hotel" className="text-blue-600 hover:underline text-sm">
+        <Link to="/hotel" className="text-brand-600 hover:underline text-sm">
           ← Back to hotels
         </Link>
         <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-12 text-center space-y-4">
           <h2 className="text-2xl font-semibold text-gray-900">Hotel not found</h2>
           <button
             onClick={load}
-            className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700"
+            className="px-5 py-2.5 bg-brand-600 text-white rounded-xl font-medium hover:bg-brand-700"
           >
             Try again
           </button>
@@ -180,7 +180,7 @@ export default function HotelRateEditor() {
         <div>
           <Link
             to={`/hotel/view/${slug}`}
-            className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-blue-700 mb-2"
+            className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-brand-700 mb-2"
           >
             <ArrowLeft size={16} /> Back to {hotel.name}
           </Link>
@@ -197,7 +197,7 @@ export default function HotelRateEditor() {
           </h2>
           <button
             onClick={() => addRow()}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100"
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-brand-50 text-brand-700 rounded-lg hover:bg-brand-100"
           >
             <Plus size={16} /> Add row
           </button>
@@ -224,7 +224,7 @@ export default function HotelRateEditor() {
                       value={r.room_type}
                       onChange={(e) => updateRow(r._key, "room_type", e.target.value)}
                       placeholder="Deluxe"
-                      className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 outline-none"
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
                     />
                   </td>
                   <td className="px-2 py-1.5">
@@ -232,7 +232,7 @@ export default function HotelRateEditor() {
                       value={r.period_label}
                       onChange={(e) => updateRow(r._key, "period_label", e.target.value)}
                       placeholder="01 Nov 25 – 25 Dec 25"
-                      className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 outline-none"
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
                     />
                   </td>
                   <td className="px-2 py-1.5">
@@ -240,7 +240,7 @@ export default function HotelRateEditor() {
                       type="date"
                       value={r.period_start}
                       onChange={(e) => updateRow(r._key, "period_start", e.target.value)}
-                      className="px-2 py-1.5 rounded-lg border border-gray-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 outline-none"
+                      className="px-2 py-1.5 rounded-lg border border-gray-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
                     />
                   </td>
                   <td className="px-2 py-1.5">
@@ -248,14 +248,14 @@ export default function HotelRateEditor() {
                       type="date"
                       value={r.period_end}
                       onChange={(e) => updateRow(r._key, "period_end", e.target.value)}
-                      className="px-2 py-1.5 rounded-lg border border-gray-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 outline-none"
+                      className="px-2 py-1.5 rounded-lg border border-gray-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
                     />
                   </td>
                   <td className="px-2 py-1.5">
                     <select
                       value={r.meal_plan}
                       onChange={(e) => updateRow(r._key, "meal_plan", e.target.value)}
-                      className="px-2 py-1.5 rounded-lg border border-gray-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 outline-none bg-white"
+                      className="px-2 py-1.5 rounded-lg border border-gray-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none bg-white"
                     >
                       <option value="">— none —</option>
                       <option value="RO">RO (room only)</option>
@@ -270,28 +270,28 @@ export default function HotelRateEditor() {
                       value={r.price}
                       onChange={(e) => updateRow(r._key, "price", e.target.value)}
                       placeholder="0"
-                      className="w-28 px-2.5 py-1.5 rounded-lg border border-gray-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 outline-none text-right"
+                      className="w-28 px-2.5 py-1.5 rounded-lg border border-gray-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-right"
                     />
                   </td>
                   <td className="px-1 py-1.5 whitespace-nowrap">
                     <button
                       onClick={() => addRow(r._key)}
                       title="Add row below (same room)"
-                      className="p-1.5 text-gray-400 hover:text-blue-600"
+                      className="p-1.5 text-gray-400 hover:text-brand-600"
                     >
                       <Plus size={16} />
                     </button>
                     <button
                       onClick={() => duplicateRow(r._key)}
                       title="Duplicate row"
-                      className="p-1.5 text-gray-400 hover:text-blue-600"
+                      className="p-1.5 text-gray-400 hover:text-brand-600"
                     >
                       <Copy size={15} />
                     </button>
                     <button
                       onClick={() => removeRow(r._key)}
                       title="Delete row"
-                      className="p-1.5 text-gray-400 hover:text-red-600"
+                      className="p-1.5 text-gray-400 hover:text-danger-600"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -320,7 +320,7 @@ export default function HotelRateEditor() {
                 setConditions((c) => ({ ...c, [field]: e.target.value }))
               }
               placeholder={ph}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 outline-none text-sm leading-relaxed"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-sm leading-relaxed"
             />
           </div>
         ))}
@@ -331,14 +331,14 @@ export default function HotelRateEditor() {
         <div className="max-w-7xl mx-auto flex items-center justify-end gap-3">
           <Link
             to={`/hotel/view/${slug}`}
-            className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-medium hover:bg-gray-50"
+            className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-500 font-medium hover:bg-gray-50"
           >
             Cancel
           </Link>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-60"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-600 text-white font-medium hover:bg-brand-700 disabled:opacity-60"
           >
             <Save size={18} />
             {saving ? "Saving…" : "Save rates"}

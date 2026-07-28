@@ -78,10 +78,10 @@ export default function NoticeCalendar({ notices = [], onDayClick }) {
         </div>
         <div className="flex items-center gap-4 text-xs text-gray-500">
           <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-sm bg-red-400" /> Stop Sale
+            <span className="w-3 h-3 rounded-sm bg-danger-600" /> Stop Sale
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-sm bg-emerald-400" /> Promotion
+            <span className="w-3 h-3 rounded-sm bg-success-600" /> Promotion
           </span>
         </div>
       </div>
@@ -110,16 +110,16 @@ export default function NoticeCalendar({ notices = [], onDayClick }) {
               .join("\n") || (onDayClick ? "Set as start date" : "");
           // Full background fill by notice type (easier to read than dots).
           let bgClass = inMonth ? "bg-white" : "bg-gray-50/60";
-          let textClass = inMonth ? "text-gray-700" : "text-gray-300";
+          let textClass = inMonth ? "text-gray-700" : "text-gray-400";
           if (hasStop && hasPromo) {
-            bgClass = "bg-gradient-to-br from-red-100 to-emerald-100";
-            textClass = "text-gray-800";
+            bgClass = "bg-gradient-to-br from-danger-100 to-success-100";
+            textClass = "text-gray-900";
           } else if (hasStop) {
-            bgClass = "bg-red-100";
-            textClass = "text-red-700";
+            bgClass = "bg-danger-100";
+            textClass = "text-danger-700";
           } else if (hasPromo) {
-            bgClass = "bg-emerald-100";
-            textClass = "text-emerald-700";
+            bgClass = "bg-success-100";
+            textClass = "text-success-700";
           }
           return (
             <button
@@ -127,14 +127,14 @@ export default function NoticeCalendar({ notices = [], onDayClick }) {
               onClick={onDayClick ? () => onDayClick(ds) : undefined}
               title={title}
               className={`relative min-h-[52px] rounded-lg border p-1.5 text-left transition ${bgClass} ${
-                isToday ? "border-blue-400 ring-1 ring-blue-300" : "border-gray-100"
+                isToday ? "border-brand-500 ring-1 ring-brand-200" : "border-gray-100"
               } ${
-                onDayClick ? "hover:border-blue-300 cursor-pointer" : "cursor-default"
+                onDayClick ? "hover:border-brand-200 cursor-pointer" : "cursor-default"
               }`}
             >
               <span
                 className={`text-xs font-medium ${textClass} ${
-                  isToday ? "font-bold text-blue-600" : ""
+                  isToday ? "font-bold text-brand-600" : ""
                 }`}
               >
                 {d.getDate()}

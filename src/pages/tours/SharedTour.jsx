@@ -36,8 +36,8 @@ const SharedTour = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading tour data...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500 mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading tour data...</p>
         </div>
       </div>
     );
@@ -49,10 +49,10 @@ const SharedTour = () => {
         <div className="text-center max-w-md mx-auto p-6">
           <div className="text-6xl mb-4">😞</div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">No data found</h1>
-          <p className="text-gray-600 mb-6">{error}</p>
+          <p className="text-gray-500 mb-6">{error}</p>
           <Link
             to="/"
-            className="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="inline-block px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
           >
             Back to the app
           </Link>
@@ -94,7 +94,7 @@ const SharedTour = () => {
             </div>
             <Link
               to="/"
-              className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
+              className="text-sm text-brand-600 hover:text-brand-800 transition-colors"
             >
               Sign in →
             </Link>
@@ -123,7 +123,7 @@ const SharedTour = () => {
               </div>
               <Link
                 to="/"
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                className="inline-flex items-center px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors text-sm"
               >
                 🔒 Sign in to manage
               </Link>

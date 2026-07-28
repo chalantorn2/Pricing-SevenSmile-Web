@@ -373,7 +373,7 @@ const EditTour = () => {
 
       await toursService.updateTour(id, submitData);
       alert("Data updated successfully");
-      navigate("/");
+      navigate(-1);
     } catch (error) {
       console.error("Error saving tour:", error);
       alert("An error occurred while saving data");
@@ -392,7 +392,7 @@ const EditTour = () => {
         setSaving(true);
         await toursService.deleteTour(id);
         alert("Data deleted successfully");
-        navigate("/");
+        navigate(-1);
       } catch (error) {
         console.error("Error deleting tour:", error);
         alert("An error occurred while deleting data");
@@ -404,7 +404,7 @@ const EditTour = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500"></div>
       </div>
     );
   }
@@ -415,8 +415,8 @@ const EditTour = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Edit Tour</h1>
         <button
-          onClick={() => navigate("/")}
-          className="inline-flex items-center gap-1 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-1 px-4 py-2 text-gray-500 hover:text-gray-900 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           Back
@@ -449,7 +449,7 @@ const EditTour = () => {
             {/* Tour Name */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tour name <span className="text-red-500">*</span>
+                Tour name <span className="text-danger-600">*</span>
               </label>
               <input
                 type="text"
@@ -457,13 +457,13 @@ const EditTour = () => {
                 value={formData.tour_name}
                 onChange={handleChange}
                 required
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.tour_name ? "border-red-500" : "border-gray-300"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ${
+                  errors.tour_name ? "border-danger-500" : "border-gray-300"
                 }`}
                 placeholder="Enter tour name"
               />
               {errors.tour_name && (
-                <p className="text-red-500 text-xs mt-1">{errors.tour_name}</p>
+                <p className="text-danger-600 text-xs mt-1">{errors.tour_name}</p>
               )}
             </div>
 
@@ -476,7 +476,7 @@ const EditTour = () => {
                 name="tour_type"
                 value={formData.tour_type}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
               >
                 {TOUR_TYPES.map((t) => (
                   <option key={t.value} value={t.value}>
@@ -511,7 +511,7 @@ const EditTour = () => {
                 placeholder="Type a province"
               />
               {errors.departure_from && (
-                <p className="text-red-500 text-xs mt-1">
+                <p className="text-danger-600 text-xs mt-1">
                   {errors.departure_from}
                 </p>
               )}
@@ -545,10 +545,10 @@ const EditTour = () => {
                 value={formData.pier}
                 onChange={(value) => handleAutocompleteChange("pier", value)}
                 placeholder="Pier name"
-                className={errors.pier ? "border-red-500" : ""}
+                className={errors.pier ? "border-danger-500" : ""}
               />
               {errors.pier && (
-                <p className="text-red-500 text-xs mt-1">{errors.pier}</p>
+                <p className="text-danger-600 text-xs mt-1">{errors.pier}</p>
               )}
             </div>
 
@@ -564,12 +564,12 @@ const EditTour = () => {
                 onChange={handleChange}
                 min="0"
                 step="1"
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.adult_price ? "border-red-500" : "border-gray-300"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ${
+                  errors.adult_price ? "border-danger-500" : "border-gray-300"
                 }`}
               />
               {errors.adult_price && (
-                <p className="text-red-500 text-xs mt-1">
+                <p className="text-danger-600 text-xs mt-1">
                   {errors.adult_price}
                 </p>
               )}
@@ -587,12 +587,12 @@ const EditTour = () => {
                 onChange={handleChange}
                 min="0"
                 step="1"
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.child_price ? "border-red-500" : "border-gray-300"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ${
+                  errors.child_price ? "border-danger-500" : "border-gray-300"
                 }`}
               />
               {errors.child_price && (
-                <p className="text-red-500 text-xs mt-1">
+                <p className="text-danger-600 text-xs mt-1">
                   {errors.child_price}
                 </p>
               )}
@@ -608,7 +608,7 @@ const EditTour = () => {
                 name="start_date"
                 value={formData.start_date}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
               />
             </div>
 
@@ -625,8 +625,8 @@ const EditTour = () => {
                   name="end_date"
                   value={formData.end_date}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.end_date ? "border-red-500" : "border-gray-300"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ${
+                    errors.end_date ? "border-danger-500" : "border-gray-300"
                   }`}
                 />
               )}
@@ -637,7 +637,7 @@ const EditTour = () => {
                   type="text"
                   value="Not specified"
                   disabled
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-orange-50 text-orange-700 cursor-not-allowed"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-warning-50 text-warning-700 cursor-not-allowed"
                 />
               )}
 
@@ -648,16 +648,16 @@ const EditTour = () => {
                     type="checkbox"
                     checked={formData.no_end_date}
                     onChange={(e) => handleNoEndDateToggle(e.target.checked)}
-                    className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                    className="rounded border-gray-300 text-warning-600 focus:ring-warning-500"
                   />
-                  <span className="ml-2 text-sm text-orange-700">
+                  <span className="ml-2 text-sm text-warning-700">
                     No end date (valid until changed)
                   </span>
                 </label>
               </div>
 
               {errors.end_date && (
-                <p className="text-red-500 text-xs mt-1">{errors.end_date}</p>
+                <p className="text-danger-600 text-xs mt-1">{errors.end_date}</p>
               )}
             </div>
 
@@ -672,7 +672,7 @@ const EditTour = () => {
                 name="map_url"
                 value={formData.map_url}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                 placeholder="https://maps.google.com/... or https://goo.gl/maps/..."
               />
               <p className="text-xs text-gray-500 mt-1">
@@ -693,7 +693,7 @@ const EditTour = () => {
                 min="0"
                 step="1"
                 placeholder="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
               />
             </div>
 
@@ -710,7 +710,7 @@ const EditTour = () => {
                 min="0"
                 step="1"
                 placeholder="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
               />
             </div>
 
@@ -722,7 +722,7 @@ const EditTour = () => {
                   name="park_fee_included"
                   checked={formData.park_fee_included}
                   onChange={handleChange}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
                 />
                 <span className="ml-2 text-sm text-gray-700">
                   This Net price includes the park fee
@@ -740,7 +740,7 @@ const EditTour = () => {
                 value={formData.notes}
                 onChange={handleChange}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                 placeholder="Enter additional notes..."
               />
             </div>
@@ -771,7 +771,7 @@ const EditTour = () => {
                     {supplierFiles.map((file) => (
                       <div
                         key={file.id}
-                        className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200"
+                        className="flex items-center justify-between p-3 bg-brand-50 rounded-lg border border-brand-200"
                       >
                         <div className="flex items-center space-x-3">
                           {file.file_type === "pdf" ? (
@@ -792,14 +792,14 @@ const EditTour = () => {
                           <button
                             type="button"
                             onClick={() => handleViewFile(file, true)}
-                            className="inline-flex items-center gap-1 px-2 py-1 text-blue-600 hover:bg-blue-100 rounded text-sm"
+                            className="inline-flex items-center gap-1 px-2 py-1 text-brand-600 hover:bg-brand-100 rounded text-sm"
                           >
                             <Eye className="h-4 w-4" /> View
                           </button>
                           <button
                             type="button"
                             onClick={() => handleDeleteSupplierFile(file.id)}
-                            className="inline-flex items-center gap-1 px-2 py-1 text-red-600 hover:bg-red-50 rounded text-sm"
+                            className="inline-flex items-center gap-1 px-2 py-1 text-danger-600 hover:bg-danger-50 rounded text-sm"
                           >
                             <Trash2 className="h-4 w-4" /> Delete
                           </button>
@@ -844,7 +844,7 @@ const EditTour = () => {
                         .map((file) => (
                           <div
                             key={file.id}
-                            className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200"
+                            className="flex items-center justify-between p-3 bg-success-50 rounded-lg border border-success-200"
                           >
                             <div className="flex items-center space-x-3">
                               {file.file_type === "pdf" ? (
@@ -866,14 +866,14 @@ const EditTour = () => {
                               <button
                                 type="button"
                                 onClick={() => handleViewFile(file, false)}
-                                className="inline-flex items-center gap-1 px-2 py-1 text-blue-600 hover:bg-blue-100 rounded text-sm"
+                                className="inline-flex items-center gap-1 px-2 py-1 text-brand-600 hover:bg-brand-100 rounded text-sm"
                               >
                                 <Eye className="h-4 w-4" /> View
                               </button>
                               <button
                                 type="button"
                                 onClick={() => handleDeleteTourFile(file.id)}
-                                className="inline-flex items-center gap-1 px-2 py-1 text-red-600 hover:bg-red-50 rounded text-sm"
+                                className="inline-flex items-center gap-1 px-2 py-1 text-danger-600 hover:bg-danger-50 rounded text-sm"
                               >
                                 <Trash2 className="h-4 w-4" /> Delete
                               </button>
@@ -915,7 +915,7 @@ const EditTour = () => {
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium shadow-md"
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-brand-600 text-white py-3 px-4 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium shadow-md"
             >
               <Save className="h-4 w-4" />
               {saving ? "Saving..." : "Save changes"}
@@ -925,7 +925,7 @@ const EditTour = () => {
               type="button"
               onClick={handleDelete}
               disabled={saving}
-              className="flex-1 inline-flex items-center justify-center gap-2 bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium shadow-md"
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-danger-600 text-white py-3 px-4 rounded-lg hover:bg-danger-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium shadow-md"
             >
               <Trash2 className="h-4 w-4" />
               {saving ? "Deleting..." : "Delete this tour"}
@@ -933,8 +933,8 @@ const EditTour = () => {
 
             <button
               type="button"
-              onClick={() => navigate("/")}
-              className="flex-1 bg-gray-300 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-400 transition-colors font-medium shadow-md"
+              onClick={() => navigate(-1)}
+              className="flex-1 bg-gray-200 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-400 transition-colors font-medium shadow-md"
             >
               Cancel
             </button>

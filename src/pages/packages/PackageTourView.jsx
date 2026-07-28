@@ -58,8 +58,8 @@ const PackageTourView = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-3"></div>
-          <p className="text-gray-600">Loading data...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500 mx-auto mb-3"></div>
+          <p className="text-gray-500">Loading data...</p>
         </div>
       </div>
     );
@@ -71,7 +71,7 @@ const PackageTourView = () => {
         <p className="text-gray-500">Package not found</p>
         <button
           onClick={() => navigate("/packages")}
-          className="mt-4 px-4 py-2 text-blue-600 hover:text-blue-700"
+          className="mt-4 px-4 py-2 text-brand-600 hover:text-brand-700"
         >
           ← Back
         </button>
@@ -88,7 +88,7 @@ const PackageTourView = () => {
             <h1 className="text-2xl font-semibold text-gray-900">
               {packageData.name}
             </h1>
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-success-100 text-success-800">
               Customer View
             </span>
           </div>
@@ -96,13 +96,13 @@ const PackageTourView = () => {
             {packageData.days} days {packageData.nights} nights
           </p>
           {packageData.description && (
-            <p className="text-sm text-gray-600 mt-2">{packageData.description}</p>
+            <p className="text-sm text-gray-500 mt-2">{packageData.description}</p>
           )}
         </div>
         <button
           type="button"
           onClick={() => navigate("/packages")}
-          className="px-4 py-2 text-gray-600 hover:text-gray-900"
+          className="px-4 py-2 text-gray-500 hover:text-gray-900"
         >
           ← Back
         </button>
@@ -112,7 +112,7 @@ const PackageTourView = () => {
       <div className="bg-white p-6 rounded-xl shadow-sm ring-1 ring-black/5 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">Package Details</h2>
-          <div className="text-xs text-gray-500 bg-green-50 px-3 py-1 rounded-full">
+          <div className="text-xs text-gray-500 bg-success-50 px-3 py-1 rounded-full">
             Customer-facing view (cost prices hidden)
           </div>
         </div>
@@ -120,8 +120,8 @@ const PackageTourView = () => {
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm border-collapse">
             <thead>
-              <tr className="bg-gradient-to-r from-blue-50 to-indigo-50">
-                <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-gray-700 sticky left-0 bg-blue-50 z-10">
+              <tr className="bg-gradient-to-r from-brand-50 to-brand-50">
+                <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-gray-700 sticky left-0 bg-brand-50 z-10">
                   Item / Day
                 </th>
                 {Array.from({ length: packageData.days }, (_, i) => i + 1).map((day) => (
@@ -138,7 +138,7 @@ const PackageTourView = () => {
               {TIME_SLOTS.map((slot, slotIndex) => (
                 <tr
                   key={slot.key}
-                  className={`hover:bg-blue-50/50 transition ${
+                  className={`hover:bg-brand-50/50 transition ${
                     slotIndex % 2 === 0 ? "bg-gray-50/50" : "bg-white"
                   }`}
                 >
@@ -173,7 +173,7 @@ const PackageTourView = () => {
                               {displayName}
                             </div>
                             {item?.notes && (
-                              <div className="text-xs text-gray-600 leading-relaxed border-l-2 border-blue-300 pl-2 mt-2">
+                              <div className="text-xs text-gray-500 leading-relaxed border-l-2 border-brand-200 pl-2 mt-2">
                                 {item.notes}
                               </div>
                             )}
@@ -196,14 +196,14 @@ const PackageTourView = () => {
         <button
           type="button"
           onClick={() => navigate(`/packages/edit/${id}`)}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:scale-[.98]"
+          className="px-6 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 active:scale-[.98]"
         >
           Edit Package
         </button>
         <button
           type="button"
           onClick={() => window.print()}
-          className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 active:scale-[.98]"
+          className="px-6 py-2 bg-success-600 text-white rounded-lg hover:bg-success-700 active:scale-[.98]"
         >
           Print / Save PDF
         </button>

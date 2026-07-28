@@ -69,17 +69,17 @@ const ProvincePicker = ({
 
   return (
     <div className="relative" ref={boxRef}>
-      <div className="flex flex-wrap items-center gap-2 px-2 py-1.5 border border-gray-300 rounded-lg bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 min-h-[38px]">
+      <div className="flex flex-wrap items-center gap-2 px-2 py-1.5 border border-gray-300 rounded-lg bg-white focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-brand-500 min-h-[38px]">
         {selected.map((p) => (
           <span
             key={p}
-            className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs font-medium px-2 py-1 rounded"
+            className="inline-flex items-center gap-1 bg-brand-50 text-brand-700 text-xs font-medium px-2 py-1 rounded"
           >
             {p}
             <button
               type="button"
               onClick={() => remove(p)}
-              className="text-blue-500 hover:text-blue-800"
+              className="text-brand-600 hover:text-brand-800"
             >
               <X className="w-3 h-3" />
             </button>
@@ -138,7 +138,7 @@ const ProvincePicker = ({
               onMouseEnter={() => setActiveIndex(i)}
               className={`px-3 py-2 cursor-pointer text-sm ${
                 activeIndex === i
-                  ? "bg-blue-50 text-blue-700"
+                  ? "bg-brand-50 text-brand-700"
                   : "hover:bg-gray-50"
               }`}
             >
@@ -155,7 +155,7 @@ const ProvincePicker = ({
               key={p}
               type="button"
               onClick={() => commit(p)}
-              className="text-xs text-gray-600 border border-gray-200 rounded-full px-2.5 py-0.5 hover:bg-white hover:border-gray-300"
+              className="text-xs text-gray-500 border border-gray-200 rounded-full px-2.5 py-0.5 hover:bg-white hover:border-gray-300"
             >
               + {p}
             </button>

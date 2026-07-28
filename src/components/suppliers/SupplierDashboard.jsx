@@ -66,11 +66,11 @@ const SupplierDashboard = ({ suppliers, tours, loading }) => {
   return (
     <div className="space-y-6">
       {/* Dashboard Header */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-100">
+      <div className="bg-gradient-to-r from-brand-50 to-brand-50 rounded-lg p-6 border border-brand-200">
         <h2 className="text-xl font-bold text-gray-900 mb-2">
           📊 Supplier Dashboard
         </h2>
-        <p className="text-gray-600">Overview and important alerts</p>
+        <p className="text-gray-500">Overview and important alerts</p>
       </div>
 
       {/* Recently Updated - Horizontal Layout */}
@@ -83,7 +83,7 @@ const SupplierDashboard = ({ suppliers, tours, loading }) => {
             </h3>
             <Link
               to="/suppliers"
-              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+              className="text-brand-600 hover:text-brand-800 text-sm font-medium"
             >
               View all →
             </Link>
@@ -96,29 +96,29 @@ const SupplierDashboard = ({ suppliers, tours, loading }) => {
               {recentlyUpdated.map((supplier) => (
                 <div
                   key={supplier.id}
-                  className="flex-1 min-w-[280px] bg-blue-50 rounded-lg p-4 border border-blue-100"
+                  className="flex-1 min-w-[280px] bg-brand-50 rounded-lg p-4 border border-brand-200"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <Link
                         to={`/suppliers/${supplier.id}`}
-                        className="font-medium text-gray-900 hover:text-blue-600 block"
+                        className="font-medium text-gray-900 hover:text-brand-600 block"
                       >
                         {supplier.name}
                       </Link>
-                      <p className="text-sm text-gray-600 mt-1">
+                      <p className="text-sm text-gray-500 mt-1">
                         Updated {formatDateTime(supplier.updated_at)}
                       </p>
 
                       {supplier.tour_count > 0 && (
                         <div className="mt-2">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success-100 text-success-800">
                             🏝️ {supplier.tour_count} tours
                           </span>
                         </div>
                       )}
                     </div>
-                    <span className="text-blue-600 text-xs whitespace-nowrap ml-2">
+                    <span className="text-brand-600 text-xs whitespace-nowrap ml-2">
                       🕒 New
                     </span>
                   </div>

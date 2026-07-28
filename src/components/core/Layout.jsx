@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
-import { Menu, PanelLeftClose, PanelLeft } from "lucide-react";
-import { useAuth } from "../../hooks/useAuth";
+import { Menu } from "lucide-react";
 import Sidebar from "./Sidebar";
 
 const Layout = () => {
@@ -9,8 +8,6 @@ const Layout = () => {
   const [collapsed, setCollapsed] = useState(
     () => localStorage.getItem("sidebarCollapsed") === "1"
   );
-  const { user } = useAuth();
-
   useEffect(() => {
     localStorage.setItem("sidebarCollapsed", collapsed ? "1" : "0");
   }, [collapsed]);
@@ -44,40 +41,17 @@ const Layout = () => {
           collapsed ? "lg:pl-16" : "lg:pl-64"
         }`}
       >
-        {/* Top bar */}
-        <div className="sticky top-0 z-10 bg-white/80 backdrop-blur shadow-sm border-b border-gray-200">
-          <div className="flex items-center justify-between h-16 px-4">
-            {/* Mobile: open drawer */}
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-            >
-              <Menu className="w-6 h-6" />
-            </button>
-
-            {/* Desktop: collapse / expand sidebar */}
-            <button
-              onClick={() => setCollapsed((v) => !v)}
-              className="hidden lg:inline-flex p-2 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
-              title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            >
-              {collapsed ? (
-                <PanelLeft className="w-5 h-5" />
-              ) : (
-                <PanelLeftClose className="w-5 h-5" />
-              )}
-            </button>
-
-            <div className="flex items-center gap-4 ml-auto">
-              <span className="text-sm text-gray-600">
-                Welcome, <span className="font-medium">{user?.username}</span>
-              </span>
-            </div>
-          </div>
-        </div>
+        {/* Mobile: floating button to open the drawer */}
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="lg:hidden fixed top-3 left-3 z-30 p-2 rounded-lg bg-white shadow-md border border-gray-200 text-gray-500 hover:text-gray-900"
+          title="Open menu"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
 
         {/* Page content */}
-        <main className="p-4 lg:p-6">
+        <main className="p-4 pt-16 lg:p-6">
           <Outlet />
         </main>
       </div>

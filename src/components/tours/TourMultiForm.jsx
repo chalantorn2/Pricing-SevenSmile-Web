@@ -50,7 +50,7 @@ const TourMultiForm = ({
     return {
       id: Date.now() + Math.random(), // Temporary ID for tracking
       tour_name: "",
-      tour_type: "one_day_trip",
+      tour_type: "",
       destinations: [], // Single province kept in an array for the ProvincePicker; flattened to `destination` on submit
       departure_from: "", // Sales zone / pickup area (persisted)
       pier: "",
@@ -208,6 +208,10 @@ const TourMultiForm = ({
       tourErrors.tour_name = "Please enter a tour name";
     }
 
+    if (!tour.tour_type) {
+      tourErrors.tour_type = "Please select a tour type";
+    }
+
     // Validate dates only if end date is specified
     if (!tour.no_end_date && tour.start_date && tour.end_date) {
       const startDate = new Date(tour.start_date);
@@ -302,9 +306,9 @@ const TourMultiForm = ({
   const sectionCard =
     "bg-white rounded-lg border border-gray-200 border-l-4 p-3 grid grid-cols-1 gap-x-4 gap-y-3";
   const inputClass =
-    "w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
+    "w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500";
   const cellInput =
-    "w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500";
+    "w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-brand-500 focus:border-brand-500";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -340,7 +344,7 @@ const TourMultiForm = ({
                 placeholder="Tour name *"
                 className={`${cellInput} ${
                   hasFieldError(tour.id, "tour_name")
-                    ? "border-red-500 ring-1 ring-red-500"
+                    ? "border-danger-500 ring-1 ring-danger-500"
                     : ""
                 }`}
               />
@@ -350,8 +354,13 @@ const TourMultiForm = ({
                 onChange={(e) =>
                   updateTour(tour.id, "tour_type", e.target.value)
                 }
-                className={cellInput}
+                className={`${cellInput} ${
+                  hasFieldError(tour.id, "tour_type")
+                    ? "border-danger-500 ring-1 ring-danger-500"
+                    : ""
+                }`}
               >
+                <option value="">Select type *</option>
                 {TOUR_TYPES.map((t) => (
                   <option key={t.value} value={t.value}>
                     {t.label}
@@ -385,7 +394,7 @@ const TourMultiForm = ({
                 <button
                   type="button"
                   onClick={() => toggleExpand(tour.id)}
-                  className="relative p-1.5 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors"
+                  className="relative p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
                   title="More details"
                 >
                   <ChevronDown
@@ -394,14 +403,14 @@ const TourMultiForm = ({
                     }`}
                   />
                   {!expanded[tour.id] && detailCount(tour) > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-blue-500 rounded-full" />
+                    <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-brand-600 rounded-full" />
                   )}
                 </button>
                 {tours.length > 1 && (
                   <button
                     type="button"
                     onClick={() => removeTour(tour.id)}
-                    className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                    className="p-1.5 text-danger-600 hover:text-danger-700 hover:bg-danger-50 rounded transition-colors"
                     title="Remove this tour"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -415,10 +424,10 @@ const TourMultiForm = ({
               <div className="px-4 py-4 bg-gray-50 border-t border-gray-100 space-y-5">
                 {/* Route & pickup */}
                 <section>
-                  <h5 className={`${sectionHead} text-blue-500`}>
+                  <h5 className={`${sectionHead} text-brand-600`}>
                     <MapPin className="w-3.5 h-3.5" /> Route &amp; pickup
                   </h5>
-                  <div className={`${sectionCard} border-l-blue-400 md:grid-cols-2`}>
+                  <div className={`${sectionCard} border-l-brand-500 md:grid-cols-2`}>
                   {/* Departure from */}
                   <div>
                     <label className={labelClass}>
@@ -492,10 +501,10 @@ const TourMultiForm = ({
 
                 {/* Schedule */}
                 <section>
-                  <h5 className={`${sectionHead} text-indigo-500`}>
+                  <h5 className={`${sectionHead} text-brand-600`}>
                     <CalendarDays className="w-3.5 h-3.5" /> Schedule
                   </h5>
-                  <div className={`${sectionCard} border-l-indigo-400 md:grid-cols-2`}>
+                  <div className={`${sectionCard} border-l-brand-500 md:grid-cols-2`}>
                   {/* Start Date */}
                   <div>
                     <label className={labelClass}>Start date</label>
@@ -522,9 +531,9 @@ const TourMultiForm = ({
                           onChange={(e) =>
                             handleNoEndDateToggle(tour.id, e.target.checked)
                           }
-                          className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                          className="rounded border-gray-300 text-warning-600 focus:ring-warning-500"
                         />
-                        <span className="ml-1.5 text-xs text-orange-700">
+                        <span className="ml-1.5 text-xs text-warning-700">
                           No end date
                         </span>
                       </label>
@@ -536,9 +545,9 @@ const TourMultiForm = ({
                         onChange={(e) =>
                           updateTour(tour.id, "end_date", e.target.value)
                         }
-                        className={`w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        className={`w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ${
                           hasFieldError(tour.id, "end_date")
-                            ? "border-red-500"
+                            ? "border-danger-500"
                             : "border-gray-300"
                         }`}
                       />
@@ -547,11 +556,11 @@ const TourMultiForm = ({
                         type="text"
                         value="Not specified"
                         disabled
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-orange-50 text-orange-700 cursor-not-allowed"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-warning-50 text-warning-700 cursor-not-allowed"
                       />
                     )}
                     {hasFieldError(tour.id, "end_date") && (
-                      <p className="text-red-500 text-xs mt-1">
+                      <p className="text-danger-600 text-xs mt-1">
                         {errors[tour.id].end_date}
                       </p>
                     )}
@@ -561,10 +570,10 @@ const TourMultiForm = ({
 
                 {/* Park fee */}
                 <section>
-                  <h5 className={`${sectionHead} text-amber-500`}>
+                  <h5 className={`${sectionHead} text-warning-600`}>
                     <Ticket className="w-3.5 h-3.5" /> Park fee
                   </h5>
-                  <div className={`${sectionCard} border-l-amber-400 md:grid-cols-3 md:items-end`}>
+                  <div className={`${sectionCard} border-l-warning-500 md:grid-cols-3 md:items-end`}>
                   {/* Park fee — adult */}
                   <div>
                     <label className={labelClass}>
@@ -614,7 +623,7 @@ const TourMultiForm = ({
                             e.target.checked
                           )
                         }
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
                       />
                       <span className="ml-2 text-sm text-gray-700">
                         Net price includes park fee
@@ -626,10 +635,10 @@ const TourMultiForm = ({
 
                 {/* Notes */}
                 <section>
-                  <h5 className={`${sectionHead} text-slate-500`}>
+                  <h5 className={`${sectionHead} text-gray-500`}>
                     <StickyNote className="w-3.5 h-3.5" /> Notes
                   </h5>
-                  <div className={`${sectionCard} border-l-slate-400`}>
+                  <div className={`${sectionCard} border-l-gray-300`}>
                     <label className="sr-only">Notes specific to this tour</label>
                     <textarea
                       value={tour.notes}
@@ -645,10 +654,10 @@ const TourMultiForm = ({
 
                 {/* Attachments */}
                 <section>
-                  <h5 className={`${sectionHead} text-emerald-500`}>
+                  <h5 className={`${sectionHead} text-success-600`}>
                     <Paperclip className="w-3.5 h-3.5" /> Attachments
                   </h5>
-                  <div className={`${sectionCard} border-l-emerald-400 md:grid-cols-3`}>
+                  <div className={`${sectionCard} border-l-success-500 md:grid-cols-3`}>
                     {/* Our Brochure */}
                     <div>
                       <label className={labelClass}>Our brochure</label>
@@ -660,14 +669,14 @@ const TourMultiForm = ({
                           addFiles(tour.id, "brochureFiles", e.target.files);
                           e.target.value = "";
                         }}
-                        className="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-green-100 file:text-green-700 hover:file:bg-green-200"
+                        className="block w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-success-100 file:text-success-700 hover:file:bg-success-100"
                       />
                       {tour.brochureFiles.length > 0 && (
                         <ul className="mt-2 space-y-1">
                           {tour.brochureFiles.map((file, i) => (
                             <li
                               key={i}
-                              className="flex items-center justify-between text-xs bg-green-50 border border-green-200 rounded px-2 py-1"
+                              className="flex items-center justify-between text-xs bg-success-50 border border-success-200 rounded px-2 py-1"
                             >
                               <span className="truncate">{file.name}</span>
                               <button
@@ -675,7 +684,7 @@ const TourMultiForm = ({
                                 onClick={() =>
                                   removeFile(tour.id, "brochureFiles", i)
                                 }
-                                className="ml-2 text-red-600 hover:text-red-800 shrink-0"
+                                className="ml-2 text-danger-600 hover:text-danger-800 shrink-0"
                               >
                                 <X className="w-3.5 h-3.5" />
                               </button>
@@ -700,14 +709,14 @@ const TourMultiForm = ({
                           );
                           e.target.value = "";
                         }}
-                        className="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-amber-100 file:text-amber-700 hover:file:bg-amber-200"
+                        className="block w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-warning-100 file:text-warning-700 hover:file:bg-warning-100"
                       />
                       {tour.supplierBrochureFiles.length > 0 && (
                         <ul className="mt-2 space-y-1">
                           {tour.supplierBrochureFiles.map((file, i) => (
                             <li
                               key={i}
-                              className="flex items-center justify-between text-xs bg-amber-50 border border-amber-200 rounded px-2 py-1"
+                              className="flex items-center justify-between text-xs bg-warning-50 border border-warning-200 rounded px-2 py-1"
                             >
                               <span className="truncate">{file.name}</span>
                               <button
@@ -719,7 +728,7 @@ const TourMultiForm = ({
                                     i
                                   )
                                 }
-                                className="ml-2 text-red-600 hover:text-red-800 shrink-0"
+                                className="ml-2 text-danger-600 hover:text-danger-800 shrink-0"
                               >
                                 <X className="w-3.5 h-3.5" />
                               </button>
@@ -740,14 +749,14 @@ const TourMultiForm = ({
                           addFiles(tour.id, "galleryFiles", e.target.files);
                           e.target.value = "";
                         }}
-                        className="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200"
+                        className="block w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-brand-100 file:text-brand-700 hover:file:bg-brand-100"
                       />
                       {tour.galleryFiles.length > 0 && (
                         <ul className="mt-2 space-y-1">
                           {tour.galleryFiles.map((file, i) => (
                             <li
                               key={i}
-                              className="flex items-center justify-between text-xs bg-blue-50 border border-blue-200 rounded px-2 py-1"
+                              className="flex items-center justify-between text-xs bg-brand-50 border border-brand-200 rounded px-2 py-1"
                             >
                               <span className="truncate">{file.name}</span>
                               <button
@@ -755,7 +764,7 @@ const TourMultiForm = ({
                                 onClick={() =>
                                   removeFile(tour.id, "galleryFiles", i)
                                 }
-                                className="ml-2 text-red-600 hover:text-red-800 shrink-0"
+                                className="ml-2 text-danger-600 hover:text-danger-800 shrink-0"
                               >
                                 <X className="w-3.5 h-3.5" />
                               </button>
@@ -777,7 +786,7 @@ const TourMultiForm = ({
         <button
           type="button"
           onClick={addTour}
-          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+          className="flex items-center gap-2 px-4 py-2 bg-success-600 text-white rounded-lg hover:bg-success-700 transition-colors text-sm font-medium"
         >
           <Plus className="w-4 h-4" />
           <span>Add another tour</span>
@@ -792,7 +801,7 @@ const TourMultiForm = ({
               Ready to save {tours.length} tour{tours.length > 1 ? "s" : ""}
             </h4>
             {tours.length > 1 && (
-              <p className="flex items-center gap-1.5 text-xs text-blue-600 mt-1">
+              <p className="flex items-center gap-1.5 text-xs text-brand-600 mt-1">
                 <Lightbulb className="w-3.5 h-3.5" />
                 New rows copy all fields from the previous row
               </p>
@@ -801,7 +810,7 @@ const TourMultiForm = ({
           <button
             type="submit"
             disabled={loading || tours.length === 0}
-            className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            className="flex items-center gap-2 px-6 py-3 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
           >
             {loading ? (
               <>

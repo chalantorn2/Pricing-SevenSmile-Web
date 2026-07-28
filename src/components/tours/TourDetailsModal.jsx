@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Pencil, Share2, X, AlertTriangle } from "lucide-react";
+import { Pencil, Share2, X, AlertTriangle, Maximize2 } from "lucide-react";
 import { Toast } from "../core";
 import TourDetails from "./TourDetails";
 
@@ -95,7 +95,7 @@ const TourDetailsModal = ({ isOpen, onClose, tour }) => {
                   </span>
                 )}
                 {isExpired && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-200">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-danger-50 px-3 py-1 text-xs font-medium text-danger-700 ring-1 ring-inset ring-danger-200">
                     <AlertTriangle className="h-3 w-3" />
                     Expired
                   </span>
@@ -104,6 +104,15 @@ const TourDetailsModal = ({ isOpen, onClose, tour }) => {
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
+              <Link
+                to={`/tour/${tour.id}`}
+                onClick={onClose}
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 active:scale-[.98]"
+                title="Open the full detail page"
+              >
+                <Maximize2 className="h-4 w-4" />
+                Full page
+              </Link>
               <button
                 onClick={handleShare}
                 className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 active:scale-[.98]"
@@ -115,7 +124,7 @@ const TourDetailsModal = ({ isOpen, onClose, tour }) => {
               <Link
                 to={`/edit/${tour.id}`}
                 onClick={handleEdit}
-                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 active:scale-[.98]"
+                className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 active:scale-[.98]"
               >
                 <Pencil className="h-4 w-4" />
                 Edit
@@ -123,7 +132,7 @@ const TourDetailsModal = ({ isOpen, onClose, tour }) => {
               <button
                 ref={closeBtnRef}
                 onClick={onClose}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
                 title="Close"
               >
                 <X className="h-5 w-5" />

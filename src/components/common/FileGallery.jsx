@@ -25,7 +25,7 @@ const FileGallery = ({ files, getFileUrl, title = "Images" }) => {
           {files.map((file) => (
             <div
               key={file.id}
-              className="aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all"
+              className="aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-brand-500 transition-all"
               onClick={() => handleImageClick(file)}
             >
               <img

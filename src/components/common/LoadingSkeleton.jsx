@@ -122,7 +122,7 @@ export const ErrorState = ({
     {onRetry && (
       <button
         onClick={onRetry}
-        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
       >
         🔄 Try again
       </button>
@@ -144,7 +144,7 @@ export const EmptyState = ({
     {actionText && onAction && (
       <button
         onClick={onAction}
-        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
       >
         {actionText}
       </button>
@@ -181,7 +181,7 @@ export const MobileOptimizedTable = ({
                       selectedItems.length === data.length && data.length > 0
                     }
                     onChange={onSelectAll}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
                   />
                 </th>
               )}
@@ -211,7 +211,7 @@ export const MobileOptimizedTable = ({
                         e.stopPropagation();
                         onSelectItem(item.id);
                       }}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
                     />
                   </td>
                 )}
@@ -244,12 +244,12 @@ export const MobileOptimizedTable = ({
                 <h3 className="font-medium text-gray-900">{item.name}</h3>
                 <div className="mt-2 space-y-1">
                   {item.phone && (
-                    <p className="text-sm text-gray-600 flex items-center">
+                    <p className="text-sm text-gray-500 flex items-center">
                       <span className="mr-1">📞</span> {item.phone}
                     </p>
                   )}
                   {item.tour_count !== undefined && (
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-500">
                       🏝️ {item.tour_count} tours
                     </p>
                   )}
@@ -264,7 +264,7 @@ export const MobileOptimizedTable = ({
                       e.stopPropagation();
                       onSelectItem(item.id);
                     }}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
                   />
                 )}
                 <svg

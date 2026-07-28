@@ -2,13 +2,13 @@ const Toast = ({ message, type = "success" }) => {
   const getToastStyles = () => {
     switch (type) {
       case "success":
-        return "bg-green-600 text-white";
+        return "bg-success-600 text-white";
       case "error":
-        return "bg-red-600 text-white";
+        return "bg-danger-600 text-white";
       case "warning":
-        return "bg-yellow-600 text-white";
+        return "bg-warning-600 text-white";
       default:
-        return "bg-blue-600 text-white";
+        return "bg-brand-600 text-white";
     }
   };
 

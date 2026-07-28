@@ -245,10 +245,10 @@ const SupplierFileUpload = ({
 
   if (!supplierId) {
     return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+      <div className="bg-warning-50 border border-warning-200 rounded-lg p-3">
         <div className="flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 text-yellow-600 shrink-0" />
-          <p className="text-yellow-800 text-sm">
+          <AlertTriangle className="w-4 h-4 text-warning-600 shrink-0" />
+          <p className="text-warning-800 text-sm">
             Please select a Supplier before uploading files
           </p>
         </div>
@@ -261,7 +261,7 @@ const SupplierFileUpload = ({
       {/* Category Selection — buttons so all options are visible */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          File category <span className="text-red-500">*</span>
+          File category <span className="text-danger-600">*</span>
         </label>
         <div className="grid grid-cols-3 gap-2">
           {Object.values(SUPPLIER_FILE_CATEGORIES).map((category) => {
@@ -276,7 +276,7 @@ const SupplierFileUpload = ({
                 className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                   active
                     ? `${category.color} border-current`
-                    : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
+                    : "bg-white text-gray-500 border-gray-300 hover:bg-gray-50"
                 }`}
               >
                 <Icon className="w-4 h-4 shrink-0" />
@@ -305,8 +305,8 @@ const SupplierFileUpload = ({
       <div
         className={`file-upload-area border-2 border-dashed rounded-lg px-4 py-5 transition-all duration-200 ${
           dragOver
-            ? "border-blue-400 bg-blue-50"
-            : "border-gray-300 hover:border-gray-400"
+            ? "border-brand-500 bg-brand-50"
+            : "border-gray-300 hover:border-gray-300"
         } ${
           disabled
             ? "opacity-50 cursor-not-allowed"
@@ -319,8 +319,8 @@ const SupplierFileUpload = ({
       >
         {uploading ? (
           <div className="flex items-center justify-center gap-3">
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-            <p className="text-sm text-gray-600">
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-brand-500"></div>
+            <p className="text-sm text-gray-500">
               Uploading to "{categoryInfo.label}"...
             </p>
           </div>
@@ -330,7 +330,7 @@ const SupplierFileUpload = ({
             <div>
               <p className="text-sm font-medium text-gray-900">
                 Drop files here or{" "}
-                <span className="text-blue-600">click to upload</span>
+                <span className="text-brand-600">click to upload</span>
               </p>
               <p className="text-xs text-gray-500 mt-0.5">
                 {categoryHints.allowedTypesText} · max {maxFileSize}MB · multiple

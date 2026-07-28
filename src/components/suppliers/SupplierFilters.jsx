@@ -50,28 +50,28 @@ const SupplierFilters = ({ onFilterChange, suppliers, tours }) => {
       id: "expiring_soon",
       label: "Tours expiring soon (30 days)",
       count: filterCounts.expiringSoon,
-      color: "bg-orange-100 text-orange-700",
+      color: "bg-warning-100 text-warning-700",
       icon: "⏰",
     },
     {
       id: "no_tours",
       label: "No tours",
       count: filterCounts.noTours,
-      color: "bg-yellow-100 text-yellow-700",
+      color: "bg-warning-100 text-warning-700",
       icon: "⚠️",
     },
     {
       id: "incomplete_info",
       label: "Incomplete contact info",
       count: filterCounts.incompleteInfo,
-      color: "bg-red-100 text-red-700",
+      color: "bg-danger-100 text-danger-700",
       icon: "📋",
     },
     {
       id: "has_active_promo",
       label: "Has promotion (park fee included)",
       count: filterCounts.hasActivePromo,
-      color: "bg-green-100 text-green-700",
+      color: "bg-success-100 text-success-700",
       icon: "🎯",
     },
     {
@@ -81,7 +81,7 @@ const SupplierFilters = ({ onFilterChange, suppliers, tours }) => {
         const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
         return new Date(supplier.updated_at) > weekAgo;
       }).length,
-      color: "bg-blue-100 text-blue-700",
+      color: "bg-brand-100 text-brand-700",
       icon: "🆕",
     },
   ];
@@ -113,14 +113,14 @@ const SupplierFilters = ({ onFilterChange, suppliers, tours }) => {
         onClick={() => setIsOpen(!isOpen)}
         className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
           hasActiveFilters
-            ? "bg-blue-100 text-blue-700 border border-blue-300"
+            ? "bg-brand-100 text-brand-700 border border-brand-200"
             : "bg-gray-100 text-gray-700 hover:bg-gray-200"
         }`}
       >
         <span>🔍</span>
         <span>Smart Filters</span>
         {hasActiveFilters && (
-          <span className="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">
+          <span className="bg-brand-600 text-white text-xs px-2 py-0.5 rounded-full">
             {activeFilters.length}
           </span>
         )}
@@ -160,7 +160,7 @@ const SupplierFilters = ({ onFilterChange, suppliers, tours }) => {
                 {hasActiveFilters && (
                   <button
                     onClick={clearAllFilters}
-                    className="text-xs text-blue-600 hover:text-blue-800"
+                    className="text-xs text-brand-600 hover:text-brand-800"
                   >
                     Clear all
                   </button>
@@ -182,7 +182,7 @@ const SupplierFilters = ({ onFilterChange, suppliers, tours }) => {
                         type="checkbox"
                         checked={activeFilters.includes(option.id)}
                         onChange={() => handleFilterToggle(option.id)}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
                       />
                       <span className="text-lg">{option.icon}</span>
                       <span className="text-sm font-medium">
@@ -193,7 +193,7 @@ const SupplierFilters = ({ onFilterChange, suppliers, tours }) => {
                       className={`text-xs px-2 py-1 rounded-full ${
                         activeFilters.includes(option.id)
                           ? "bg-white bg-opacity-70"
-                          : "bg-gray-100 text-gray-600"
+                          : "bg-gray-100 text-gray-500"
                       }`}
                     >
                       {option.count}

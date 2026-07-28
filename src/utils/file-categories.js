@@ -17,7 +17,7 @@ export const TOUR_FILE_CATEGORIES = {
     description: "Photos of attractions, activities, tours",
     allowedTypes: ["image"], // images only
     examples: ["Island photos", "Activity photos", "Hotel photos"],
-    color: "bg-blue-100 text-blue-700",
+    color: "bg-brand-100 text-brand-700",
     icon: Images,
   },
   brochure: {
@@ -26,7 +26,7 @@ export const TOUR_FILE_CATEGORIES = {
     description: "Our own flyers, catalogs, tour details",
     allowedTypes: ["pdf", "image"],
     examples: ["Tour flyer", "Our catalog", "Menu"],
-    color: "bg-green-100 text-green-700",
+    color: "bg-success-100 text-success-700",
     icon: ClipboardList,
   },
   brochure_supplier: {
@@ -35,7 +35,7 @@ export const TOUR_FILE_CATEGORIES = {
     description: "Brochures and catalogs provided by the Supplier",
     allowedTypes: ["pdf", "image"],
     examples: ["Supplier flyer", "Supplier catalog"],
-    color: "bg-amber-100 text-amber-700",
+    color: "bg-warning-100 text-warning-700",
     icon: Files,
   },
   general: {
@@ -56,7 +56,7 @@ export const SUPPLIER_FILE_CATEGORIES = {
     description: "Price list from Supplier",
     allowedTypes: ["pdf", "image"],
     examples: ["Price list Jan 2025", "Price List Update"],
-    color: "bg-emerald-100 text-emerald-700",
+    color: "bg-success-100 text-success-700",
     icon: Banknote,
   },
   qr_code: {
@@ -65,7 +65,7 @@ export const SUPPLIER_FILE_CATEGORIES = {
     description: "QR Code for Line group, Social Media",
     allowedTypes: ["pdf", "image"],
     examples: ["QR Code Line Group", "QR Code Facebook"],
-    color: "bg-purple-100 text-purple-700",
+    color: "bg-brand-100 text-brand-700",
     icon: QrCode,
   },
   general: {

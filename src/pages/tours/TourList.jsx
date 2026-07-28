@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { toursService } from "../../services/api-service";
 import { TourDetailsModal } from "../../components/tours";
 import { DocumentModal } from "../../components/common";
-import { ColumnToggle } from "../../components/core";
+import { Toast } from "../../components/core";
 import * as XLSX from "xlsx";
 import {
   MapPin,
@@ -13,19 +13,117 @@ import {
   Building2,
   FileText,
   Paperclip,
+  Pencil,
+  Link2,
   ChevronUp,
   ChevronDown,
   ChevronsUpDown,
-  LayoutList,
-  Table2,
+  AlertTriangle,
+  RotateCcw,
 } from "lucide-react";
+
+const columns = [
+  { key: "id", label: "No.", sortable: false },
+  { key: "tour_name", label: "Tour name", sortable: true },
+  { key: "departure_from", label: "Departure from", sortable: true },
+  { key: "destination", label: "Destination", sortable: true },
+  { key: "adult_price", label: "Adult price", sortable: true, align: "right" },
+  { key: "child_price", label: "Child price", sortable: true, align: "right" },
+];
+
+// A <select> that shrinks to the width of the option currently selected.
+// The native select is taken out of flow (absolute + transparent) so its own
+// intrinsic width — always the widest option — never drives the layout; the
+// visible label span sizes the control instead.
+const FitSelect = ({ value, onChange, options, ariaLabel }) => {
+  const selectedLabel =
+    options.find((opt) => opt.value === value)?.label ?? options[0]?.label;
+
+  return (
+    <span className="relative inline-flex items-center self-start max-w-full lg:max-w-xs rounded-lg border border-gray-300 bg-white pl-3 pr-8 py-2 text-sm text-gray-900 focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-brand-500">
+      <span className="truncate">{selectedLabel}</span>
+      <ChevronDown className="pointer-events-none absolute right-2.5 w-4 h-4 text-gray-500" />
+      <select
+        value={value}
+        onChange={onChange}
+        aria-label={ariaLabel}
+        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+      >
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+    </span>
+  );
+};
+
+// First page, last page, and the pages either side of the current one, with
+// "gap" markers standing in for the ranges that get collapsed.
+const getPageItems = (current, total) => {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+
+  const pages = new Set([1, total, current, current - 1, current + 1]);
+  const visible = [...pages].filter((p) => p >= 1 && p <= total).sort((a, b) => a - b);
+
+  return visible.flatMap((page, i) =>
+    i > 0 && page - visible[i - 1] > 1 ? ["gap", page] : [page]
+  );
+};
+
+const isExpired = (endDate) => {
+  if (!endDate || endDate === "0000-00-00") return false;
+  return new Date(endDate) < new Date();
+};
+
+const formatDate = (dateString) =>
+  new Date(dateString).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+const formatPrice = (price) => {
+  // Support both number and numeric string
+  const n =
+    typeof price === "number"
+      ? price
+      : Number(String(price ?? "").replace(/[, ]/g, ""));
+  if (Number.isNaN(n)) return "-";
+  return new Intl.NumberFormat("en-US").format(n);
+};
+
+const getNotesWithExpiry = (tour) => {
+  let notes = tour.notes || "";
+  notes =
+    (tour.park_fee_included
+      ? "This Net price includes the park fee"
+      : "This Net price does not include the park fee") +
+    (notes ? ` | ${notes}` : "");
+
+  if (isExpired(tour.end_date)) {
+    notes += " | ⚠️ Expired, please renew";
+  }
+  return notes;
+};
 
 const TourList = () => {
   // ========= State =========
   const [tours, setTours] = useState([]);
-  const [filteredTours, setFilteredTours] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+
+  const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [supplierFilter, setSupplierFilter] = useState("");
+  const [destinationFilter, setDestinationFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all"); // all | active | expired
+
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [searchParams] = useSearchParams();
   const activeProvince = searchParams.get("province");
@@ -34,81 +132,79 @@ const TourList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
 
-  // Modals (existing logic)
+  // Modals
   const [selectedTour, setSelectedTour] = useState(null);
   const [showTourDetailsModal, setShowTourDetailsModal] = useState(false);
   const [showDocumentModal, setShowDocumentModal] = useState(false);
 
-  // Columns (existing logic)
-  const mainColumns = [
-    { key: "id", label: "No.", sortable: false },
-    { key: "tour_name", label: "Tour name", sortable: true },
-    { key: "departure_from", label: "Departure from", sortable: true },
-    { key: "adult_price", label: "Adult price", sortable: true },
-    { key: "child_price", label: "Child price", sortable: true },
-    { key: "details", label: "More details", sortable: false },
-    { key: "documents", label: "View documents", sortable: false },
-  ];
+  // Toast
+  const [toast, setToast] = useState(null);
 
-  const allColumns = [
-    { key: "id", label: "No.", sortable: false },
-    { key: "tour_name", label: "Tour name", sortable: true },
-    { key: "departure_from", label: "Departure from", sortable: true },
-    { key: "destination", label: "Destination", sortable: true },
-    { key: "pier", label: "Pier", sortable: true },
-    { key: "adult_price", label: "Adult price", sortable: true },
-    { key: "child_price", label: "Child price", sortable: true },
-    { key: "notes", label: "Notes", sortable: false },
-    { key: "updated_at", label: "Updated at", sortable: true },
-    { key: "updated_by", label: "Updated by", sortable: true },
-  ];
-
-  const [visibleColumns, setVisibleColumns] = useState({
-    id: true,
-    tour_name: true,
-    departure_from: true,
-    destination: false,
-    pier: false,
-    adult_price: true,
-    child_price: true,
-    notes: false,
-    updated_at: false,
-    updated_by: false,
-  });
-
-  const [useMainTable, setUseMainTable] = useState(true);
-
-  // ========= Effects (existing logic) =========
+  // ========= Effects =========
   useEffect(() => {
     fetchTours();
   }, []);
 
+  // Debounce the search box so typing stays responsive on large lists
   useEffect(() => {
-    filterAndSortTours();
-  }, [tours, searchTerm, sortConfig, activeProvince]);
+    const timer = setTimeout(() => setSearchTerm(searchInput), 250);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   // Reset to first page when filters/search/sort/pageSize change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, sortConfig, activeProvince, pageSize]);
+  }, [
+    searchTerm,
+    supplierFilter,
+    destinationFilter,
+    statusFilter,
+    sortConfig,
+    activeProvince,
+    pageSize,
+  ]);
 
-  // ========= Data/Logic (existing) =========
+  // ========= Data/Logic =========
   const fetchTours = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const data = await toursService.getAllTours();
       setTours(data);
     } catch (error) {
       console.error("Error fetching tours:", error);
-      alert("An error occurred while loading data");
+      setLoadError(error?.message || "An error occurred while loading data");
     } finally {
       setLoading(false);
     }
   };
 
-  const filterAndSortTours = () => {
+  // Options for the filter dropdowns, derived from the loaded data
+  const supplierOptions = useMemo(
+    () =>
+      [...new Set(tours.map((t) => t.supplier_name).filter(Boolean))].sort(
+        (a, b) => a.localeCompare(b)
+      ),
+    [tours]
+  );
+
+  const destinationOptions = useMemo(
+    () =>
+      [...new Set(tours.map((t) => t.destination).filter(Boolean))].sort(
+        (a, b) => a.localeCompare(b)
+      ),
+    [tours]
+  );
+
+  const expiredCount = useMemo(
+    () => tours.filter((t) => isExpired(t.end_date)).length,
+    [tours]
+  );
+
+  const filteredTours = useMemo(() => {
     const searchLower = searchTerm.toLowerCase().trim();
-    let filtered = tours.filter((tour) => {
+
+    const filtered = tours.filter((tour) => {
       // Province filter (from sidebar submenu) — by destination
       if (
         activeProvince &&
@@ -117,6 +213,17 @@ const TourList = () => {
       ) {
         return false;
       }
+      if (supplierFilter && tour.supplier_name !== supplierFilter) return false;
+      if (destinationFilter && tour.destination !== destinationFilter) {
+        return false;
+      }
+      if (statusFilter !== "all") {
+        const expired = isExpired(tour.end_date);
+        if (statusFilter === "expired" && !expired) return false;
+        if (statusFilter === "active" && expired) return false;
+      }
+      if (!searchLower) return true;
+
       return (
         tour.tour_name?.toLowerCase().includes(searchLower) ||
         tour.supplier_name?.toLowerCase().includes(searchLower) ||
@@ -149,7 +256,29 @@ const TourList = () => {
       });
     }
 
-    setFilteredTours(filtered);
+    return filtered;
+  }, [
+    tours,
+    searchTerm,
+    supplierFilter,
+    destinationFilter,
+    statusFilter,
+    sortConfig,
+    activeProvince,
+  ]);
+
+  const hasActiveFilters =
+    Boolean(searchTerm) ||
+    Boolean(supplierFilter) ||
+    Boolean(destinationFilter) ||
+    statusFilter !== "all";
+
+  const clearFilters = () => {
+    setSearchInput("");
+    setSearchTerm("");
+    setSupplierFilter("");
+    setDestinationFilter("");
+    setStatusFilter("all");
   };
 
   const handleSort = (key) => {
@@ -157,43 +286,6 @@ const TourList = () => {
       key,
       direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
     }));
-  };
-
-  const isExpired = (endDate) => {
-    if (!endDate || endDate === "0000-00-00") return false;
-    return new Date(endDate) < new Date();
-  };
-
-  const formatDate = (dateString) =>
-    new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-
-  const formatPrice = (price) => {
-    // Support both number and numeric string
-    const n =
-      typeof price === "number"
-        ? price
-        : Number(String(price ?? "").replace(/[, ]/g, ""));
-    if (Number.isNaN(n)) return "-";
-    return new Intl.NumberFormat("en-US").format(n);
-  };
-
-  const getNotesWithExpiry = (tour) => {
-    let notes = tour.notes || "";
-    notes =
-      (tour.park_fee_included
-        ? "This Net price includes the park fee"
-        : "This Net price does not include the park fee") + (notes ? ` | ${notes}` : "");
-
-    if (isExpired(tour.end_date)) {
-      notes += " | ⚠️ Expired, please renew";
-    }
-    return notes;
   };
 
   const handleExportExcel = () => {
@@ -222,10 +314,6 @@ const TourList = () => {
     );
   };
 
-  const toggleColumn = (columnKey) => {
-    setVisibleColumns((prev) => ({ ...prev, [columnKey]: !prev[columnKey] }));
-  };
-
   const openTourDetailsModal = (tour) => {
     setSelectedTour(tour);
     setShowTourDetailsModal(true);
@@ -236,35 +324,128 @@ const TourList = () => {
     setShowDocumentModal(true);
   };
 
+  const handleCopyTourLink = async (tour) => {
+    const url = `${window.location.origin}/tour/${tour.id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setToast("Link copied");
+    } catch {
+      setToast("Unable to copy the link");
+    }
+    setTimeout(() => setToast(null), 1500);
+  };
+
   const closeModals = () => {
     setShowTourDetailsModal(false);
     setShowDocumentModal(false);
     setSelectedTour(null);
   };
 
-  // ========= UI =========
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-3"></div>
-          <p className="text-gray-600">Loading data...</p>
-        </div>
-      </div>
-    );
-  }
-
-  const currentColumns = useMainTable ? mainColumns : allColumns;
-  const showColumn = useMainTable
-    ? (key) => mainColumns.some((col) => col.key === key)
-    : (key) => visibleColumns[key];
-
-  // Pagination derived values
+  // ========= Derived =========
   const totalItems = filteredTours.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const safePage = Math.min(currentPage, totalPages);
   const startIndex = (safePage - 1) * pageSize;
   const paginatedTours = filteredTours.slice(startIndex, startIndex + pageSize);
+
+  // ========= Sub-renders =========
+  // In the desktop table the buttons stay dimmed until the row is hovered or
+  // something inside them takes focus; the mobile cards always show them.
+  const renderActions = (tour, { revealOnHover = false } = {}) => (
+    <div
+      className={`inline-flex items-center gap-1 ${
+        revealOnHover
+          ? "opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+          : ""
+      }`}
+    >
+      <button
+        onClick={() => openTourDetailsModal(tour)}
+        className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 active:scale-[.98]"
+        title="View details"
+        aria-label={`View details of ${tour.tour_name}`}
+      >
+        <FileText className="w-4 h-4" />
+      </button>
+      <button
+        onClick={() => openDocumentModal(tour)}
+        className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 active:scale-[.98]"
+        title="View documents"
+        aria-label={`View documents of ${tour.tour_name}`}
+      >
+        <Paperclip className="w-4 h-4" />
+      </button>
+      <Link
+        to={`/edit/${tour.id}`}
+        className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 active:scale-[.98]"
+        title="Edit"
+        aria-label={`Edit ${tour.tour_name}`}
+      >
+        <Pencil className="w-4 h-4" />
+      </Link>
+      <button
+        onClick={() => handleCopyTourLink(tour)}
+        className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 active:scale-[.98]"
+        title="Copy link to this tour"
+        aria-label={`Copy link to ${tour.tour_name}`}
+      >
+        <Link2 className="w-4 h-4" />
+      </button>
+    </div>
+  );
+
+  const renderEmptyState = () => {
+    if (hasActiveFilters || activeProvince) {
+      return (
+        <div className="text-center py-12 px-6">
+          <p className="text-gray-500 font-medium">No tours match your filters</p>
+          <p className="text-sm text-gray-500 mt-1">
+            Try a different keyword or clear the filters.
+          </p>
+          {hasActiveFilters && (
+            <button
+              onClick={clearFilters}
+              className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm border border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Clear filters
+            </button>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div className="text-center py-12 px-6">
+        <p className="text-gray-500 font-medium">No tour prices yet</p>
+        <p className="text-sm text-gray-500 mt-1">
+          Add your first tour price to get started.
+        </p>
+        <Link
+          to="/add"
+          className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white bg-brand-600 hover:bg-brand-700 text-sm"
+        >
+          <Plus className="w-4 h-4" />
+          Add new price
+        </Link>
+      </div>
+    );
+  };
+
+  const renderSkeleton = () => (
+    <div className="divide-y divide-gray-100">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div key={i} className="flex items-center gap-4 px-6 py-4 animate-pulse">
+          <div className="h-4 w-6 rounded bg-gray-200" />
+          <div className="h-4 flex-1 rounded bg-gray-200" />
+          <div className="h-4 w-32 rounded bg-gray-200" />
+          <div className="h-6 w-24 rounded bg-gray-200" />
+          <div className="h-6 w-24 rounded bg-gray-200" />
+          <div className="h-8 w-28 rounded bg-gray-200" />
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -274,10 +455,10 @@ const TourList = () => {
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl font-semibold text-gray-900">Tour List</h1>
             {activeProvince && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700">
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-brand-100 text-brand-700">
                 <MapPin className="w-4 h-4" />
                 {activeProvince}
-                <Link to="/" className="ml-1 text-blue-500 hover:text-blue-800">
+                <Link to="/" className="ml-1 text-brand-600 hover:text-brand-800">
                   <X className="w-4 h-4" />
                 </Link>
               </span>
@@ -292,14 +473,16 @@ const TourList = () => {
         <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={handleExportExcel}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white bg-green-600 hover:bg-green-700 active:scale-[.98] shadow-sm"
+            disabled={totalItems === 0}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white bg-success-600 hover:bg-success-700 active:scale-[.98] shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+            title={`Export ${totalItems} rows to Excel`}
           >
             <FileSpreadsheet className="w-4 h-4" />
-            <span>Export Excel</span>
+            <span>Export Excel ({totalItems})</span>
           </button>
           <Link
             to="/add"
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700 active:scale-[.98] shadow-sm"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white bg-brand-600 hover:bg-brand-700 active:scale-[.98] shadow-sm"
           >
             <Plus className="w-4 h-4" />
             <span>Add new price</span>
@@ -307,9 +490,29 @@ const TourList = () => {
         </div>
       </div>
 
-      {/* Search & View Controls */}
-      <div className="bg-white p-4 rounded-xl shadow-sm ring-1 ring-black/5 space-y-4">
-        <div className="flex flex-col lg:flex-row gap-4">
+      {/* Expired warning */}
+      {!loading && expiredCount > 0 && statusFilter !== "expired" && (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-xl bg-danger-50 px-4 py-3 ring-1 ring-danger-200">
+          <div className="flex items-center gap-2 text-sm text-danger-800">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>
+              <span className="font-semibold">{expiredCount}</span> tour price
+              {expiredCount > 1 ? "s have" : " has"} expired and may be out of
+              date.
+            </span>
+          </div>
+          <button
+            onClick={() => setStatusFilter("expired")}
+            className="self-start sm:self-auto text-sm font-medium text-danger-700 underline underline-offset-2 hover:text-danger-800"
+          >
+            Review them
+          </button>
+        </div>
+      )}
+
+      {/* Search & Filters */}
+      <div className="bg-white p-4 rounded-xl shadow-sm ring-1 ring-black/5">
+        <div className="flex flex-col lg:flex-row gap-3">
           {/* Search */}
           <div className="flex-1">
             <label htmlFor="tour-search" className="sr-only">
@@ -320,9 +523,9 @@ const TourList = () => {
                 id="tour-search"
                 type="text"
                 placeholder="Search: tour name, Supplier, departure, pier, notes..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="w-full pl-10 pr-10 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"
               />
               <svg
                 className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400"
@@ -338,310 +541,370 @@ const TourList = () => {
                   d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z"
                 />
               </svg>
+              {searchInput && (
+                <button
+                  onClick={() => setSearchInput("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-500"
+                  aria-label="Clear search"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Result count */}
-          <div className="text-sm text-gray-600 flex items-center">
-            Showing{" "}
-            <span className="mx-1 font-medium">{filteredTours.length}</span> of{" "}
-            <span className="mx-1 font-medium">{tours.length}</span> items
-          </div>
-        </div>
+          {/* Supplier */}
+          <FitSelect
+            value={supplierFilter}
+            onChange={(e) => setSupplierFilter(e.target.value)}
+            ariaLabel="Filter by supplier"
+            options={[
+              { value: "", label: "All suppliers" },
+              ...supplierOptions.map((name) => ({ value: name, label: name })),
+            ]}
+          />
 
-        {/* Table toggle & Column controls */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-2">
+          {/* Destination — hidden when the sidebar already pins a province */}
+          {!activeProvince && (
+            <FitSelect
+              value={destinationFilter}
+              onChange={(e) => setDestinationFilter(e.target.value)}
+              ariaLabel="Filter by destination"
+              options={[
+                { value: "", label: "All destinations" },
+                ...destinationOptions.map((name) => ({
+                  value: name,
+                  label: name,
+                })),
+              ]}
+            />
+          )}
+
+          {/* Status */}
+          <FitSelect
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            ariaLabel="Filter by status"
+            options={[
+              { value: "all", label: "All status" },
+              { value: "active", label: "Active only" },
+              { value: "expired", label: "Expired only" },
+            ]}
+          />
+
+          {hasActiveFilters && (
             <button
-              onClick={() => setUseMainTable(!useMainTable)}
-              className={`px-3 py-2 rounded-lg text-sm transition-colors border ${
-                useMainTable
-                  ? "bg-blue-50 text-blue-700 border-blue-200"
-                  : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
-              }`}
-              title="Switch column layout"
+              onClick={clearFilters}
+              className="inline-flex items-center justify-center gap-1.5 self-start px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-900"
             >
-              <span className="inline-flex items-center gap-1.5">
-                {useMainTable ? (
-                  <LayoutList className="w-4 h-4" />
-                ) : (
-                  <Table2 className="w-4 h-4" />
-                )}
-                {useMainTable ? "Compact table" : "Full table"}
-              </span>
+              <RotateCcw className="w-3.5 h-3.5" />
+              Clear filters
             </button>
-
-            {!useMainTable && (
-              <div className="ml-1">
-                <ColumnToggle
-                  columns={allColumns}
-                  visibleColumns={visibleColumns}
-                  onToggleColumn={toggleColumn}
-                />
-              </div>
-            )}
-          </div>
-
-          <div className="text-xs text-gray-500">
-            {useMainTable ? "Showing 7 main columns" : "Showing full table"}
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm ring-1 ring-black/5 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="bg-gray-50 text-gray-600 sticky top-0 z-10">
-              <tr className="border-b border-gray-200">
-                {currentColumns.map((column) => {
-                  if (!showColumn(column.key)) return null;
-                  const active = sortConfig.key === column.key;
-                  return (
-                    <th
-                      key={column.key}
-                      scope="col"
-                      className={`px-6 py-3 text-left uppercase tracking-wider text-[11px] font-semibold ${
-                        column.sortable ? "cursor-pointer select-none" : ""
-                      }`}
-                      onClick={() => column.sortable && handleSort(column.key)}
-                    >
-                      <div className="inline-flex items-center gap-1">
-                        <span>{column.label}</span>
-                        {column.sortable &&
-                          (active ? (
-                            sortConfig.direction === "asc" ? (
-                              <ChevronUp className="w-3.5 h-3.5 text-gray-800" />
+      {/* Error */}
+      {loadError && (
+        <div className="bg-white rounded-xl shadow-sm ring-1 ring-danger-200 p-6 text-center">
+          <AlertTriangle className="w-8 h-8 text-danger-600 mx-auto mb-2" />
+          <p className="text-gray-900 font-medium">Could not load tours</p>
+          <p className="text-sm text-gray-500 mt-1">{loadError}</p>
+          <button
+            onClick={fetchTours}
+            className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white bg-brand-600 hover:bg-brand-700 text-sm"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* List */}
+      {!loadError && (
+        <div className="bg-white rounded-xl shadow-sm ring-1 ring-black/5 overflow-hidden">
+          {loading ? (
+            renderSkeleton()
+          ) : totalItems === 0 ? (
+            renderEmptyState()
+          ) : (
+            <>
+              {/* Desktop table */}
+              {/* The scroll container needs a bounded height, otherwise the
+                  sticky header has nothing to stick to and scrolls away. */}
+              <div className="hidden md:block overflow-auto max-h-[calc(100vh-16rem)]">
+                <table className="min-w-full text-sm">
+                  <thead className="text-gray-500">
+                    <tr>
+                      {columns.map((column) => {
+                        const active = sortConfig.key === column.key;
+                        const alignRight = column.align === "right";
+                        return (
+                          <th
+                            key={column.key}
+                            scope="col"
+                            aria-sort={
+                              active
+                                ? sortConfig.direction === "asc"
+                                  ? "ascending"
+                                  : "descending"
+                                : column.sortable
+                                ? "none"
+                                : undefined
+                            }
+                            className={`sticky top-0 z-10 bg-gray-50 border-b border-gray-200 px-6 py-3 uppercase tracking-wider text-[11px] font-semibold ${
+                              alignRight ? "text-right" : "text-left"
+                            }`}
+                          >
+                            {column.sortable ? (
+                              <button
+                                type="button"
+                                onClick={() => handleSort(column.key)}
+                                className={`inline-flex items-center gap-1 rounded -mx-1 px-1 py-0.5 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
+                                  active ? "text-gray-900" : ""
+                                }`}
+                              >
+                                <span>{column.label}</span>
+                                {active ? (
+                                  sortConfig.direction === "asc" ? (
+                                    <ChevronUp className="w-3.5 h-3.5" />
+                                  ) : (
+                                    <ChevronDown className="w-3.5 h-3.5" />
+                                  )
+                                ) : (
+                                  <ChevronsUpDown className="w-3.5 h-3.5 text-gray-400" />
+                                )}
+                              </button>
                             ) : (
-                              <ChevronDown className="w-3.5 h-3.5 text-gray-800" />
-                            )
-                          ) : (
-                            <ChevronsUpDown className="w-3.5 h-3.5 text-gray-400" />
+                              column.label
+                            )}
+                          </th>
+                        );
+                      })}
+                      <th
+                        scope="col"
+                        className="sticky top-0 z-10 w-0 bg-gray-50 border-b border-gray-200 pl-2 pr-4 py-3"
+                      >
+                        <span className="sr-only">Actions</span>
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody className="divide-y divide-gray-100">
+                    {paginatedTours.map((tour, index) => {
+                      const expired = isExpired(tour.end_date);
+
+                      return (
+                        <tr
+                          key={tour.id}
+                          className={`group transition ${
+                            expired
+                              ? "bg-danger-50/40 hover:bg-danger-50"
+                              : "hover:bg-gray-50"
+                          }`}
+                        >
+                          <td className="px-6 py-3 whitespace-nowrap text-gray-900">
+                            {startIndex + index + 1}
+                          </td>
+
+                          {/* Tour Name + Supplier + expired badge */}
+                          <td className="px-6 py-3 align-top">
+                            <div className="flex items-start gap-2">
+                              <div className="font-medium text-gray-900 leading-5">
+                                {tour.tour_name}
+                              </div>
+                              {expired && (
+                                <span className="inline-flex items-center gap-1 shrink-0 rounded-full bg-danger-100 px-2 py-0.5 text-[11px] font-semibold text-danger-700 ring-1 ring-inset ring-danger-200">
+                                  <AlertTriangle className="w-3 h-3" />
+                                  Expired
+                                </span>
+                              )}
+                            </div>
+                            {tour.supplier_name && (
+                              <div className="mt-1 inline-flex items-center gap-1 text-xs text-gray-500">
+                                <Building2 className="w-3.5 h-3.5" />
+                                <span className="truncate">
+                                  {tour.supplier_name}
+                                </span>
+                              </div>
+                            )}
+                          </td>
+
+                          {["departure_from", "destination"].map((key) => (
+                            <td
+                              key={key}
+                              className="px-6 py-3 whitespace-nowrap text-gray-900"
+                            >
+                              {tour[key] || "-"}
+                            </td>
                           ))}
+
+                          {["adult_price", "child_price"].map((key) => (
+                            <td
+                              key={key}
+                              className="px-6 py-3 whitespace-nowrap text-right font-semibold text-gray-900 tabular-nums"
+                            >
+                              {formatPrice(tour[key])}
+                              <span className="ml-1 text-xs font-normal text-gray-400">
+                                THB
+                              </span>
+                            </td>
+                          ))}
+
+                          <td className="w-0 pl-2 pr-4 py-3 whitespace-nowrap text-right">
+                            {renderActions(tour, { revealOnHover: true })}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile cards */}
+              <div className="md:hidden divide-y divide-gray-100">
+                {paginatedTours.map((tour) => {
+                  const expired = isExpired(tour.end_date);
+
+                  return (
+                    <div
+                      key={tour.id}
+                      className={`p-4 space-y-3 ${
+                        expired ? "bg-danger-50/40" : ""
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="font-medium text-gray-900 leading-5">
+                            {tour.tour_name}
+                          </div>
+                          {tour.supplier_name && (
+                            <div className="mt-1 inline-flex items-center gap-1 text-xs text-gray-500">
+                              <Building2 className="w-3.5 h-3.5" />
+                              <span className="truncate">
+                                {tour.supplier_name}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        {expired && (
+                          <span className="inline-flex items-center gap-1 shrink-0 rounded-full bg-danger-100 px-2 py-0.5 text-[11px] font-semibold text-danger-700 ring-1 ring-inset ring-danger-200">
+                            <AlertTriangle className="w-3 h-3" />
+                            Expired
+                          </span>
+                        )}
                       </div>
-                    </th>
+
+                      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 text-sm">
+                        <span className="text-gray-500">
+                          Adult{" "}
+                          <span className="font-semibold text-gray-900 tabular-nums">
+                            {formatPrice(tour.adult_price)}
+                          </span>{" "}
+                          <span className="text-xs text-gray-400">THB</span>
+                        </span>
+                        <span className="text-gray-500">
+                          Child{" "}
+                          <span className="font-semibold text-gray-900 tabular-nums">
+                            {formatPrice(tour.child_price)}
+                          </span>{" "}
+                          <span className="text-xs text-gray-400">THB</span>
+                        </span>
+                      </div>
+
+                      <div className="text-xs text-gray-500">
+                        <span className="text-gray-400">From </span>
+                        {tour.departure_from || "-"}
+                        {tour.destination && (
+                          <>
+                            <span className="text-gray-400"> → </span>
+                            {tour.destination}
+                          </>
+                        )}
+                      </div>
+
+                      {renderActions(tour)}
+                    </div>
                   );
                 })}
-              </tr>
-            </thead>
+              </div>
 
-            <tbody className="divide-y divide-gray-100">
-              {paginatedTours.map((tour, index) => {
-                const expired = isExpired(tour.end_date);
+              {/* Pagination */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-6 py-4 border-t border-gray-100">
+                <div className="flex items-center gap-3 text-sm text-gray-500">
+                  <span>
+                    Showing{" "}
+                    <span className="font-medium">{startIndex + 1}</span>–
+                    <span className="font-medium">
+                      {Math.min(startIndex + pageSize, totalItems)}
+                    </span>{" "}
+                    of <span className="font-medium">{totalItems}</span>
+                  </span>
+                  <span className="hidden sm:inline text-gray-400">|</span>
+                  <label className="flex items-center gap-2">
+                    <span>Per page</span>
+                    <select
+                      value={pageSize}
+                      onChange={(e) => setPageSize(Number(e.target.value))}
+                      className="rounded-lg border border-gray-300 px-2 py-1 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                    >
+                      {[10, 25, 50, 100].map((n) => (
+                        <option key={n} value={n}>
+                          {n}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
 
-                return (
-                  <tr
-                    key={tour.id}
-                    className={`group hover:bg-gray-50 transition ${
-                      expired ? "opacity-95" : ""
-                    }`}
+                <nav className="flex items-center gap-1" aria-label="Pagination">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={safePage === 1}
+                    className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    {/* Index */}
-                    {showColumn("id") && (
-                      <td className="px-6 py-3 whitespace-nowrap text-gray-900">
-                        {startIndex + index + 1}
-                      </td>
-                    )}
-
-                    {/* Tour Name + Supplier */}
-                    {showColumn("tour_name") && (
-                      <td className="px-6 py-3 align-top">
-                        <div className="font-medium text-gray-900 leading-5">
-                          {tour.tour_name}
-                        </div>
-                        {tour.supplier_name && (
-                          <div className="mt-1 inline-flex items-center gap-1 text-xs text-gray-600">
-                            <Building2 className="w-3.5 h-3.5" />
-                            <span className="truncate">
-                              {tour.supplier_name}
-                            </span>
-                          </div>
-                        )}
-                      </td>
-                    )}
-
-                    {/* Departure From */}
-                    {showColumn("departure_from") && (
-                      <td className="px-6 py-3 whitespace-nowrap text-gray-900">
-                        {tour.departure_from || "-"}
-                      </td>
-                    )}
-
-                    {/* Destination */}
-                    {showColumn("destination") && (
-                      <td className="px-6 py-3 whitespace-nowrap text-gray-900">
-                        {tour.destination || "-"}
-                      </td>
-                    )}
-
-                    {/* Pier */}
-                    {showColumn("pier") && (
-                      <td className="px-6 py-3 whitespace-nowrap text-gray-900">
-                        {tour.pier || "-"}
-                      </td>
-                    )}
-
-                    {/* Adult Price */}
-                    {showColumn("adult_price") && (
-                      <td className="px-6 py-3 whitespace-nowrap">
-                        <div
-                          className="inline-flex items-baseline gap-1 rounded-md bg-emerald-50 px-2 py-1
-                   ring-1 ring-emerald-200 transition transform
-                   group-hover:scale-125
-                   group-hover:bg-emerald-100 group-hover:ring-emerald-300"
-                        >
-                          <span className="font-semibold text-emerald-700">
-                            THB {formatPrice(tour.adult_price)}
-                          </span>
-                        </div>
-                      </td>
-                    )}
-
-                    {/* Child Price */}
-                    {showColumn("child_price") && (
-                      <td className="px-6 py-3 whitespace-nowrap">
-                        <div
-                          className="inline-flex items-baseline gap-1 rounded-md bg-cyan-50 px-2 py-1
-                   ring-1 ring-cyan-200 transition transform
-                   group-hover:scale-115
-                   group-hover:bg-cyan-100 group-hover:ring-cyan-300"
-                        >
-                          <span className="font-semibold text-cyan-700">
-                            THB {formatPrice(tour.child_price)}
-                          </span>
-                        </div>
-                      </td>
-                    )}
-
-                    {/* Notes */}
-                    {showColumn("notes") && (
-                      <td className="px-6 py-3">
-                        <div className="whitespace-pre-wrap leading-5 text-gray-800">
-                          {getNotesWithExpiry(tour)}
-                        </div>
-                      </td>
-                    )}
-
-                    {/* Updated At */}
-                    {showColumn("updated_at") && (
-                      <td className="px-6 py-3 whitespace-nowrap text-gray-500">
-                        {tour.updated_at ? formatDate(tour.updated_at) : "-"}
-                      </td>
-                    )}
-
-                    {/* Updated By */}
-                    {showColumn("updated_by") && (
-                      <td className="px-6 py-3 whitespace-nowrap text-gray-500">
-                        {tour.updated_by || "-"}
-                      </td>
-                    )}
-
-                    {/* Actions (main table only) */}
-                    {useMainTable && (
-                      <>
-                        <td className="px-6 py-3 whitespace-nowrap text-center">
-                          <button
-                            onClick={() => openTourDetailsModal(tour)}
-                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200 hover:bg-blue-100 active:scale-[.98] text-xs"
-                            title="View details"
-                          >
-                            <FileText className="w-3.5 h-3.5" />
-                            <span>View details</span>
-                          </button>
-                        </td>
-                        <td className="px-6 py-3 whitespace-nowrap text-center">
-                          <button
-                            onClick={() => openDocumentModal(tour)}
-                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-200 hover:bg-gray-100 active:scale-[.98] text-xs"
-                            title="View documents"
-                          >
-                            <Paperclip className="w-3.5 h-3.5" />
-                            <span>View documents</span>
-                          </button>
-                        </td>
-                      </>
-                    )}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                    Prev
+                  </button>
+                  {getPageItems(safePage, totalPages).map((item, i) =>
+                    item === "gap" ? (
+                      <span
+                        key={`gap-${i}`}
+                        className="px-2 text-sm text-gray-400"
+                      >
+                        ...
+                      </span>
+                    ) : (
+                      <button
+                        key={item}
+                        onClick={() => setCurrentPage(item)}
+                        aria-current={item === safePage ? "page" : undefined}
+                        className={`min-w-[2.25rem] px-2 py-1.5 rounded-lg text-sm border ${
+                          item === safePage
+                            ? "border-brand-600 bg-brand-600 text-white"
+                            : "border-gray-200 text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        {item}
+                      </button>
+                    )
+                  )}
+                  <button
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
+                    disabled={safePage === totalPages}
+                    className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </nav>
+              </div>
+            </>
+          )}
         </div>
+      )}
 
-        {filteredTours.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500">No matching data found</p>
-          </div>
-        )}
-
-        {/* Pagination */}
-        {totalItems > 0 && (
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-6 py-4 border-t border-gray-100">
-            <div className="flex items-center gap-3 text-sm text-gray-600">
-              <span>
-                Showing{" "}
-                <span className="font-medium">{startIndex + 1}</span>–
-                <span className="font-medium">
-                  {Math.min(startIndex + pageSize, totalItems)}
-                </span>{" "}
-                of <span className="font-medium">{totalItems}</span>
-              </span>
-              <span className="hidden sm:inline text-gray-300">|</span>
-              <label className="flex items-center gap-2">
-                <span>Per page</span>
-                <select
-                  value={pageSize}
-                  onChange={(e) => setPageSize(Number(e.target.value))}
-                  className="rounded-lg border border-gray-300 px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  {[10, 25, 50, 100].map((n) => (
-                    <option key={n} value={n}>
-                      {n}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setCurrentPage(1)}
-                disabled={safePage === 1}
-                className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                First
-              </button>
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={safePage === 1}
-                className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                Prev
-              </button>
-              <span className="px-3 py-1.5 text-sm text-gray-600">
-                Page <span className="font-medium">{safePage}</span> /{" "}
-                <span className="font-medium">{totalPages}</span>
-              </span>
-              <button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={safePage === totalPages}
-                className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
-              <button
-                onClick={() => setCurrentPage(totalPages)}
-                disabled={safePage === totalPages}
-                className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                Last
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Modals (existing logic) */}
+      {/* Modals */}
       <TourDetailsModal
         isOpen={showTourDetailsModal}
         onClose={closeModals}
@@ -652,6 +915,8 @@ const TourList = () => {
         onClose={closeModals}
         tour={selectedTour}
       />
+
+      {toast && <Toast message={toast} />}
     </div>
   );
 };
