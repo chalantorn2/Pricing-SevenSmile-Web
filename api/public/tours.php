@@ -6,9 +6,27 @@ publicApiInit($VALID_API_KEY);
 try {
     $pdo = publicApiDB($DB_HOST, $DB_NAME, $DB_USER, $DB_PASS);
 
-    // Full tour + supplier data (including contact info)
+    // Full tour + supplier data (including contact info).
+    // Columns are listed explicitly: t.* would leak the internal `updated_by` admin name.
     $sql = "SELECT
-              t.*,
+              t.id,
+              t.supplier_id,
+              t.tour_name,
+              t.departure_from,
+              t.destination,
+              t.pier,
+              t.tour_type,
+              t.adult_price,
+              t.child_price,
+              t.start_date,
+              t.end_date,
+              t.notes,
+              t.park_fee_included,
+              t.park_fee_adult,
+              t.park_fee_child,
+              t.map_url,
+              t.created_at,
+              t.updated_at,
               sa.name AS supplier_name,
               sa.address,
               sa.phone,
@@ -19,7 +37,8 @@ try {
               sa.line,
               sa.facebook,
               sa.whatsapp,
-              sa.website
+              sa.website,
+              sa.email
             FROM tours t
             LEFT JOIN suppliers sa ON t.supplier_id = sa.id";
 
