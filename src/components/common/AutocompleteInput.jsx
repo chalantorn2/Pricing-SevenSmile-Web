@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { authHeaders } from "../../services/api-service";
 
 const AutocompleteInput = ({
   type, // 'departure_from' or 'pier'
@@ -54,7 +55,7 @@ const AutocompleteInput = ({
       const apiUrl = `${
         import.meta.env.VITE_API_BASE_URL
       }/autocomplete.php?type=${type}&query=${encodeURIComponent(searchQuery)}`;
-      const response = await fetch(apiUrl);
+      const response = await fetch(apiUrl, { headers: authHeaders() });
       const data = await response.json();
 
       if (data.success && data.data) {
@@ -185,7 +186,7 @@ const AutocompleteInput = ({
           placeholder={placeholder}
           disabled={disabled}
           required={required}
-          className={`w-full px-3 py-2 pr-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+          className={`w-full px-3 py-2 pr-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors ${
             disabled ? "bg-gray-100 cursor-not-allowed" : ""
           } ${className}`}
           {...props}
@@ -194,7 +195,7 @@ const AutocompleteInput = ({
         {/* Loading Spinner */}
         {loading && (
           <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-brand-500"></div>
           </div>
         )}
       </div>
@@ -212,7 +213,7 @@ const AutocompleteInput = ({
               onMouseEnter={() => setSelectedIndex(index)}
               className={`px-4 py-3 cursor-pointer transition-colors ${
                 selectedIndex === index
-                  ? "bg-blue-50 text-blue-700"
+                  ? "bg-brand-50 text-brand-700"
                   : "hover:bg-gray-50"
               }`}
             >

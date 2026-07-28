@@ -1,14 +1,49 @@
 // API Service for MariaDB via PHP - Updated for Suppliers
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
+// Login session. The token is issued by api/auth.php and checked by api/_auth.php on
+// every protected endpoint; without it the API answers 401. Kept in localStorage
+// rather than a cookie because the dev server runs on a different origin than the API.
+const TOKEN_KEY = "auth_token";
+
+export function getAuthToken() {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+/**
+ * Auth header for the few requests that cannot go through apiCall — multipart uploads
+ * must let the browser set Content-Type itself so the boundary is right.
+ */
+export function authHeaders() {
+  const token = getAuthToken();
+  return token ? { "X-Auth-Token": token } : {};
+}
+
+function clearStoredSession() {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem("user");
+}
+
+// The token is gone or no longer valid: drop what we cached and send the user to the
+// login screen. Share pages read open endpoints, so they never land here.
+function handleExpiredSession() {
+  clearStoredSession();
+  if (window.location.pathname !== "/login") {
+    window.location.assign("/login");
+  }
+}
+
 // Helper function for API calls
 async function apiCall(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
+  const token = getAuthToken();
   const config = {
+    ...options,
     headers: {
       "Content-Type": "application/json",
+      ...(token ? { "X-Auth-Token": token } : {}),
+      ...(options.headers || {}),
     },
-    ...options,
   };
 
   console.log("🔗 API Call:", url);
@@ -22,6 +57,10 @@ async function apiCall(endpoint, options = {}) {
     if (!response.ok) {
       const data = await response.json();
       console.error("❌ HTTP Error:", response.status, data);
+      // 401 on a login attempt is a wrong password, not an expired session.
+      if (response.status === 401 && !endpoint.startsWith("/auth.php")) {
+        handleExpiredSession();
+      }
       throw new Error(data.error || `HTTP error! status: ${response.status}`);
     }
 
@@ -41,7 +80,7 @@ async function apiCall(endpoint, options = {}) {
     let data;
     try {
       data = JSON.parse(jsonText);
-    } catch (parseError) {
+    } catch {
       console.error(
         "❌ JSON Parse Error. Raw response:",
         text.substring(0, 500)
@@ -86,8 +125,17 @@ export const authService = {
         id: response.data.id,
         username: response.data.username,
         role: response.data.role,
+        full_name: response.data.full_name || "",
+        nickname: response.data.nickname || "",
+        office: response.data.office || "sevensmile",
+        position: response.data.position || "",
       };
 
+      // The token is what actually authorises later calls; the cached user object is
+      // only there so the UI can render a name before the session check comes back.
+      if (response.data.token) {
+        localStorage.setItem(TOKEN_KEY, response.data.token);
+      }
       localStorage.setItem("user", JSON.stringify(userData));
       console.log("✅ Login successful:", userData);
       return userData;
@@ -97,18 +145,47 @@ export const authService = {
     }
   },
 
-  // Logout
-  logout() {
-    localStorage.removeItem("user");
-    console.log("👋 User logged out");
+  // Logout — drop the session on the server too, so a copied token stops working.
+  async logout() {
+    try {
+      if (getAuthToken()) {
+        await apiCall("/auth.php?action=logout", { method: "POST" });
+      }
+    } catch (error) {
+      console.warn("Logout call failed, clearing locally anyway:", error.message);
+    } finally {
+      clearStoredSession();
+      console.log("👋 User logged out");
+    }
   },
 
-  // Get current user
+  // Get the cached user without asking the server (synchronous, for first paint).
   getCurrentUser() {
     const user = localStorage.getItem("user");
     const userData = user ? JSON.parse(user) : null;
     console.log("👤 Current user:", userData);
     return userData;
+  },
+
+  /**
+   * Ask the server who we are. Returns the user on a live session, or null when the
+   * token is missing/expired — a stale localStorage entry alone no longer counts as
+   * being logged in.
+   */
+  async verifySession() {
+    if (!getAuthToken()) {
+      clearStoredSession();
+      return null;
+    }
+    try {
+      const response = await apiCall("/auth.php?action=me");
+      localStorage.setItem("user", JSON.stringify(response.data));
+      return response.data;
+    } catch (error) {
+      console.warn("Session check failed:", error.message);
+      clearStoredSession();
+      return null;
+    }
   },
 
   // Check if user is admin
@@ -312,6 +389,7 @@ export const supplierFilesService = {
 
       const response = await fetch(`${API_BASE_URL}/supplier-files.php`, {
         method: "POST",
+        headers: authHeaders(),
         body: formData,
       });
 
@@ -543,6 +621,7 @@ export const filesService = {
 
       const response = await fetch(`${API_BASE_URL}/files.php`, {
         method: "POST",
+        headers: authHeaders(),
         body: formData,
       });
 
@@ -816,7 +895,8 @@ export const packageToursService = {
 };
 
 export const hotelsService = {
-  // Get hotels (stored in our DB, synced from indosmilesouthservices.com)
+  // Get hotels. This site owns the hotel data; indosmilesouthservices.com pulls
+  // it from api/public/hotels.php.
   async getAllHotels(filters = {}) {
     try {
       const params = new URLSearchParams();
@@ -845,16 +925,78 @@ export const hotelsService = {
     }
   },
 
-  // Pull/refresh hotels from indosmilesouthservices.com into our DB
-  async syncHotels() {
+  // Get one hotel by id (used when opening the edit form from the list)
+  async getHotelById(id) {
     try {
-      console.log("🔄 Syncing hotels from source...");
-      const response = await apiCall("/hotels-sync.php", { method: "POST" });
-      console.log("✅ Hotels synced:", response);
-      return response;
+      const response = await apiCall(`/hotels.php?id=${encodeURIComponent(id)}`);
+      return response.data;
     } catch (error) {
-      console.error("❌ Failed to sync hotels:", error);
-      throw new Error("An error occurred while syncing hotels: " + error.message);
+      console.error("❌ Failed to fetch hotel:", error);
+      throw new Error("An error occurred while loading the hotel: " + error.message);
+    }
+  },
+
+  // Create a hotel (source_id stays NULL — it never came from another system)
+  async createHotel(payload) {
+    try {
+      const response = await apiCall("/hotel-manage.php", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      return response.data;
+    } catch (error) {
+      console.error("❌ Failed to create hotel:", error);
+      throw new Error("An error occurred while saving the hotel: " + error.message);
+    }
+  },
+
+  // Update any hotel
+  async updateHotel(id, payload) {
+    try {
+      const response = await apiCall(`/hotel-manage.php?id=${encodeURIComponent(id)}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+      return response.data;
+    } catch (error) {
+      console.error("❌ Failed to update hotel:", error);
+      throw new Error("An error occurred while saving the hotel: " + error.message);
+    }
+  },
+
+  // Delete a manually-created hotel along with its rates and notices
+  async deleteHotel(id) {
+    try {
+      await apiCall(`/hotel-manage.php?id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+      return true;
+    } catch (error) {
+      console.error("❌ Failed to delete hotel:", error);
+      throw new Error("An error occurred while deleting the hotel: " + error.message);
+    }
+  },
+
+  // Upload one or more hotel images, returns their public URLs
+  async uploadHotelImages(files) {
+    try {
+      const formData = new FormData();
+      Array.from(files).forEach((file) => formData.append("files[]", file));
+
+      const response = await fetch(`${API_BASE_URL}/hotel-upload.php`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: formData,
+      });
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || (result.data?.errors || []).join(", ") || "Upload failed");
+      }
+      return result.data;
+    } catch (error) {
+      console.error("❌ Failed to upload hotel image:", error);
+      throw new Error("An error occurred while uploading the image: " + error.message);
     }
   },
 

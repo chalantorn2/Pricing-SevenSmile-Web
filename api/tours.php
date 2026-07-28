@@ -1,15 +1,20 @@
 <?php
 // api/tours.php - Updated to support map_url field
+//
+// GET stays open to anyone: /share/tour/:id is a public page with no signed-in user,
+// and every link already handed to a customer depends on it. Writes need a login.
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+require_once __DIR__ . '/_auth.php';
 
 // Handle preflight requests
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
+
+authRequireForWrites();
 
 // Error reporting for debugging
 error_reporting(E_ALL);
@@ -33,8 +38,50 @@ try {
 
     switch ($method) {
         case 'GET':
+            // Get a single tour by id
+            if (isset($_GET['id']) && $_GET['id'] !== '') {
+                $sql = "SELECT t.*,
+                  sa.name as supplier_name,
+                  sa.address,
+                  sa.phone,
+                  sa.phone_2,
+                  sa.phone_3,
+                  sa.phone_4,
+                  sa.phone_5,
+                  sa.line,
+                  sa.facebook,
+                  sa.whatsapp,
+                  sa.website,
+                  sa.created_at as sub_agent_created_at,
+                  sa.updated_at as sub_agent_updated_at
+                FROM tours t
+                LEFT JOIN suppliers sa ON t.supplier_id = sa.id
+                WHERE t.id = ?";
+
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute(array($_GET['id']));
+                $tour = $stmt->fetch();
+
+                if (!$tour) {
+                    http_response_code(404);
+                    echo json_encode(array(
+                        'success' => false,
+                        'message' => 'Tour not found',
+                        'timestamp' => date('c')
+                    ));
+                    break;
+                }
+
+                echo json_encode(array(
+                    'success' => true,
+                    'data' => $tour,
+                    'timestamp' => date('c')
+                ));
+                break;
+            }
+
             // Get all tours with supplier information
-            $sql = "SELECT t.*, 
+            $sql = "SELECT t.*,
               sa.name as supplier_name,
               sa.address,
               sa.phone,
@@ -213,6 +260,44 @@ try {
                 echo json_encode(array(
                     'success' => true,
                     'message' => 'Destination updated for ' . $stmt->rowCount() . ' tour(s)',
+                    'updated' => $stmt->rowCount()
+                ));
+                break;
+            }
+
+            // Bulk update tour_type (migration tool) - one request for many tours
+            if (isset($_GET['action']) && $_GET['action'] === 'bulk_type') {
+                $input = file_get_contents('php://input');
+                $data = json_decode($input, true);
+
+                $ids = isset($data['ids']) && is_array($data['ids']) ? $data['ids'] : array();
+                $tour_type = isset($data['tour_type']) ? $data['tour_type'] : null;
+                $updated_by = isset($data['updated_by']) ? $data['updated_by'] : 'Unknown';
+
+                // Keep only valid integer IDs
+                $ids = array_values(array_filter(array_map('intval', $ids), function ($v) {
+                    return $v > 0;
+                }));
+
+                if (empty($ids)) {
+                    throw new Exception("No tours selected");
+                }
+
+                // Only allow known tour_type values
+                $allowed_types = array('one_day_trip', 'private', 'show_ticket', 'activity', 'package');
+                if ($tour_type === null || !in_array($tour_type, $allowed_types, true)) {
+                    throw new Exception("Invalid tour type");
+                }
+
+                // Parameterized IN clause from the selected IDs
+                $placeholders = implode(',', array_fill(0, count($ids), '?'));
+                $sql = "UPDATE tours SET tour_type = ?, updated_by = ?, updated_at = NOW() WHERE id IN ($placeholders)";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute(array_merge(array($tour_type, $updated_by), $ids));
+
+                echo json_encode(array(
+                    'success' => true,
+                    'message' => 'Tour type updated for ' . $stmt->rowCount() . ' tour(s)',
                     'updated' => $stmt->rowCount()
                 ));
                 break;

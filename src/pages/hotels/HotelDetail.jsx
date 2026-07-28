@@ -246,8 +246,8 @@ export default function HotelDetail() {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
-          <p className="mt-4 text-gray-600">Loading hotel…</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500" />
+          <p className="mt-4 text-gray-500">Loading hotel…</p>
         </div>
       </div>
     );
@@ -256,7 +256,7 @@ export default function HotelDetail() {
   if (error || !hotel) {
     return (
       <div className="space-y-4">
-        <Link to="/hotel" className="text-blue-600 hover:underline text-sm">
+        <Link to="/hotel" className="text-brand-600 hover:underline text-sm">
           ← Back to hotels
         </Link>
         <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-12 text-center space-y-4">
@@ -268,7 +268,7 @@ export default function HotelDetail() {
           </p>
           <button
             onClick={fetchHotel}
-            className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700"
+            className="px-5 py-2.5 bg-brand-600 text-white rounded-xl font-medium hover:bg-brand-700"
           >
             Try again
           </button>
@@ -282,10 +282,10 @@ export default function HotelDetail() {
       {/* Breadcrumb */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         <nav className="flex items-center gap-2 text-sm text-gray-500">
-          <Link to="/hotel" className="hover:text-blue-700">
+          <Link to="/hotel" className="hover:text-brand-700">
             Hotels
           </Link>
-          <span className="text-gray-300">›</span>
+          <span className="text-gray-400">›</span>
           <span className="text-gray-900 font-medium truncate max-w-[220px]">
             {hotel.name}
           </span>
@@ -298,7 +298,7 @@ export default function HotelDetail() {
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${hotel.main_image || ""})` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/50 to-transparent" />
 
         <div className="absolute inset-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-end pb-10">
           <button
@@ -316,14 +316,14 @@ export default function HotelDetail() {
 
           <div className="flex flex-wrap items-center gap-3 mb-4">
             {hotel.destination && (
-              <span className="bg-amber-400 text-slate-900 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest">
+              <span className="bg-warning-600 text-gray-900 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest">
                 {hotel.destination}
               </span>
             )}
             {hotel.stars ? (
               <div className="flex gap-1 bg-black/30 backdrop-blur-md px-3 py-1 rounded-full">
                 {Array.from({ length: parseInt(hotel.stars) || 0 }).map((_, i) => (
-                  <span key={i} className="text-amber-400 text-sm">
+                  <span key={i} className="text-warning-600 text-sm">
                     ★
                   </span>
                 ))}
@@ -344,7 +344,7 @@ export default function HotelDetail() {
             <span className="flex items-center gap-2">📍 {hotel.destination}</span>
             {parseFloat(hotel.rating) > 0 && (
               <span className="flex items-center gap-2">
-                <span className="text-amber-400">★</span>
+                <span className="text-warning-600">★</span>
                 <span className="font-semibold">{hotel.rating} / 5.0</span>
                 <span className="text-white/60">
                   ({hotel.review_count} reviews)
@@ -373,7 +373,7 @@ export default function HotelDetail() {
                         onClick={() => setRateView("table")}
                         className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition ${
                           rateView === "table"
-                            ? "bg-white text-blue-600 shadow-sm"
+                            ? "bg-white text-brand-600 shadow-sm"
                             : "text-gray-500 hover:text-gray-700"
                         }`}
                       >
@@ -383,7 +383,7 @@ export default function HotelDetail() {
                         onClick={() => setRateView("calendar")}
                         className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition ${
                           rateView === "calendar"
-                            ? "bg-white text-blue-600 shadow-sm"
+                            ? "bg-white text-brand-600 shadow-sm"
                             : "text-gray-500 hover:text-gray-700"
                         }`}
                       >
@@ -399,7 +399,7 @@ export default function HotelDetail() {
                       Red = Stop Sale · Green = Promotion.{" "}
                       <Link
                         to={`/hotel/notices/${slug}`}
-                        className="text-blue-600 hover:underline font-medium"
+                        className="text-brand-600 hover:underline font-medium"
                       >
                         Manage
                       </Link>
@@ -431,12 +431,12 @@ export default function HotelDetail() {
                             key={room.name}
                             className={`group border-t border-gray-100 ${
                               zebra ? "bg-gray-50" : "bg-white"
-                            } hover:bg-blue-50`}
+                            } hover:bg-brand-50`}
                           >
                             <td
                               className={`sticky left-0 z-10 ${
                                 zebra ? "bg-gray-50" : "bg-white"
-                              } group-hover:bg-blue-50 px-2.5 py-1.5 font-medium text-gray-800 whitespace-nowrap`}
+                              } group-hover:bg-brand-50 px-2.5 py-1.5 font-medium text-gray-900 whitespace-nowrap`}
                             >
                               {room.name}
                             </td>
@@ -456,7 +456,7 @@ export default function HotelDetail() {
                                         {c.price.toLocaleString()}
                                       </span>
                                     ) : (
-                                      <span className="text-gray-300">—</span>
+                                      <span className="text-gray-400">—</span>
                                     );
                                   })()}
                                 </td>
@@ -486,7 +486,7 @@ export default function HotelDetail() {
                   </h2>
                   <Link
                     to={`/hotel/notices/${slug}`}
-                    className="text-sm font-medium text-blue-600 hover:underline"
+                    className="text-sm font-medium text-brand-600 hover:underline"
                   >
                     Manage
                   </Link>
@@ -495,13 +495,13 @@ export default function HotelDetail() {
                   {stopSales.map((n) => (
                     <div
                       key={`s-${n.id}`}
-                      className="flex items-start gap-3 rounded-xl bg-red-50 border border-red-100 px-4 py-3"
+                      className="flex items-start gap-3 rounded-xl bg-danger-50 border border-danger-200 px-4 py-3"
                     >
-                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold bg-red-100 text-red-600 shrink-0">
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold bg-danger-100 text-danger-600 shrink-0">
                         <Ban size={13} /> Stop Sale
                       </span>
                       <div className="min-w-0 text-sm">
-                        <div className="font-medium text-gray-800">
+                        <div className="font-medium text-gray-900">
                           {n.date_start} → {n.date_end}
                           <span className="text-gray-400 font-normal">
                             {" · "}
@@ -519,13 +519,13 @@ export default function HotelDetail() {
                   {promotions.map((n) => (
                     <div
                       key={`p-${n.id}`}
-                      className="flex items-start gap-3 rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3"
+                      className="flex items-start gap-3 rounded-xl bg-success-50 border border-success-200 px-4 py-3"
                     >
-                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold bg-emerald-100 text-emerald-600 shrink-0">
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold bg-success-100 text-success-600 shrink-0">
                         <Tag size={13} /> Promo
                       </span>
                       <div className="min-w-0 text-sm flex-1">
-                        <div className="font-medium text-gray-800">
+                        <div className="font-medium text-gray-900">
                           {n.date_start} → {n.date_end}
                           <span className="text-gray-400 font-normal">
                             {" · "}
@@ -539,7 +539,7 @@ export default function HotelDetail() {
                         )}
                       </div>
                       {n.promo_price != null && (
-                        <span className="text-base font-semibold text-emerald-600 whitespace-nowrap shrink-0">
+                        <span className="text-base font-semibold text-success-600 whitespace-nowrap shrink-0">
                           ฿{Number(n.promo_price).toLocaleString()}
                         </span>
                       )}
@@ -561,8 +561,8 @@ export default function HotelDetail() {
                       onClick={() => setActiveCategory("all")}
                       className={`px-4 py-2 rounded-full text-sm font-medium transition ${
                         activeCategory === "all"
-                          ? "bg-slate-800 text-white"
-                          : "bg-white border border-gray-200 text-gray-600 hover:border-slate-400"
+                          ? "bg-gray-800 text-white"
+                          : "bg-white border border-gray-200 text-gray-500 hover:border-gray-300"
                       }`}
                     >
                       All ({galleryImages.length})
@@ -573,8 +573,8 @@ export default function HotelDetail() {
                         onClick={() => setActiveCategory(cat)}
                         className={`px-4 py-2 rounded-full text-sm font-medium transition ${
                           activeCategory === cat
-                            ? "bg-slate-800 text-white"
-                            : "bg-white border border-gray-200 text-gray-600 hover:border-slate-400"
+                            ? "bg-gray-800 text-white"
+                            : "bg-white border border-gray-200 text-gray-500 hover:border-gray-300"
                         }`}
                       >
                         {cat} ({galleryByCategory[cat].length})
@@ -598,7 +598,7 @@ export default function HotelDetail() {
                       />
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
                       {idx === 5 && filteredGalleryImages.length > 6 && (
-                        <div className="absolute inset-0 bg-slate-900/60 flex items-center justify-center">
+                        <div className="absolute inset-0 bg-gray-900/60 flex items-center justify-center">
                           <span className="text-white text-2xl font-semibold">
                             +{filteredGalleryImages.length - 6} photos
                           </span>
@@ -621,11 +621,11 @@ export default function HotelDetail() {
                     {hotel.short_description}
                   </p>
                 )}
-                <p className="text-gray-600 leading-relaxed whitespace-pre-line">
+                <p className="text-gray-500 leading-relaxed whitespace-pre-line">
                   {hotel.description}
                 </p>
                 {(hotel.check_in_time || hotel.check_out_time) && (
-                  <div className="mt-6 flex flex-wrap gap-6 text-gray-600">
+                  <div className="mt-6 flex flex-wrap gap-6 text-gray-500">
                     {hotel.check_in_time && (
                       <span>
                         🕐 Check-in: <strong>{hotel.check_in_time}</strong>
@@ -650,7 +650,7 @@ export default function HotelDetail() {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
                   {amenities.map((a, idx) => (
                     <div key={idx} className="flex items-center gap-3 text-gray-700">
-                      <span className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center text-green-600 shrink-0">
+                      <span className="w-9 h-9 rounded-full bg-warning-100 flex items-center justify-center text-success-600 shrink-0">
                         ✓
                       </span>
                       <span className="font-medium text-sm md:text-base">{a}</span>
@@ -697,7 +697,7 @@ export default function HotelDetail() {
                               <span className="block text-[11px] text-gray-400">
                                 from
                               </span>
-                              <span className="text-base font-semibold text-blue-600 whitespace-nowrap">
+                              <span className="text-base font-semibold text-brand-600 whitespace-nowrap">
                                 ฿{roomPriceFrom[room.name].toLocaleString()}
                               </span>
                               <span className="block text-[11px] text-gray-400">
@@ -711,17 +711,17 @@ export default function HotelDetail() {
                             {room.description}
                           </p>
                         )}
-                        <div className="flex flex-wrap gap-3 text-sm text-gray-600">
+                        <div className="flex flex-wrap gap-3 text-sm text-gray-500">
                           {room.bed_type && <span>🛏 {room.bed_type} Bed</span>}
                           {room.max_guests && <span>👥 Max {room.max_guests} guests</span>}
                           {room.room_size && <span>📐 {room.room_size} sqm</span>}
                         </div>
                         {room.amenities && room.amenities.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-50">
+                          <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100">
                             {room.amenities.map((a, i) => (
                               <span
                                 key={i}
-                                className="bg-gray-50 border border-gray-100 text-gray-600 px-3 py-1 rounded-lg text-xs font-medium"
+                                className="bg-gray-50 border border-gray-100 text-gray-500 px-3 py-1 rounded-lg text-xs font-medium"
                               >
                                 {a}
                               </span>
@@ -746,7 +746,7 @@ export default function HotelDetail() {
                     <h3 className="text-sm font-semibold text-gray-700 mb-1.5">
                       Validity &amp; Market
                     </h3>
-                    <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">
+                    <p className="text-gray-500 text-sm leading-relaxed whitespace-pre-line">
                       {hotel.rate_validity}
                     </p>
                   </div>
@@ -756,7 +756,7 @@ export default function HotelDetail() {
                     <h3 className="text-sm font-semibold text-gray-700 mb-1.5">
                       Children &amp; Extra Bed
                     </h3>
-                    <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">
+                    <p className="text-gray-500 text-sm leading-relaxed whitespace-pre-line">
                       {hotel.child_policy}
                     </p>
                   </div>
@@ -766,7 +766,7 @@ export default function HotelDetail() {
                     <h3 className="text-sm font-semibold text-gray-700 mb-1.5">
                       Terms &amp; Conditions
                     </h3>
-                    <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">
+                    <p className="text-gray-500 text-sm leading-relaxed whitespace-pre-line">
                       {hotel.rate_terms}
                     </p>
                   </div>
@@ -783,7 +783,7 @@ export default function HotelDetail() {
                   Hotel info
                 </h3>
                 <p className="text-sm text-gray-500">
-                  Synced from indosmilesouthservices.com
+                  Master record — indosmilesouthservices.com pulls from here
                 </p>
               </div>
 
@@ -805,7 +805,7 @@ export default function HotelDetail() {
                       href={hotel.website}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-blue-600 hover:underline break-all"
+                      className="text-brand-600 hover:underline break-all"
                     >
                       {hotel.website}
                     </a>
@@ -815,7 +815,7 @@ export default function HotelDetail() {
 
               {hotel.address && (
                 <div className="pt-4 border-t border-gray-100">
-                  <div className="flex items-start gap-3 text-sm text-gray-600">
+                  <div className="flex items-start gap-3 text-sm text-gray-500">
                     📍
                     <div>
                       <span>{hotel.address}</span>
@@ -825,7 +825,7 @@ export default function HotelDetail() {
                         )}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block mt-1.5 text-blue-600 hover:underline font-medium text-xs"
+                        className="block mt-1.5 text-brand-600 hover:underline font-medium text-xs"
                       >
                         View on Google Maps →
                       </a>
@@ -836,21 +836,21 @@ export default function HotelDetail() {
 
               <Link
                 to={`/hotel/rates/${slug}`}
-                className="block text-center w-full bg-blue-600 text-white px-4 py-2.5 rounded-xl font-medium hover:bg-blue-700"
+                className="block text-center w-full bg-brand-600 text-white px-4 py-2.5 rounded-xl font-medium hover:bg-brand-700"
               >
                 ✎ Edit net rates
               </Link>
 
               <Link
                 to={`/hotel/notices/${slug}`}
-                className="block text-center w-full border border-amber-300 text-amber-700 bg-amber-50 px-4 py-2.5 rounded-xl font-medium hover:bg-amber-100"
+                className="block text-center w-full border border-warning-200 text-warning-700 bg-warning-50 px-4 py-2.5 rounded-xl font-medium hover:bg-warning-100"
               >
                 🗓 Stop Sale &amp; Promotions
               </Link>
 
               <Link
                 to="/hotel"
-                className="block text-center w-full border border-gray-200 text-gray-600 px-4 py-2.5 rounded-xl font-medium hover:bg-gray-50"
+                className="block text-center w-full border border-gray-200 text-gray-500 px-4 py-2.5 rounded-xl font-medium hover:bg-gray-50"
               >
                 ← Back to hotels
               </Link>
@@ -878,7 +878,7 @@ export default function HotelDetail() {
                 }}
                 className={`px-4 py-1.5 rounded-full text-xs font-medium transition ${
                   activeCategory === "all"
-                    ? "bg-white text-slate-900"
+                    ? "bg-white text-gray-900"
                     : "bg-white/15 text-white/80 hover:bg-white/25"
                 }`}
               >
@@ -896,7 +896,7 @@ export default function HotelDetail() {
                   }}
                   className={`px-4 py-1.5 rounded-full text-xs font-medium transition ${
                     activeCategory === cat
-                      ? "bg-white text-slate-900"
+                      ? "bg-white text-gray-900"
                       : "bg-white/15 text-white/80 hover:bg-white/25"
                   }`}
                 >

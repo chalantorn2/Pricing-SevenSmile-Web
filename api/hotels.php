@@ -1,6 +1,8 @@
 <?php
 // api/hotels.php
-// Read-only list/detail of hotels stored in our DB (populated by hotels-sync.php).
+// Read-only list/detail of the hotels this site owns. Staff-only: the payload carries
+// net (cost) rates, so a login is required. Partner sites read api/public/hotels.php
+// with an API key instead.
 // GET ?slug=xxx  -> single hotel
 // GET (list)     -> filters: destination, province, stars, featured, search,
 //                   active, page, limit, sort_by, sort_order
@@ -9,7 +11,7 @@
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+require_once __DIR__ . '/_auth.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -20,6 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     echo json_encode(array('success' => false, 'error' => 'Method not allowed. This endpoint is read-only.'));
     exit;
 }
+
+authRequire();
 
 $host = 'localhost';
 $dbname = 'sevensmile_contactrate';

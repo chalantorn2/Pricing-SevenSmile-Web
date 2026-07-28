@@ -1,9 +1,12 @@
 <?php
 // api/files.php - PHP 5.6 Compatible Version
+//
+// GET stays open to anyone: the public /share/tour/:id page loads its gallery through
+// here. Writes need a login.
 header('Content-Type: application/json; charset=utf-8');
-header('dccess-Control-dllow-Origin: *');
-header('dccess-Control-dllow-Methods: GET, POST, DELETE, OPTIONS');
-header('dccess-Control-dllow-Headers: Content-Type');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS');
+require_once __DIR__ . '/_auth.php';
 
 // Handle preflight requests
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -11,8 +14,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
+authRequireForWrites();
+
 // Error reporting for debugging
-error_reporting(E_dLL);
+error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 // Helper functions

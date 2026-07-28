@@ -16,28 +16,39 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is already logged in
-    const currentUser = authService.getCurrentUser();
-    setUser(currentUser);
-    setLoading(false);
+    let cancelled = false;
+
+    // Show the cached user straight away so the UI does not flash the login screen,
+    // then confirm with the server: only a live token counts as being logged in.
+    setUser(authService.getCurrentUser());
+
+    authService.verifySession().then((verified) => {
+      if (cancelled) return;
+      setUser(verified);
+      setLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const login = async (username, password) => {
-    try {
-      const userData = await authService.login(username, password);
-      setUser({
-        id: userData.id,
-        username: userData.username,
-        role: userData.role,
-      });
-      return userData;
-    } catch (error) {
-      throw error;
-    }
+    const userData = await authService.login(username, password);
+    setUser({
+      id: userData.id,
+      username: userData.username,
+      role: userData.role,
+      full_name: userData.full_name || "",
+      nickname: userData.nickname || "",
+      office: userData.office || "sevensmile",
+      position: userData.position || "",
+    });
+    return userData;
   };
 
-  const logout = () => {
-    authService.logout();
+  const logout = async () => {
+    await authService.logout();
     setUser(null);
   };
 

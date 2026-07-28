@@ -1,13 +1,21 @@
 <?php
 // api/hotels-sync.php
-// Pulls every hotel from indosmilesouthservices.com public_hotels.php and upserts
-// it into our own `hotels` table (keyed on source_id). Triggered by the "Sync"
-// button on the admin Hotels page. POST only.
+// RETIRED — inbound sync is off.
+//
+// This used to pull every hotel from indosmilesouthservices.com and upsert it into
+// our `hotels` table. The direction is now reversed: this site is the master record
+// and INDO Smile pulls from api/public/hotels.php. Running this again would
+// overwrite hotels edited here, so it is disabled rather than deleted (the import
+// logic is worth keeping if we ever need to onboard another source site).
+//
+// To re-enable for a one-off import: set $SYNC_ENABLED = true below, run it, then
+// set it back to false.
+$SYNC_ENABLED = false;
 
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+require_once __DIR__ . '/_auth.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -16,6 +24,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(array('success' => false, 'error' => 'Method not allowed. Use POST to sync.'));
+    exit;
+}
+// Admins only if it is ever switched back on: it rewrites every hotel on the site.
+authRequireAdmin();
+if (!$SYNC_ENABLED) {
+    http_response_code(410);
+    echo json_encode(array(
+        'success' => false,
+        'error' => 'Inbound hotel sync is retired. This site is the master record for hotels; '
+            . 'indosmilesouthservices.com pulls from api/public/hotels.php.',
+    ));
     exit;
 }
 

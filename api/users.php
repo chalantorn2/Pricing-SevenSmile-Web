@@ -1,14 +1,41 @@
 <?php
 // users.php - compatible with PHP 5.6
+// Admin-only: this endpoint lists staff accounts and sets their passwords.
 include 'config.php';
+require_once __DIR__ . '/_auth.php';
+
+authRequireAdmin();
 
 $db = getDB();
 $method = $_SERVER['REQUEST_METHOD'];
 
+$USER_FIELDS = "id, username, full_name, nickname, office, `position`, role, created_at";
+
+// Normalise the office value coming from the client.
+function normalizeOffice($value) {
+    $allowed = array('sevensmile', 'indosmile', 'both');
+    $value = is_string($value) ? strtolower(trim($value)) : '';
+    return in_array($value, $allowed) ? $value : 'sevensmile';
+}
+
+function optionalText($input, $key) {
+    if (!isset($input[$key])) {
+        return null;
+    }
+    $value = trim($input[$key]);
+    return $value === '' ? null : $value;
+}
+
+// Store a bcrypt hash, never the password itself. Legacy plain-text rows are upgraded
+// as their owners sign in (see auth.php).
+function hashPassword($plain) {
+    return password_hash((string) $plain, PASSWORD_DEFAULT);
+}
+
 switch ($method) {
     case 'GET':
         try {
-            $stmt = $db->query("SELECT id, username, role, created_at FROM users ORDER BY created_at DESC");
+            $stmt = $db->query("SELECT $USER_FIELDS FROM users ORDER BY created_at DESC");
             $users = $stmt->fetchAll();
             sendJSON(array(
                 'success' => true,
@@ -23,15 +50,19 @@ switch ($method) {
         try {
             $input = getInput();
 
-            $stmt = $db->prepare("INSERT INTO users (username, password, role) VALUES (?, ?, ?)");
+            $stmt = $db->prepare("INSERT INTO users (username, password, role, full_name, nickname, office, `position`) VALUES (?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute(array(
                 $input['username'],
-                $input['password'],
-                $input['role']
+                hashPassword($input['password']),
+                $input['role'],
+                optionalText($input, 'full_name'),
+                optionalText($input, 'nickname'),
+                normalizeOffice(isset($input['office']) ? $input['office'] : null),
+                optionalText($input, 'position')
             ));
 
             $id = $db->lastInsertId();
-            $stmt = $db->prepare("SELECT id, username, role, created_at FROM users WHERE id = ?");
+            $stmt = $db->prepare("SELECT $USER_FIELDS FROM users WHERE id = ?");
             $stmt->execute(array($id));
             $user = $stmt->fetch();
 
@@ -53,15 +84,28 @@ switch ($method) {
 
             $input = getInput();
 
+            $params = array(
+                $input['username'],
+                $input['role'],
+                optionalText($input, 'full_name'),
+                optionalText($input, 'nickname'),
+                normalizeOffice(isset($input['office']) ? $input['office'] : null),
+                optionalText($input, 'position')
+            );
+            $sql = "UPDATE users SET username=?, role=?, full_name=?, nickname=?, office=?, `position`=?";
+
             if (isset($input['password']) && $input['password']) {
-                $stmt = $db->prepare("UPDATE users SET username=?, password=?, role=? WHERE id=?");
-                $stmt->execute(array($input['username'], $input['password'], $input['role'], $id));
-            } else {
-                $stmt = $db->prepare("UPDATE users SET username=?, role=? WHERE id=?");
-                $stmt->execute(array($input['username'], $input['role'], $id));
+                $sql .= ", password=?";
+                $params[] = hashPassword($input['password']);
             }
 
-            $stmt = $db->prepare("SELECT id, username, role, created_at FROM users WHERE id = ?");
+            $sql .= " WHERE id=?";
+            $params[] = $id;
+
+            $stmt = $db->prepare($sql);
+            $stmt->execute($params);
+
+            $stmt = $db->prepare("SELECT $USER_FIELDS FROM users WHERE id = ?");
             $stmt->execute(array($id));
             $user = $stmt->fetch();
 
