@@ -21,6 +21,7 @@ import {
   X,
   Loader2,
   ChevronDown,
+  Layers,
 } from "lucide-react";
 
 // Collapsible section (module scope so its open/closed state persists across re-renders)
@@ -44,7 +45,7 @@ const AccordionSection = ({
         {Icon && <Icon className={`h-4 w-4 shrink-0 ${iconClass}`} />}
         <h3 className="flex-1 text-sm font-semibold text-gray-900">{title}</h3>
         {badge != null && (
-          <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-600">
+          <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-500">
             {badge}
           </span>
         )}
@@ -68,6 +69,7 @@ const TourDetails = ({
   className = "",
 }) => {
   const [selectedImage, setSelectedImage] = useState(null);
+  const [activeFileTab, setActiveFileTab] = useState("all");
   const { filesByCategory, loading: filesLoading } = useTourFiles(tour?.id);
 
   const getOrderedCategories = () => {
@@ -152,7 +154,7 @@ const TourDetails = ({
             <span key={index}>
               <a
                 href={`tel:${phone}`}
-                className="text-blue-600 hover:underline"
+                className="text-brand-600 hover:underline"
               >
                 {phone}
               </a>
@@ -172,6 +174,15 @@ const TourDetails = ({
 
   const fileCategories = getOrderedCategories();
   const totalFiles = fileCategories.reduce((sum, g) => sum + g.files.length, 0);
+
+  // Fall back to "All" when the selected category no longer has any files
+  const effectiveFileTab = fileCategories.some((g) => g.key === activeFileTab)
+    ? activeFileTab
+    : "all";
+  const visibleFileCategories =
+    effectiveFileTab === "all"
+      ? fileCategories
+      : fileCategories.filter((g) => g.key === effectiveFileTab);
 
   const formatUpdatedAt = (value) =>
     value
@@ -200,7 +211,7 @@ const TourDetails = ({
 
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 {!!tour.tour_type && (
-                  <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-200">
+                  <span className="inline-flex items-center rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700 ring-1 ring-inset ring-brand-200">
                     {getTourTypeLabel(tour.tour_type)}
                   </span>
                 )}
@@ -220,7 +231,7 @@ const TourDetails = ({
                   </span>
                 )}
                 {isExpired && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-200">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-danger-50 px-3 py-1 text-xs font-medium text-danger-700 ring-1 ring-inset ring-danger-200">
                     <AlertTriangle className="h-3 w-3" />
                     Expired
                   </span>
@@ -245,7 +256,7 @@ const TourDetails = ({
                 {onEdit && (
                   <Link
                     to={`/edit/${tour.id}`}
-                    className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 active:scale-[.98]"
+                    className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 active:scale-[.98]"
                   >
                     <Pencil className="h-4 w-4" />
                     Edit
@@ -262,7 +273,7 @@ const TourDetails = ({
         {/* Pricing — open by default */}
         <AccordionSection
           icon={Banknote}
-          iconClass="text-emerald-500"
+          iconClass="text-success-600"
           title="Net Price (THB)"
           defaultOpen
         >
@@ -270,13 +281,13 @@ const TourDetails = ({
             <div className="grid grid-cols-2 gap-4">
               <div className="rounded-lg bg-gray-50 p-4 ring-1 ring-gray-200">
                 <div className="text-xs text-gray-500">Adult</div>
-                <div className="mt-1 text-2xl font-bold text-emerald-600">
+                <div className="mt-1 text-2xl font-bold text-success-600">
                   THB {formatPrice(tour.adult_price)}
                 </div>
               </div>
               <div className="rounded-lg bg-gray-50 p-4 ring-1 ring-gray-200">
                 <div className="text-xs text-gray-500">Child</div>
-                <div className="mt-1 text-2xl font-bold text-emerald-600">
+                <div className="mt-1 text-2xl font-bold text-success-600">
                   THB {formatPrice(tour.child_price)}
                 </div>
               </div>
@@ -292,7 +303,7 @@ const TourDetails = ({
                 <span className="text-xs font-medium text-gray-500">Until</span>
                 <span
                   className={`text-sm ${
-                    isExpired ? "font-medium text-red-600" : "text-gray-900"
+                    isExpired ? "font-medium text-danger-600" : "text-gray-900"
                   }`}
                 >
                   {formatDate(tour.end_date)}
@@ -301,19 +312,19 @@ const TourDetails = ({
             </div>
             {hasParkFee && (
               <div className="grid grid-cols-2 gap-3">
-                <div className="flex items-center justify-between rounded-lg bg-amber-50 px-3 py-2 ring-1 ring-amber-100">
-                  <span className="text-xs font-medium text-amber-700">
+                <div className="flex items-center justify-between rounded-lg bg-warning-50 px-3 py-2 ring-1 ring-warning-200">
+                  <span className="text-xs font-medium text-warning-700">
                     Park fee / adult
                   </span>
-                  <span className="text-sm font-medium text-amber-800">
+                  <span className="text-sm font-medium text-warning-800">
                     THB {formatPrice(tour.park_fee_adult)}
                   </span>
                 </div>
-                <div className="flex items-center justify-between rounded-lg bg-amber-50 px-3 py-2 ring-1 ring-amber-100">
-                  <span className="text-xs font-medium text-amber-700">
+                <div className="flex items-center justify-between rounded-lg bg-warning-50 px-3 py-2 ring-1 ring-warning-200">
+                  <span className="text-xs font-medium text-warning-700">
                     Park fee / child
                   </span>
-                  <span className="text-sm font-medium text-amber-800">
+                  <span className="text-sm font-medium text-warning-800">
                     THB {formatPrice(tour.park_fee_child)}
                   </span>
                 </div>
@@ -325,7 +336,7 @@ const TourDetails = ({
         {/* Tour Information — open by default */}
         <AccordionSection
           icon={Info}
-          iconClass="text-blue-500"
+          iconClass="text-brand-600"
           title="Tour Information"
           defaultOpen
         >
@@ -354,7 +365,7 @@ const TourDetails = ({
         {/* Contact & Supplier — collapsed by default */}
         <AccordionSection
           icon={Phone}
-          iconClass="text-violet-500"
+          iconClass="text-brand-600"
           title="Contact & Supplier"
         >
           <dl className="divide-y divide-gray-100">
@@ -362,7 +373,7 @@ const TourDetails = ({
             {tour.line && (
               <div className="grid grid-cols-3 gap-3 px-4 py-2.5">
                 <dt className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
-                  <MessageCircle className="h-3.5 w-3.5 text-green-600" />
+                  <MessageCircle className="h-3.5 w-3.5 text-success-600" />
                   Line
                 </dt>
                 <dd className="col-span-2 text-sm text-gray-900">{tour.line}</dd>
@@ -371,7 +382,7 @@ const TourDetails = ({
             {tour.facebook && (
               <div className="grid grid-cols-3 gap-3 px-4 py-2.5">
                 <dt className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
-                  <ExternalLink className="h-3.5 w-3.5 text-blue-600" />
+                  <ExternalLink className="h-3.5 w-3.5 text-brand-600" />
                   Facebook
                 </dt>
                 <dd className="col-span-2 text-sm">
@@ -379,7 +390,7 @@ const TourDetails = ({
                     href={tour.facebook}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="break-all text-blue-600 hover:underline"
+                    className="break-all text-brand-600 hover:underline"
                   >
                     {tour.facebook}
                   </a>
@@ -389,7 +400,7 @@ const TourDetails = ({
             {tour.whatsapp && (
               <div className="grid grid-cols-3 gap-3 px-4 py-2.5">
                 <dt className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
-                  <Smartphone className="h-3.5 w-3.5 text-green-600" />
+                  <Smartphone className="h-3.5 w-3.5 text-success-600" />
                   WhatsApp
                 </dt>
                 <dd className="col-span-2 text-sm">
@@ -397,7 +408,7 @@ const TourDetails = ({
                     href={`https://wa.me/${tour.whatsapp}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-emerald-600 hover:underline"
+                    className="text-success-600 hover:underline"
                   >
                     {tour.whatsapp}
                   </a>
@@ -421,30 +432,82 @@ const TourDetails = ({
         {/* Files & Gallery — collapsed by default */}
         {filesLoading ? (
           <div className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 py-4">
-            <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
-            <p className="text-sm text-gray-600">Loading files...</p>
+            <Loader2 className="h-5 w-5 animate-spin text-brand-600" />
+            <p className="text-sm text-gray-500">Loading files...</p>
           </div>
         ) : (
           totalFiles > 0 && (
             <AccordionSection
               icon={Paperclip}
-              iconClass="text-amber-500"
+              iconClass="text-warning-600"
               title="Files & Gallery"
               badge={totalFiles}
             >
+              {/* Category tabs — keeps the panel short instead of stacking
+                  every category on top of each other */}
+              {fileCategories.length > 1 && (
+                <div
+                  role="tablist"
+                  aria-label="File categories"
+                  className="flex items-center gap-2 overflow-x-auto border-b border-gray-100 px-4 py-3"
+                >
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={effectiveFileTab === "all"}
+                    onClick={() => setActiveFileTab("all")}
+                    className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border px-3 py-1.5 text-xs transition-colors ${
+                      effectiveFileTab === "all"
+                        ? "border-gray-900 bg-gray-900 text-white"
+                        : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    <Layers className="h-3.5 w-3.5" />
+                    All
+                    <span className="opacity-75">({totalFiles})</span>
+                  </button>
+
+                  {fileCategories.map(({ key, files, categoryInfo }) => {
+                    const CategoryIcon = categoryInfo.icon;
+                    const isActive = effectiveFileTab === key;
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        role="tab"
+                        aria-selected={isActive}
+                        onClick={() => setActiveFileTab(key)}
+                        className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border px-3 py-1.5 text-xs transition-colors ${
+                          isActive
+                            ? `${categoryInfo.color} border-current font-medium`
+                            : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                        }`}
+                      >
+                        <CategoryIcon className="h-3.5 w-3.5" />
+                        {categoryInfo.label}
+                        <span className="opacity-75">({files.length})</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
               <div className="space-y-6 p-4">
-                {fileCategories.map(({ key, files, categoryInfo }) => {
+                {visibleFileCategories.map(({ key, files, categoryInfo }) => {
                   const CategoryIcon = categoryInfo.icon;
                   const isImageGroup =
                     key === "gallery" ||
                     files.some((f) => f.file_type === "image");
                   return (
                     <div key={key}>
-                      <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900">
-                        <CategoryIcon className="h-4 w-4 text-gray-400" />
-                        {categoryInfo.label} ({files.length}{" "}
-                        {isImageGroup ? "images" : "files"})
-                      </h4>
+                      {/* The active tab already names a filtered view */}
+                      {effectiveFileTab === "all" && (
+                        <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900">
+                          <CategoryIcon className="h-4 w-4 text-gray-400" />
+                          {categoryInfo.label} ({files.length}{" "}
+                          {isImageGroup ? "images" : "files"})
+                        </h4>
+                      )}
 
                       {isImageGroup ? (
                         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
@@ -490,16 +553,16 @@ const TourDetails = ({
         <div
           className={`rounded-xl p-3 ring-1 ${
             tour.park_fee_included
-              ? "bg-emerald-50 ring-emerald-200"
-              : "bg-amber-50 ring-amber-200"
+              ? "bg-success-50 ring-success-200"
+              : "bg-warning-50 ring-warning-200"
           }`}
         >
-          <p className="flex items-start gap-2 whitespace-pre-wrap text-sm text-gray-800">
+          <p className="flex items-start gap-2 whitespace-pre-wrap text-sm text-gray-900">
             <StickyNote className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
             {getNotes(tour)}
           </p>
           {isExpired && (
-            <p className="mt-2 flex items-center gap-1.5 text-sm font-medium text-red-600">
+            <p className="mt-2 flex items-center gap-1.5 text-sm font-medium text-danger-600">
               <AlertTriangle className="h-4 w-4" />
               Expired, please renew
             </p>
@@ -528,7 +591,7 @@ const TourDetails = ({
             />
             <button
               onClick={() => setSelectedImage(null)}
-              className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white bg-opacity-90 text-gray-800 shadow-lg transition-all hover:bg-opacity-100"
+              className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white bg-opacity-90 text-gray-900 shadow-lg transition-all hover:bg-opacity-100"
             >
               <X className="h-6 w-6" />
             </button>

@@ -8,17 +8,20 @@ import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { Layout } from "./components/core";
 import Login from "./pages/auth/Login";
 import TourList from "./pages/tours/TourList";
+import TourDetail from "./pages/tours/TourDetail";
 import AddTour from "./pages/tours/AddTour";
 import TransferList from "./pages/transfers/TransferList";
 import HotelList from "./pages/hotels/HotelList";
 import HotelDetail from "./pages/hotels/HotelDetail";
 import HotelRateEditor from "./pages/hotels/HotelRateEditor";
 import HotelNoticeEditor from "./pages/hotels/HotelNoticeEditor";
+import RestaurantList from "./pages/restaurants/RestaurantList";
 import UserManagement from "./pages/users/UserManagement";
 import SupplierList from "./pages/suppliers/SupplierList";
 import SupplierDetail from "./pages/suppliers/SupplierDetail";
 import SharedTour from "./pages/tours/SharedTour";
 import EditTour from "./pages/tours/EditTour";
+import BulkEditTours from "./pages/tours/BulkEditTours";
 import PackageTourList from "./pages/packages/PackageTourList";
 import PackageTourForm from "./pages/packages/PackageTourForm";
 import PackageTourView from "./pages/packages/PackageTourView";
@@ -31,7 +34,7 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500"></div>
       </div>
     );
   }
@@ -54,7 +57,7 @@ const AppRoutes = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500"></div>
       </div>
     );
   }
@@ -78,7 +81,9 @@ const AppRoutes = () => {
         {/* Tours Routes */}
         <Route index element={<TourList />} />
         <Route path="add" element={<AddTour />} />
+        <Route path="tour/:id" element={<TourDetail />} />
         <Route path="edit/:id" element={<EditTour />} />
+        <Route path="edit-tours/:supplierId" element={<BulkEditTours />} />
 
         {/* Package Tours Routes */}
         <Route path="packages" element={<PackageTourList />} />
@@ -100,6 +105,10 @@ const AppRoutes = () => {
         <Route path="hotel/rates/:slug" element={<HotelRateEditor />} />
         <Route path="hotel/notices/:slug" element={<HotelNoticeEditor />} />
         <Route path="hotel/:province" element={<HotelList />} />
+
+        {/* Restaurant Routes */}
+        <Route path="restaurant" element={<RestaurantList />} />
+        <Route path="restaurant/:province" element={<RestaurantList />} />
 
         {/* User Management Routes */}
         <Route path="users" element={<UserManagement />} />

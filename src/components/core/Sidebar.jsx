@@ -6,6 +6,7 @@ import {
   Palmtree,
   Hotel,
   Car,
+  UtensilsCrossed,
   Building2,
   Users,
   Package,
@@ -13,6 +14,8 @@ import {
   MapPin,
   LayoutList,
   LogOut,
+  PanelLeft,
+  PanelLeftClose,
 } from "lucide-react";
 
 // Static province list for modules without data yet (Hotels / Transfers)
@@ -90,6 +93,18 @@ const Sidebar = ({ onNavigate, collapsed = false, onSetCollapsed }) => {
         ],
       },
       {
+        key: "restaurants",
+        label: "Restaurants",
+        icon: UtensilsCrossed,
+        children: [
+          { label: "All Restaurants", to: "/restaurant", end: true },
+          ...STATIC_PROVINCES.map((p) => ({
+            label: p,
+            to: `/restaurant/${encodeURIComponent(p)}`,
+          })),
+        ],
+      },
+      {
         key: "transfers",
         label: "Transfers",
         icon: Car,
@@ -103,7 +118,7 @@ const Sidebar = ({ onNavigate, collapsed = false, onSetCollapsed }) => {
   );
 
   const singles = [
-    { label: "Tour Packages", to: "/packages", icon: Package },
+    // { label: "Tour Packages", to: "/packages", icon: Package },
     { label: "Suppliers", to: "/suppliers", icon: Building2 },
     {
       label: isAdmin() ? "Users" : "My Account",
@@ -115,6 +130,8 @@ const Sidebar = ({ onNavigate, collapsed = false, onSetCollapsed }) => {
   const isGroupActive = (key) => {
     if (key === "tours") return location.pathname === "/";
     if (key === "hotels") return location.pathname.startsWith("/hotel");
+    if (key === "restaurants")
+      return location.pathname.startsWith("/restaurant");
     if (key === "transfers") return location.pathname.startsWith("/transfer");
     return false;
   };
@@ -123,7 +140,7 @@ const Sidebar = ({ onNavigate, collapsed = false, onSetCollapsed }) => {
   useEffect(() => {
     setOpenGroups((prev) => {
       const next = { ...prev };
-      ["tours", "hotels", "transfers"].forEach((key) => {
+      ["tours", "hotels", "restaurants", "transfers"].forEach((key) => {
         if (isGroupActive(key)) next[key] = true;
       });
       return next;
@@ -153,12 +170,16 @@ const Sidebar = ({ onNavigate, collapsed = false, onSetCollapsed }) => {
     <div className="flex flex-col h-full bg-white">
       {/* Logo */}
       <div
-        className={`flex items-center h-16 border-b border-gray-200 px-5 ${
+        className={`group flex items-center h-16 border-b border-gray-200 px-5 ${
           collapsed ? "lg:px-0 lg:justify-center" : ""
         }`}
       >
         <div className="flex items-center gap-3 overflow-hidden">
-          <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-600 text-white shadow-sm shrink-0">
+          <div
+            className={`relative flex items-center justify-center w-9 h-9 rounded-lg bg-brand-600 text-white shadow-sm shrink-0 ${
+              collapsed ? "lg:hidden" : ""
+            }`}
+          >
             <Palmtree className="w-5 h-5" />
           </div>
           <div
@@ -170,6 +191,21 @@ const Sidebar = ({ onNavigate, collapsed = false, onSetCollapsed }) => {
             <p className="text-[11px] text-gray-400">Price Management</p>
           </div>
         </div>
+
+        {/* Desktop: collapse / expand sidebar */}
+        <button
+          onClick={() => onSetCollapsed?.(!collapsed)}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className={`hidden lg:inline-flex p-2 rounded-md text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-colors ${
+            collapsed ? "" : "ml-auto"
+          }`}
+        >
+          {collapsed ? (
+            <PanelLeft className="w-5 h-5" />
+          ) : (
+            <PanelLeftClose className="w-5 h-5" />
+          )}
+        </button>
       </div>
 
       {/* Navigation */}
@@ -191,13 +227,13 @@ const Sidebar = ({ onNavigate, collapsed = false, onSetCollapsed }) => {
                 title={collapsed ? group.label : undefined}
                 className={`group w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-150 ${lgCenter} ${
                   groupActive
-                    ? "text-blue-700 bg-blue-50"
+                    ? "text-brand-700 bg-brand-50"
                     : "text-gray-700 hover:bg-gray-100"
                 }`}
               >
                 <Icon
                   className={`w-5 h-5 shrink-0 transition-transform duration-150 group-hover:scale-110 ${
-                    groupActive ? "text-blue-600" : "text-gray-400"
+                    groupActive ? "text-brand-600" : "text-gray-400"
                   }`}
                 />
                 <span className={`flex-1 text-left whitespace-nowrap ${lgHide}`}>
@@ -227,8 +263,8 @@ const Sidebar = ({ onNavigate, collapsed = false, onSetCollapsed }) => {
                           onClick={onNavigate}
                           className={`flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors ${
                             active
-                              ? "bg-blue-100 text-blue-700 font-medium"
-                              : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                              ? "bg-brand-100 text-brand-700 font-medium"
+                              : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
                           }`}
                         >
                           {child.province !== undefined ||
@@ -270,13 +306,13 @@ const Sidebar = ({ onNavigate, collapsed = false, onSetCollapsed }) => {
               title={collapsed ? item.label : undefined}
               className={`group flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-150 ${lgCenter} ${
                 active
-                  ? "text-blue-700 bg-blue-50"
+                  ? "text-brand-700 bg-brand-50"
                   : "text-gray-700 hover:bg-gray-100"
               }`}
             >
               <Icon
                 className={`w-5 h-5 shrink-0 transition-transform duration-150 group-hover:scale-110 ${
-                  active ? "text-blue-600" : "text-gray-400"
+                  active ? "text-brand-600" : "text-gray-400"
                 }`}
               />
               <span className={`whitespace-nowrap ${lgHide}`}>{item.label}</span>
@@ -290,7 +326,7 @@ const Sidebar = ({ onNavigate, collapsed = false, onSetCollapsed }) => {
         <div
           className={`flex items-center gap-3 px-2 py-2 rounded-lg ${lgCenter}`}
         >
-          <div className="flex items-center justify-center w-9 h-9 rounded-full bg-blue-100 text-blue-700 font-semibold text-sm uppercase shrink-0">
+          <div className="flex items-center justify-center w-9 h-9 rounded-full bg-brand-100 text-brand-700 font-semibold text-sm uppercase shrink-0">
             {user?.username?.charAt(0) || "U"}
           </div>
           <div className={`flex-1 min-w-0 ${lgHide}`}>
@@ -303,7 +339,7 @@ const Sidebar = ({ onNavigate, collapsed = false, onSetCollapsed }) => {
           </div>
           <button
             onClick={logout}
-            className={`p-2 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors ${lgHide}`}
+            className={`p-2 rounded-md text-gray-400 hover:text-danger-600 hover:bg-danger-50 transition-colors ${lgHide}`}
             title="Log out"
           >
             <LogOut className="w-5 h-5" />

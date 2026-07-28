@@ -3,6 +3,7 @@ export { default as Login } from "./auth/Login";
 
 // Tour pages
 export { default as TourList } from "./tours/TourList";
+export { default as TourDetail } from "./tours/TourDetail";
 export { default as EditTour } from "./tours/EditTour";
 export { default as AddTour } from "./tours/AddTour";
 export { default as SharedTour } from "./tours/SharedTour";
