@@ -2,6 +2,31 @@ import { useState, useEffect } from "react";
 import { usersService } from "../../services/api-service";
 import { useAuth } from "../../hooks/useAuth";
 
+const OFFICES = [
+  { value: "sevensmile", label: "Seven Smile" },
+  { value: "indosmile", label: "INDO Smile" },
+  { value: "both", label: "Seven Smile + INDO Smile" },
+];
+
+const OFFICE_BADGE = {
+  sevensmile: "bg-brand-100 text-brand-800",
+  indosmile: "bg-warning-100 text-warning-800",
+  both: "bg-success-100 text-success-800",
+};
+
+const officeLabel = (value) =>
+  OFFICES.find((o) => o.value === value)?.label || "Seven Smile";
+
+const emptyForm = {
+  username: "",
+  password: "",
+  role: "user",
+  full_name: "",
+  nickname: "",
+  office: "sevensmile",
+  position: "",
+};
+
 const UserManagement = () => {
   const { user: currentUser, isAdmin } = useAuth();
   const canManage = isAdmin();
@@ -9,11 +34,7 @@ const UserManagement = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-  const [formData, setFormData] = useState({
-    username: "",
-    password: "",
-    role: "user",
-  });
+  const [formData, setFormData] = useState(emptyForm);
 
   useEffect(() => {
     fetchUsers();
@@ -37,6 +58,10 @@ const UserManagement = () => {
       username: user?.username || "",
       password: "",
       role: user?.role || "user",
+      full_name: user?.full_name || "",
+      nickname: user?.nickname || "",
+      office: user?.office || "sevensmile",
+      position: user?.position || "",
     });
     setShowModal(true);
   };
@@ -44,11 +69,7 @@ const UserManagement = () => {
   const handleCloseModal = () => {
     setShowModal(false);
     setEditingUser(null);
-    setFormData({
-      username: "",
-      password: "",
-      role: "user",
-    });
+    setFormData(emptyForm);
   };
 
   const handleChange = (e) => {
@@ -76,6 +97,10 @@ const UserManagement = () => {
       const submitData = {
         username: formData.username.trim(),
         role: formData.role,
+        full_name: formData.full_name.trim(),
+        nickname: formData.nickname.trim(),
+        office: formData.office,
+        position: formData.position.trim(),
       };
 
       // Only include password if it's provided (for new users or password changes)
@@ -129,7 +154,7 @@ const UserManagement = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500"></div>
       </div>
     );
   }
@@ -144,9 +169,9 @@ const UserManagement = () => {
         {canManage && (
           <button
             onClick={() => handleOpenModal()}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
           >
-            ➕ Add New User
+            Add New User
           </button>
         )}
       </div>
@@ -159,6 +184,15 @@ const UserManagement = () => {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Username
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Office
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Position
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Role
@@ -180,11 +214,34 @@ const UserManagement = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
+                    {/* Nickname first - that is what people go by here. */}
+                    <div className="text-sm text-gray-900">
+                      {user.nickname || user.full_name || "-"}
+                    </div>
+                    {user.nickname && user.full_name && (
+                      <div className="text-xs text-gray-500">
+                        {user.full_name}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span
+                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        OFFICE_BADGE[user.office] || OFFICE_BADGE.sevensmile
+                      }`}
+                    >
+                      {officeLabel(user.office)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-700">
+                    {user.position || "-"}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                         user.role === "admin"
-                          ? "bg-red-100 text-red-800"
-                          : "bg-green-100 text-green-800"
+                          ? "bg-danger-100 text-danger-800"
+                          : "bg-success-100 text-success-800"
                       }`}
                     >
                       {user.role === "admin" ? "Admin" : "User"}
@@ -196,14 +253,14 @@ const UserManagement = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                     <button
                       onClick={() => handleOpenModal(user)}
-                      className="text-blue-600 hover:text-blue-900 transition-colors"
+                      className="text-brand-600 hover:text-brand-800 transition-colors"
                     >
                       Edit
                     </button>
                     {canManage && user.username !== "admin" && (
                       <button
                         onClick={() => handleDeleteUser(user.id, user.username)}
-                        className="text-red-600 hover:text-red-900 transition-colors"
+                        className="text-danger-600 hover:text-danger-800 transition-colors"
                       >
                         Delete
                       </button>
@@ -225,7 +282,7 @@ const UserManagement = () => {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 modal-backdrop flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 {!canManage
@@ -238,7 +295,7 @@ const UserManagement = () => {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Username <span className="text-red-500">*</span>
+                    Username <span className="text-danger-600">*</span>
                   </label>
                   <input
                     type="text"
@@ -247,17 +304,97 @@ const UserManagement = () => {
                     onChange={handleChange}
                     required
                     readOnly={!canManage}
-                    className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ${
                       !canManage ? "bg-gray-100 text-gray-500" : ""
                     }`}
                     placeholder="Enter username"
                   />
                 </div>
 
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Nickname
+                    </label>
+                    <input
+                      type="text"
+                      name="nickname"
+                      value={formData.nickname}
+                      onChange={handleChange}
+                      readOnly={!canManage}
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ${
+                        !canManage ? "bg-gray-100 text-gray-500" : ""
+                      }`}
+                      placeholder="e.g. Nui"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      name="full_name"
+                      value={formData.full_name}
+                      onChange={handleChange}
+                      readOnly={!canManage}
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ${
+                        !canManage ? "bg-gray-100 text-gray-500" : ""
+                      }`}
+                      placeholder="e.g. Somchai Jaidee"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Office <span className="text-danger-600">*</span>
+                  </label>
+                  <select
+                    name="office"
+                    value={formData.office}
+                    onChange={handleChange}
+                    required
+                    disabled={!canManage}
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ${
+                      !canManage ? "bg-gray-100 text-gray-500" : ""
+                    }`}
+                  >
+                    {OFFICES.map((office) => (
+                      <option key={office.value} value={office.value}>
+                        {office.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Position
+                  </label>
+                  <input
+                    type="text"
+                    name="position"
+                    value={formData.position}
+                    onChange={handleChange}
+                    readOnly={!canManage}
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ${
+                      !canManage ? "bg-gray-100 text-gray-500" : ""
+                    }`}
+                    placeholder="e.g. GM, Sales Manager"
+                  />
+                  {canManage && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      More than one position can be entered, separated by commas
+                    </p>
+                  )}
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Password{" "}
-                    {editingUser ? "" : <span className="text-red-500">*</span>}
+                    {editingUser ? "" : <span className="text-danger-600">*</span>}
                   </label>
                   <input
                     type="password"
@@ -265,7 +402,7 @@ const UserManagement = () => {
                     value={formData.password}
                     onChange={handleChange}
                     required={!editingUser}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                     placeholder={
                       editingUser
                         ? "Leave blank if unchanged"
@@ -282,14 +419,14 @@ const UserManagement = () => {
                 {canManage && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Role <span className="text-red-500">*</span>
+                      Role <span className="text-danger-600">*</span>
                     </label>
                     <select
                       name="role"
                       value={formData.role}
                       onChange={handleChange}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                     >
                       <option value="user">User</option>
                       <option value="admin">Admin</option>
@@ -300,14 +437,14 @@ const UserManagement = () => {
                 <div className="flex gap-3 pt-4">
                   <button
                     type="submit"
-                    className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                    className="flex-1 bg-brand-600 text-white py-2 px-4 rounded-lg hover:bg-brand-700 transition-colors"
                   >
                     {editingUser ? "Update" : "Add User"}
                   </button>
                   <button
                     type="button"
                     onClick={handleCloseModal}
-                    className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors"
+                    className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors"
                   >
                     Cancel
                   </button>
