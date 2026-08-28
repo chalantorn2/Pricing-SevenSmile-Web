@@ -1,4 +1,12 @@
 import { useState } from "react";
+import {
+  AlarmClock,
+  AlertTriangle,
+  ClipboardList,
+  Search,
+  Sparkles,
+  Target,
+} from "lucide-react";
 
 const SupplierFilters = ({ onFilterChange, suppliers, tours }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -51,28 +59,28 @@ const SupplierFilters = ({ onFilterChange, suppliers, tours }) => {
       label: "Tours expiring soon (30 days)",
       count: filterCounts.expiringSoon,
       color: "bg-warning-100 text-warning-700",
-      icon: "⏰",
+      icon: AlarmClock,
     },
     {
       id: "no_tours",
       label: "No tours",
       count: filterCounts.noTours,
       color: "bg-warning-100 text-warning-700",
-      icon: "⚠️",
+      icon: AlertTriangle,
     },
     {
       id: "incomplete_info",
       label: "Incomplete contact info",
       count: filterCounts.incompleteInfo,
       color: "bg-danger-100 text-danger-700",
-      icon: "📋",
+      icon: ClipboardList,
     },
     {
       id: "has_active_promo",
       label: "Has promotion (park fee included)",
       count: filterCounts.hasActivePromo,
       color: "bg-success-100 text-success-700",
-      icon: "🎯",
+      icon: Target,
     },
     {
       id: "recent_activity",
@@ -82,7 +90,7 @@ const SupplierFilters = ({ onFilterChange, suppliers, tours }) => {
         return new Date(supplier.updated_at) > weekAgo;
       }).length,
       color: "bg-brand-100 text-brand-700",
-      icon: "🆕",
+      icon: Sparkles,
     },
   ];
 
@@ -117,7 +125,7 @@ const SupplierFilters = ({ onFilterChange, suppliers, tours }) => {
             : "bg-gray-100 text-gray-700 hover:bg-gray-200"
         }`}
       >
-        <span>🔍</span>
+        <Search className="w-4 h-4" />
         <span>Smart Filters</span>
         {hasActiveFilters && (
           <span className="bg-brand-600 text-white text-xs px-2 py-0.5 rounded-full">
@@ -184,7 +192,7 @@ const SupplierFilters = ({ onFilterChange, suppliers, tours }) => {
                         onChange={() => handleFilterToggle(option.id)}
                         className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
                       />
-                      <span className="text-lg">{option.icon}</span>
+                      <option.icon className="w-4.5 h-4.5 text-gray-500" />
                       <span className="text-sm font-medium">
                         {option.label}
                       </span>

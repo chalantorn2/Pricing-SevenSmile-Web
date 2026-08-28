@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { Car, MapPin, Plus } from "lucide-react";
 import { transfersService } from "../../services/api-service";
 import {
@@ -9,42 +9,45 @@ import {
   VehicleFormModal,
   categoryLabel,
 } from "../../components/transfers";
+import { ConfirmDialog, Toast } from "../../components/core";
+import { useI18n } from "../../i18n";
 
 const TABS = [
-  { key: "routes", label: "Routes" },
-  { key: "locations", label: "Locations" },
-  { key: "vehicles", label: "Vehicles" },
+  { key: "routes", label: "transfers.tabs.routes" },
+  { key: "locations", label: "transfers.tabs.locations" },
+  { key: "vehicles", label: "transfers.tabs.vehicles" },
 ];
 
 const money = (n) => Number(n).toLocaleString("en-US", { maximumFractionDigits: 0 });
 
-const StatusPill = ({ active }) =>
-  active ? (
-    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-success-50 text-success-700">
-      Active
-    </span>
+const StatusPill = ({ active }) => {
+  const { t } = useI18n();
+  return active ? (
+    <span className="badge-success">{t("common.active")}</span>
   ) : (
-    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-700 text-white">
-      Inactive
-    </span>
+    <span className="badge-neutral">{t("common.inactive")}</span>
   );
+};
 
-const RowActions = ({ onEdit, onDelete }) => (
+const RowActions = ({ onEdit, onDelete }) => {
+  const { t } = useI18n();
+  return (
   <div className="flex justify-end gap-2">
     <button
       onClick={onEdit}
-      className="px-3 py-1 text-xs font-medium text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50"
+      className="btn-secondary btn-sm min-h-10"
     >
-      Edit
+      {t("common.edit")}
     </button>
     <button
       onClick={onDelete}
-      className="px-3 py-1 text-xs font-medium text-danger-600 border border-danger-200 rounded-lg hover:bg-danger-50"
+      className="btn-ghost btn-sm min-h-10 text-danger-600 hover:bg-danger-50 hover:text-danger-700"
     >
-      Delete
+      {t("common.delete")}
     </button>
   </div>
-);
+  );
+};
 
 /**
  * Transfers are priced as a matrix, not as a catalogue of vendors, so this screen
@@ -63,7 +66,10 @@ const RowActions = ({ onEdit, onDelete }) => (
  * form needs the full lists to pick from.
  */
 const TransferList = () => {
+  const { t } = useI18n();
   const { province } = useParams();
+  // Quick search on the home screen lands here with ?q= — seed the filter from it.
+  const [searchParams] = useSearchParams();
 
   const [tab, setTab] = useState("routes");
   const [data, setData] = useState({
@@ -74,7 +80,7 @@ const TransferList = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(searchParams.get("q") || "");
   // Which rate sheet is on screen. "" until the first load picks one; the fetch
   // sends it so the routes come back carrying only that supplier's prices.
   const [supplierId, setSupplierId] = useState("");
@@ -87,6 +93,9 @@ const TransferList = () => {
   const [editingRoute, setEditingRoute] = useState(null);
   const [editingLocation, setEditingLocation] = useState(null);
   const [editingVehicle, setEditingVehicle] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [toast, setToast] = useState(null);
 
   const load = useCallback(async () => {
     try {
@@ -123,15 +132,26 @@ const TransferList = () => {
     load();
   }, [load]);
 
-  const remove = async (resource, id, label) => {
-    if (!window.confirm(`Delete "${label}"?`)) return;
+  const remove = async () => {
+    if (!deleteTarget) return;
     try {
-      await transfersService.deleteTransferItem(resource, id);
+      setDeleting(true);
+      await transfersService.deleteTransferItem(deleteTarget.resource, deleteTarget.id);
+      setDeleteTarget(null);
+      setToast({ type: "success", message: t("transfers.deleteSuccess") });
       await load();
     } catch (err) {
-      alert(err.message);
+      setToast({ type: "error", message: err.message || t("common.deleteError") });
+    } finally {
+      setDeleting(false);
     }
   };
+
+  useEffect(() => {
+    if (!toast) return undefined;
+    const timer = setTimeout(() => setToast(null), 3200);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   const term = search.trim().toLowerCase();
 
@@ -210,15 +230,15 @@ const TransferList = () => {
   }, [data.vehicles, term]);
 
   const addButton = {
-    routes: { label: "Add route", onClick: () => setEditingRoute({}) },
-    locations: { label: "Add location", onClick: () => setEditingLocation({}) },
-    vehicles: { label: "Add vehicle", onClick: () => setEditingVehicle({}) },
+    routes: { label: t("transfers.tabs.routes"), onClick: () => setEditingRoute({}) },
+    locations: { label: t("transfers.tabs.locations"), onClick: () => setEditingLocation({}) },
+    vehicles: { label: t("transfers.tabs.vehicles"), onClick: () => setEditingVehicle({}) },
   }[tab];
 
   const searchPlaceholder = {
-    routes: "Search by route, location or category…",
-    locations: "Search by name or province…",
-    vehicles: "Search by name…",
+    routes: t("transfers.search.routes"),
+    locations: t("transfers.search.locations"),
+    vehicles: t("transfers.search.vehicles"),
   }[tab];
 
   const card = "bg-white rounded-xl shadow-sm ring-1 ring-black/5";
@@ -230,7 +250,7 @@ const TransferList = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl font-semibold text-gray-900">Transfers</h1>
+            <h1 className="text-2xl font-semibold text-gray-900">{t("transfers.title")}</h1>
             {province && (
               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-brand-100 text-brand-700">
                 <MapPin size={14} /> {province}
@@ -247,25 +267,25 @@ const TransferList = () => {
 
         <button
           onClick={addButton.onClick}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-brand-600 text-white font-medium hover:bg-brand-700"
+          className="btn-primary"
         >
-          <Plus size={16} /> {addButton.label}
+          <Plus size={16} /> {t("transfers.add", { item: addButton.label })}
         </button>
       </div>
 
       {/* Tabs */}
       <div className="flex flex-wrap gap-1 border-b border-gray-200">
-        {TABS.map((t) => (
+        {TABS.map((item) => (
           <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
+            key={item.key}
+            onClick={() => setTab(item.key)}
             className={`px-5 py-2.5 text-sm font-medium border-b-2 -mb-px transition ${
-              tab === t.key
+              tab === item.key
                 ? "text-brand-700 border-brand-600"
                 : "text-gray-500 border-transparent hover:text-gray-700"
             }`}
           >
-            {t.label}
+            {t(item.label)}
           </button>
         ))}
       </div>
@@ -278,7 +298,8 @@ const TransferList = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={searchPlaceholder}
-            className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+            aria-label={searchPlaceholder}
+            className="input flex-1"
           />
           {tab === "routes" && (
             <select
@@ -314,7 +335,7 @@ const TransferList = () => {
       {/* Body */}
       {loading ? (
         <div className={`${card} p-12 text-center text-gray-500`}>
-          Loading transfers…
+          {t("common.loading")}
         </div>
       ) : error ? (
         <div className="bg-danger-50 border border-danger-200 rounded-xl p-6 text-center text-danger-700">
@@ -408,12 +429,12 @@ const TransferList = () => {
                               <RowActions
                                 onEdit={() => setEditingRoute(r)}
                                 onDelete={() =>
-                                  remove(
-                                    "routes",
-                                    r.id,
-                                    r.label ||
-                                      `${r.origin_name} to ${r.destination_name}`
-                                  )
+                                  setDeleteTarget({
+                                    resource: "routes",
+                                    id: r.id,
+                                    label:
+                                      r.label || `${r.origin_name} to ${r.destination_name}`,
+                                  })
                                 }
                               />
                             </td>
@@ -462,7 +483,9 @@ const TransferList = () => {
                     <td className="px-4 py-2">
                       <RowActions
                         onEdit={() => setEditingLocation(l)}
-                        onDelete={() => remove("locations", l.id, l.name)}
+                        onDelete={() =>
+                          setDeleteTarget({ resource: "locations", id: l.id, label: l.name })
+                        }
                       />
                     </td>
                   </tr>
@@ -528,7 +551,9 @@ const TransferList = () => {
                     <td className="px-4 py-2">
                       <RowActions
                         onEdit={() => setEditingVehicle(v)}
-                        onDelete={() => remove("vehicles", v.id, v.name)}
+                        onDelete={() =>
+                          setDeleteTarget({ resource: "vehicles", id: v.id, label: v.name })
+                        }
                       />
                     </td>
                   </tr>
@@ -572,6 +597,17 @@ const TransferList = () => {
           }}
         />
       )}
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title={t("transfers.deleteTitle")}
+        description={t("transfers.deleteDescription", { name: deleteTarget?.label || "" })}
+        confirmLabel={t("common.delete")}
+        cancelLabel={t("common.cancel")}
+        busy={deleting}
+        onConfirm={remove}
+        onCancel={() => setDeleteTarget(null)}
+      />
+      {toast && <Toast {...toast} onClose={() => setToast(null)} />}
     </div>
   );
 };

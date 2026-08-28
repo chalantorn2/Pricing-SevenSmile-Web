@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import {
   LayoutGrid,
   List,
@@ -12,11 +12,16 @@ import {
 } from "lucide-react";
 import { restaurantsService } from "../../services/api-service";
 import RestaurantFormModal from "../../components/restaurants/RestaurantFormModal";
+import { ConfirmDialog, Toast } from "../../components/core";
+import { useI18n } from "../../i18n";
 
 const VIEW_KEY = "restaurantsViewMode";
 
 const RestaurantList = () => {
+  const { t } = useI18n();
   const { province } = useParams();
+  // Quick search on the home screen lands here with ?q= — seed the filter from it.
+  const [searchParams] = useSearchParams();
 
   // "card" | "list" | "compact" — remembered so the choice survives navigation and reloads
   const [viewMode, setViewMode] = useState(
@@ -24,10 +29,13 @@ const RestaurantList = () => {
   );
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("q") || "");
   const [error, setError] = useState(null);
   // null = closed, {} = create, restaurant object = edit
   const [editing, setEditing] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [toast, setToast] = useState(null);
 
   const loadRestaurants = useCallback(async () => {
     try {
@@ -52,15 +60,36 @@ const RestaurantList = () => {
     localStorage.setItem(VIEW_KEY, viewMode);
   }, [viewMode]);
 
-  const handleDelete = async (restaurant) => {
-    if (!window.confirm(`Delete "${restaurant.name}"?`)) return;
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 767px)");
+    const keepMobileReadable = () => {
+      if (media.matches && viewMode === "compact") setViewMode("list");
+    };
+    keepMobileReadable();
+    media.addEventListener("change", keepMobileReadable);
+    return () => media.removeEventListener("change", keepMobileReadable);
+  }, [viewMode]);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await restaurantsService.deleteRestaurant(restaurant.id);
+      setDeleting(true);
+      await restaurantsService.deleteRestaurant(deleteTarget.id);
+      setDeleteTarget(null);
+      setToast({ type: "success", message: t("restaurants.deleteSuccess") });
       await loadRestaurants();
     } catch (err) {
-      alert(err.message);
+      setToast({ type: "error", message: err.message || t("common.deleteError") });
+    } finally {
+      setDeleting(false);
     }
   };
+
+  useEffect(() => {
+    if (!toast) return undefined;
+    const timer = setTimeout(() => setToast(null), 3200);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   // Suggestions for the form's datalists
   const destinations = useMemo(
@@ -91,7 +120,7 @@ const RestaurantList = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl font-semibold text-gray-900">Restaurants</h1>
+            <h1 className="text-2xl font-semibold text-gray-900">{t("restaurants.title")}</h1>
             {province && (
               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-brand-100 text-brand-700">
                 <MapPin size={14} /> {province}
@@ -99,16 +128,16 @@ const RestaurantList = () => {
             )}
           </div>
           <p className="text-sm text-gray-500 mt-1">
-            {restaurants.length} restaurants — manage restaurant information and menus
+            {t("restaurants.count", { count: restaurants.length })} · {t("restaurants.subtitle")}
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <div className="inline-flex p-1 rounded-lg bg-gray-100">
             {[
-              { id: "card", label: "Card view", Icon: LayoutGrid },
-              { id: "list", label: "List view", Icon: List },
-              { id: "compact", label: "Compact view", Icon: Rows3 },
+              { id: "card", label: t("common.view.card"), Icon: LayoutGrid },
+              { id: "list", label: t("common.view.list"), Icon: List },
+              { id: "compact", label: t("common.view.compact"), Icon: Rows3 },
             ].map((v) => (
               <button
                 key={v.id}
@@ -117,7 +146,7 @@ const RestaurantList = () => {
                 title={v.label}
                 aria-label={v.label}
                 aria-pressed={viewMode === v.id}
-                className={`p-2 rounded-md transition ${
+                className={`${v.id === "compact" ? "hidden md:flex" : "flex"} min-h-11 min-w-11 items-center justify-center rounded-md transition ${
                   viewMode === v.id
                     ? "bg-white text-brand-700 shadow-sm"
                     : "text-gray-500 hover:text-gray-700"
@@ -129,9 +158,9 @@ const RestaurantList = () => {
           </div>
           <button
             onClick={() => setEditing({})}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-brand-600 text-white font-medium hover:bg-brand-700"
+            className="btn-primary"
           >
-            <Plus size={16} /> Add restaurant
+            <Plus size={16} /> {t("restaurants.add")}
           </button>
         </div>
       </div>
@@ -142,15 +171,16 @@ const RestaurantList = () => {
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search by name, destination or cuisine…"
-          className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+          placeholder={t("restaurants.searchPlaceholder")}
+          aria-label={t("restaurants.searchPlaceholder")}
+          className="input"
         />
       </div>
 
       {/* Body */}
       {loading ? (
         <div className="bg-white rounded-xl shadow-sm ring-1 ring-black/5 p-12 text-center text-gray-500">
-          Loading restaurants…
+          {t("restaurants.loading")}
         </div>
       ) : error ? (
         <div className="bg-danger-50 border border-danger-200 rounded-xl p-6 text-center text-danger-700">
@@ -161,16 +191,15 @@ const RestaurantList = () => {
           <UtensilsCrossed size={40} className="mx-auto text-gray-300" />
           <p className="text-gray-500">
             {restaurants.length === 0
-              ? "No restaurants yet. Click “Add restaurant” to create one."
-              : "No restaurants match your search."}
+              ? t("restaurants.empty")
+              : t("restaurants.noResults")}
           </p>
         </div>
       ) : viewMode === "card" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((r) => (
-            <Link
+            <article
               key={r.id}
-              to={`/restaurant/view/${encodeURIComponent(r.slug)}`}
               className="bg-white rounded-xl shadow-sm ring-1 ring-black/5 overflow-hidden flex flex-col hover:shadow-md hover:ring-brand-200 transition"
             >
               <div className="h-40 bg-gray-100 relative">
@@ -189,13 +218,13 @@ const RestaurantList = () => {
                 {/* Status badges share the left corner so the logo owns the right one. */}
                 <div className="absolute top-2 left-2 flex flex-wrap gap-1">
                   {!!r.is_featured && (
-                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-warning-600 text-warning-800">
-                      Featured
+                    <span className="badge-warning">
+                      {t("common.featured")}
                     </span>
                   )}
                   {!r.is_active && (
                     <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-700 text-white">
-                      Inactive
+                      {t("common.inactive")}
                     </span>
                   )}
                 </div>
@@ -210,8 +239,10 @@ const RestaurantList = () => {
               </div>
               <div className="p-4 flex flex-col gap-1 flex-1">
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-semibold text-gray-900 leading-snug">
-                    {r.name}
+                  <h3 className="font-semibold leading-snug">
+                    <Link to={`/restaurant/view/${encodeURIComponent(r.slug)}`} className="text-gray-900 hover:text-brand-700">
+                      {r.name}
+                    </Link>
                   </h3>
                   {r.cuisine && (
                     <span className="shrink-0 px-2 py-0.5 rounded-full text-xs font-medium bg-brand-50 text-brand-700">
@@ -230,19 +261,19 @@ const RestaurantList = () => {
                         strokeWidth={0}
                       />
                       {r.rating}{" "}
-                      <span className="text-gray-400">({r.review_count} reviews)</span>
+                      <span className="text-gray-400">{t("restaurants.reviews", { count: r.review_count })}</span>
                     </span>
                   ) : null}
                   {r.seating_capacity ? (
                     <span className="flex items-center gap-1">
                       <Users size={14} className="text-gray-400" />
-                      {r.seating_capacity} pax
+                      {t("restaurants.capacity", { count: r.seating_capacity })}
                     </span>
                   ) : null}
                 </div>
                 {menuCount(r) > 0 && (
                   <p className="text-xs text-gray-400 mt-1">
-                    {menuCount(r)} menu{menuCount(r) === 1 ? "" : "s"}
+                    {t("restaurants.menuCount", { count: menuCount(r) })}
                   </p>
                 )}
 
@@ -252,30 +283,29 @@ const RestaurantList = () => {
                       e.preventDefault();
                       setEditing(r);
                     }}
-                    className="px-3 py-1 text-xs font-medium text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50"
+                    className="btn-secondary btn-sm min-h-10"
                   >
-                    Edit
+                    {t("common.edit")}
                   </button>
                   <button
                     onClick={(e) => {
                       e.preventDefault();
-                      handleDelete(r);
+                      setDeleteTarget(r);
                     }}
-                    className="px-3 py-1 text-xs font-medium text-danger-600 border border-danger-200 rounded-lg hover:bg-danger-50"
+                    className="btn-ghost btn-sm min-h-10 text-danger-600 hover:bg-danger-50 hover:text-danger-700"
                   >
-                    Delete
+                    {t("common.delete")}
                   </button>
                 </div>
               </div>
-            </Link>
+            </article>
           ))}
         </div>
       ) : viewMode === "list" ? (
         <div className="bg-white rounded-xl shadow-sm ring-1 ring-black/5 divide-y divide-gray-100 overflow-hidden">
           {filtered.map((r) => (
-            <Link
+            <article
               key={r.id}
-              to={`/restaurant/view/${encodeURIComponent(r.slug)}`}
               className="flex items-center gap-4 p-3 sm:p-4 hover:bg-gray-50 transition"
             >
               <div className="h-16 w-24 shrink-0 rounded-lg bg-gray-100 overflow-hidden">
@@ -295,8 +325,10 @@ const RestaurantList = () => {
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="font-semibold text-gray-900 leading-snug truncate">
-                    {r.name}
+                  <h3 className="font-semibold leading-snug truncate">
+                    <Link to={`/restaurant/view/${encodeURIComponent(r.slug)}`} className="text-gray-900 hover:text-brand-700">
+                      {r.name}
+                    </Link>
                   </h3>
                   {r.cuisine && (
                     <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-brand-50 text-brand-700">
@@ -304,13 +336,13 @@ const RestaurantList = () => {
                     </span>
                   )}
                   {!!r.is_featured && (
-                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-warning-600 text-warning-800">
-                      Featured
+                    <span className="badge-warning">
+                      {t("common.featured")}
                     </span>
                   )}
                   {!r.is_active && (
                     <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-700 text-white">
-                      Inactive
+                      {t("common.inactive")}
                     </span>
                   )}
                 </div>
@@ -319,7 +351,7 @@ const RestaurantList = () => {
                   {r.seating_capacity ? (
                     <span className="flex items-center gap-1">
                       <Users size={14} className="text-gray-400" />
-                      {r.seating_capacity} pax
+                      {t("restaurants.capacity", { count: r.seating_capacity })}
                     </span>
                   ) : null}
                 </div>
@@ -340,21 +372,21 @@ const RestaurantList = () => {
                     e.preventDefault();
                     setEditing(r);
                   }}
-                  className="px-3 py-1 text-xs font-medium text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50"
+                  className="btn-secondary btn-sm min-h-10"
                 >
-                  Edit
+                  {t("common.edit")}
                 </button>
                 <button
                   onClick={(e) => {
                     e.preventDefault();
-                    handleDelete(r);
+                    setDeleteTarget(r);
                   }}
-                  className="px-3 py-1 text-xs font-medium text-danger-600 border border-danger-200 rounded-lg hover:bg-danger-50"
+                  className="btn-ghost btn-sm min-h-10 text-danger-600 hover:bg-danger-50 hover:text-danger-700"
                 >
-                  Delete
+                  {t("common.delete")}
                 </button>
               </div>
-            </Link>
+            </article>
           ))}
         </div>
       ) : (
@@ -363,11 +395,11 @@ const RestaurantList = () => {
             <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
               <tr>
                 <th className="px-4 py-2 text-left font-medium w-12">#</th>
-                <th className="px-4 py-2 text-left font-medium">Restaurant</th>
-                <th className="px-4 py-2 text-left font-medium">Destination</th>
-                <th className="px-4 py-2 text-left font-medium w-40">Cuisine</th>
-                <th className="px-4 py-2 text-left font-medium w-24">Menus</th>
-                <th className="px-4 py-2 text-right font-medium w-48">Actions</th>
+                <th className="px-4 py-2 text-left font-medium">{t("restaurants.col.name")}</th>
+                <th className="px-4 py-2 text-left font-medium">{t("restaurants.col.destination")}</th>
+                <th className="px-4 py-2 text-left font-medium w-40">{t("restaurants.col.cuisine")}</th>
+                <th className="px-4 py-2 text-left font-medium w-24">{t("restaurants.col.menus")}</th>
+                <th className="px-4 py-2 text-right font-medium w-48">{t("common.actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -383,7 +415,7 @@ const RestaurantList = () => {
                     </Link>
                     {!r.is_active && (
                       <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-700 text-white">
-                        Inactive
+                      {t("common.inactive")}
                       </span>
                     )}
                   </td>
@@ -396,21 +428,21 @@ const RestaurantList = () => {
                     <div className="flex justify-end gap-2">
                       <Link
                         to={`/restaurant/rates/${encodeURIComponent(r.slug)}`}
-                        className="px-3 py-1 text-xs font-medium text-brand-700 border border-brand-200 rounded-lg hover:bg-brand-50"
+                        className="inline-flex min-h-10 items-center rounded-lg border border-brand-200 px-3 py-1 text-xs font-medium text-brand-700 hover:bg-brand-50"
                       >
-                        Rates
+                        {t("restaurants.rates")}
                       </Link>
                       <button
                         onClick={() => setEditing(r)}
-                        className="px-3 py-1 text-xs font-medium text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50"
+                        className="btn-secondary btn-sm min-h-10"
                       >
-                        Edit
+                        {t("common.edit")}
                       </button>
                       <button
-                        onClick={() => handleDelete(r)}
-                        className="px-3 py-1 text-xs font-medium text-danger-600 border border-danger-200 rounded-lg hover:bg-danger-50"
+                        onClick={() => setDeleteTarget(r)}
+                        className="btn-ghost btn-sm min-h-10 text-danger-600 hover:bg-danger-50 hover:text-danger-700"
                       >
-                        Delete
+                        {t("common.delete")}
                       </button>
                     </div>
                   </td>
@@ -433,6 +465,18 @@ const RestaurantList = () => {
           }}
         />
       )}
+
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title={t("restaurants.deleteTitle")}
+        description={t("restaurants.deleteDescription", { name: deleteTarget?.name || "" })}
+        confirmLabel={t("common.delete")}
+        cancelLabel={t("common.cancel")}
+        busy={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
+      {toast && <Toast {...toast} onClose={() => setToast(null)} />}
     </div>
   );
 };

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Images } from "lucide-react";
 
 const FileGallery = ({ files, getFileUrl, title = "Images" }) => {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -17,7 +18,7 @@ const FileGallery = ({ files, getFileUrl, title = "Images" }) => {
     <>
       <div className="file-gallery-section">
         <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
-          <span className="mr-2">🖼️</span>
+          <Images className="mr-2 w-4 h-4 text-gray-400" />
           {title} ({files.length} images)
         </h3>
 

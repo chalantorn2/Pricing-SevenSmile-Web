@@ -144,9 +144,9 @@ const TourFileUpload = ({
       try {
         setUploading(true);
         await uploadFilesSequentially(files);
-        alert(`✅ Finished uploading ${files.length} files`);
+        alert(`Finished uploading ${files.length} files`);
       } catch (error) {
-        alert(`❌ An error occurred: ${error.message}`);
+        alert(`An error occurred: ${error.message}`);
       } finally {
         setUploading(false);
         // Reset file input
@@ -180,9 +180,9 @@ const TourFileUpload = ({
       try {
         setUploading(true);
         await uploadFilesSequentially(files);
-        alert(`✅ Finished uploading ${files.length} files`);
+        alert(`Finished uploading ${files.length} files`);
       } catch (error) {
-        alert(`❌ An error occurred: ${error.message}`);
+        alert(`An error occurred: ${error.message}`);
       } finally {
         setUploading(false);
       }

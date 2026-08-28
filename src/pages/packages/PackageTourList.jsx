@@ -1,13 +1,20 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { Eye, Pencil, Plus, Trash2 } from "lucide-react";
 import { packageToursService } from "../../services/api-service";
+import { ConfirmDialog, Toast } from "../../components/core";
+import { useI18n } from "../../i18n";
 
 const PackageTourList = () => {
+  const { t } = useI18n();
   const [packages, setPackages] = useState([]);
   const [filteredPackages, setFilteredPackages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     fetchPackages();
@@ -86,18 +93,27 @@ const PackageTourList = () => {
       minute: "2-digit",
     });
 
-  const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this package?")) return;
-
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await packageToursService.deletePackage(id);
-      alert("Package deleted successfully");
+      setDeleting(true);
+      await packageToursService.deletePackage(deleteTarget.id);
+      setDeleteTarget(null);
+      setToast({ type: "success", message: t("packages.deleteSuccess") });
       fetchPackages();
     } catch (error) {
       console.error("Error deleting package:", error);
-      alert("An error occurred while deleting the package");
+      setToast({ type: "error", message: error.message || t("common.deleteError") });
+    } finally {
+      setDeleting(false);
     }
   };
+
+  useEffect(() => {
+    if (!toast) return undefined;
+    const timer = setTimeout(() => setToast(null), 3200);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   if (loading) {
     return (
@@ -124,16 +140,16 @@ const PackageTourList = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Tour Packages</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">{t("packages.title")}</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Manage tour packages and define daily details
+            {t("packages.subtitle")}
           </p>
         </div>
         <Link
           to="/packages/create"
           className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white bg-brand-600 hover:bg-brand-700 active:scale-[.98] shadow-sm"
         >
-          <span>➕</span>
+          <Plus className="w-4 h-4" />
           <span>Create New Package</span>
         </Link>
       </div>
@@ -250,7 +266,7 @@ const PackageTourList = () => {
                         className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-200 hover:bg-brand-100 active:scale-[.98] text-xs"
                         title="Edit"
                       >
-                        <span aria-hidden>✏️</span>
+                        <Pencil className="w-3.5 h-3.5" />
                         <span>Edit</span>
                       </Link>
                       <Link
@@ -258,15 +274,15 @@ const PackageTourList = () => {
                         className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-success-50 text-success-700 ring-1 ring-inset ring-success-200 hover:bg-success-100 active:scale-[.98] text-xs"
                         title="Customer View"
                       >
-                        <span aria-hidden>👁️</span>
+                        <Eye className="w-3.5 h-3.5" />
                         <span>Customer View</span>
                       </Link>
                       <button
-                        onClick={() => handleDelete(pkg.id)}
+                        onClick={() => setDeleteTarget(pkg)}
                         className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-danger-50 text-danger-700 ring-1 ring-inset ring-danger-200 hover:bg-danger-100 active:scale-[.98] text-xs"
                         title="Delete"
                       >
-                        <span aria-hidden>🗑️</span>
+                        <Trash2 className="w-3.5 h-3.5" />
                         <span>Delete</span>
                       </button>
                     </div>
@@ -283,6 +299,17 @@ const PackageTourList = () => {
           </div>
         )}
       </div>
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title={t("packages.deleteTitle")}
+        description={t("packages.deleteDescription", { name: deleteTarget?.name || "" })}
+        confirmLabel={t("common.delete")}
+        cancelLabel={t("common.cancel")}
+        busy={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
+      {toast && <Toast {...toast} onClose={() => setToast(null)} />}
     </div>
   );
 };

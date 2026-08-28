@@ -68,7 +68,7 @@ const SupplierDashboard = ({ suppliers, tours, loading }) => {
       {/* Dashboard Header */}
       <div className="bg-gradient-to-r from-brand-50 to-brand-50 rounded-lg p-6 border border-brand-200">
         <h2 className="text-xl font-bold text-gray-900 mb-2">
-          📊 Supplier Dashboard
+          Supplier Dashboard
         </h2>
         <p className="text-gray-500">Overview and important alerts</p>
       </div>

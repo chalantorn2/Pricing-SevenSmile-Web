@@ -23,6 +23,7 @@ import {
   X,
 } from "lucide-react";
 import { hotelsService } from "../../services/api-service";
+import { pushRecentItem } from "../../utils/recentItems";
 import NoticeCalendar from "../../components/hotels/NoticeCalendar";
 
 // Detail page mirrors the indosmilesouthservices.com layout (hero, gallery by
@@ -45,8 +46,16 @@ export default function HotelDetail() {
       setLoading(true);
       setError(false);
       const data = await hotelsService.getHotelBySlug(slug);
-      if (data) setHotel(data);
-      else setError(true);
+      if (data) {
+        setHotel(data);
+        // Remember the visit so the home screen can offer a shortcut back
+        pushRecentItem({
+          type: "hotel",
+          id: data.slug,
+          name: data.name,
+          meta: data.destination || "",
+        });
+      } else setError(true);
     } catch (err) {
       console.error("Error fetching hotel:", err);
       setError(true);

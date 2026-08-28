@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { toursService } from "../../services/api-service";
+import { useI18n } from "../../i18n";
 import { TourDetailsModal } from "../../components/tours";
 import { DocumentModal } from "../../components/common";
 import { Toast } from "../../components/core";
@@ -22,13 +23,14 @@ import {
   RotateCcw,
 } from "lucide-react";
 
+// Labels are i18n keys — the header row renders them through t().
 const columns = [
-  { key: "id", label: "No.", sortable: false },
-  { key: "tour_name", label: "Tour name", sortable: true },
-  { key: "departure_from", label: "Departure from", sortable: true },
-  { key: "destination", label: "Destination", sortable: true },
-  { key: "adult_price", label: "Adult price", sortable: true, align: "right" },
-  { key: "child_price", label: "Child price", sortable: true, align: "right" },
+  { key: "id", label: "tours.col.no", sortable: false },
+  { key: "tour_name", label: "tours.col.name", sortable: true },
+  { key: "departure_from", label: "tours.col.departure", sortable: true },
+  { key: "destination", label: "tours.col.destination", sortable: true },
+  { key: "adult_price", label: "tours.col.adultPrice", sortable: true, align: "right" },
+  { key: "child_price", label: "tours.col.childPrice", sortable: true, align: "right" },
 ];
 
 // A <select> that shrinks to the width of the option currently selected.
@@ -107,26 +109,37 @@ const getNotesWithExpiry = (tour) => {
     (notes ? ` | ${notes}` : "");
 
   if (isExpired(tour.end_date)) {
-    notes += " | ⚠️ Expired, please renew";
+    notes += " | Expired, please renew";
   }
   return notes;
 };
 
 const TourList = () => {
+  const { t } = useI18n();
+
   // ========= State =========
   const [tours, setTours] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
 
-  const [searchInput, setSearchInput] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [supplierFilter, setSupplierFilter] = useState("");
-  const [destinationFilter, setDestinationFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all"); // all | active | expired
-
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [searchParams] = useSearchParams();
   const activeProvince = searchParams.get("province");
+
+  // Deep links from the home screen land here as /tours?q=... (quick search)
+  // and /tours?status=expired (the expired pill) — seed the filters from them.
+  const initialSearch = searchParams.get("q") || "";
+  const initialStatus = ["all", "active", "expired"].includes(
+    searchParams.get("status")
+  )
+    ? searchParams.get("status")
+    : "all";
+
+  const [searchInput, setSearchInput] = useState(initialSearch);
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
+  const [supplierFilter, setSupplierFilter] = useState("");
+  const [destinationFilter, setDestinationFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState(initialStatus); // all | active | expired
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -453,12 +466,17 @@ const TourList = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl font-semibold text-gray-900">Tour List</h1>
+            <h1 className="text-2xl font-semibold text-gray-900">
+              {t("tours.title")}
+            </h1>
             {activeProvince && (
               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-brand-100 text-brand-700">
                 <MapPin className="w-4 h-4" />
                 {activeProvince}
-                <Link to="/" className="ml-1 text-brand-600 hover:text-brand-800">
+                <Link
+                  to="/tours"
+                  className="ml-1 text-brand-600 hover:text-brand-800"
+                >
                   <X className="w-4 h-4" />
                 </Link>
               </span>
@@ -466,8 +484,8 @@ const TourList = () => {
           </div>
           <p className="text-sm text-gray-500 mt-1">
             {activeProvince
-              ? `Showing tours in ${activeProvince}`
-              : "Manage all tour prices and details in the system"}
+              ? t("tours.showingIn", { province: activeProvince })
+              : t("tours.subtitle")}
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
@@ -478,14 +496,16 @@ const TourList = () => {
             title={`Export ${totalItems} rows to Excel`}
           >
             <FileSpreadsheet className="w-4 h-4" />
-            <span>Export Excel ({totalItems})</span>
+            <span>
+              {t("tours.export")} ({totalItems})
+            </span>
           </button>
           <Link
             to="/add"
             className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white bg-brand-600 hover:bg-brand-700 active:scale-[.98] shadow-sm"
           >
             <Plus className="w-4 h-4" />
-            <span>Add new price</span>
+            <span>{t("tours.addNew")}</span>
           </Link>
         </div>
       </div>
@@ -495,17 +515,13 @@ const TourList = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-xl bg-danger-50 px-4 py-3 ring-1 ring-danger-200">
           <div className="flex items-center gap-2 text-sm text-danger-800">
             <AlertTriangle className="w-4 h-4 shrink-0" />
-            <span>
-              <span className="font-semibold">{expiredCount}</span> tour price
-              {expiredCount > 1 ? "s have" : " has"} expired and may be out of
-              date.
-            </span>
+            <span>{t("tours.expiredBanner", { count: expiredCount })}</span>
           </div>
           <button
             onClick={() => setStatusFilter("expired")}
             className="self-start sm:self-auto text-sm font-medium text-danger-700 underline underline-offset-2 hover:text-danger-800"
           >
-            Review them
+            {t("tours.reviewThem")}
           </button>
         </div>
       )}
@@ -522,7 +538,7 @@ const TourList = () => {
               <input
                 id="tour-search"
                 type="text"
-                placeholder="Search: tour name, Supplier, departure, pier, notes..."
+                placeholder={t("tours.searchPlaceholder")}
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 className="w-full pl-10 pr-10 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"
@@ -559,7 +575,7 @@ const TourList = () => {
             onChange={(e) => setSupplierFilter(e.target.value)}
             ariaLabel="Filter by supplier"
             options={[
-              { value: "", label: "All suppliers" },
+              { value: "", label: t("tours.allSuppliers") },
               ...supplierOptions.map((name) => ({ value: name, label: name })),
             ]}
           />
@@ -571,7 +587,7 @@ const TourList = () => {
               onChange={(e) => setDestinationFilter(e.target.value)}
               ariaLabel="Filter by destination"
               options={[
-                { value: "", label: "All destinations" },
+                { value: "", label: t("tours.allDestinations") },
                 ...destinationOptions.map((name) => ({
                   value: name,
                   label: name,
@@ -586,9 +602,9 @@ const TourList = () => {
             onChange={(e) => setStatusFilter(e.target.value)}
             ariaLabel="Filter by status"
             options={[
-              { value: "all", label: "All status" },
-              { value: "active", label: "Active only" },
-              { value: "expired", label: "Expired only" },
+              { value: "all", label: t("tours.statusAll") },
+              { value: "active", label: t("tours.statusActive") },
+              { value: "expired", label: t("tours.statusExpired") },
             ]}
           />
 
@@ -598,7 +614,7 @@ const TourList = () => {
               className="inline-flex items-center justify-center gap-1.5 self-start px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-900"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              Clear filters
+              {t("common.clearFilters")}
             </button>
           )}
         </div>
@@ -608,14 +624,14 @@ const TourList = () => {
       {loadError && (
         <div className="bg-white rounded-xl shadow-sm ring-1 ring-danger-200 p-6 text-center">
           <AlertTriangle className="w-8 h-8 text-danger-600 mx-auto mb-2" />
-          <p className="text-gray-900 font-medium">Could not load tours</p>
+          <p className="text-gray-900 font-medium">{t("tours.errorTitle")}</p>
           <p className="text-sm text-gray-500 mt-1">{loadError}</p>
           <button
             onClick={fetchTours}
             className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white bg-brand-600 hover:bg-brand-700 text-sm"
           >
             <RotateCcw className="w-4 h-4" />
-            Retry
+            {t("common.retry")}
           </button>
         </div>
       )}
@@ -664,7 +680,7 @@ const TourList = () => {
                                   active ? "text-gray-900" : ""
                                 }`}
                               >
-                                <span>{column.label}</span>
+                                <span>{t(column.label)}</span>
                                 {active ? (
                                   sortConfig.direction === "asc" ? (
                                     <ChevronUp className="w-3.5 h-3.5" />
@@ -676,7 +692,7 @@ const TourList = () => {
                                 )}
                               </button>
                             ) : (
-                              column.label
+                              t(column.label)
                             )}
                           </th>
                         );

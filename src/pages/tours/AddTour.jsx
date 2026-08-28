@@ -153,7 +153,7 @@ const AddTour = () => {
       } else {
         alert(`Successfully created ${createdTours.length} tours!`);
       }
-      navigate("/");
+      navigate("/tours");
     } catch (error) {
       console.error("Error creating tours:", error);
       alert("An error occurred while creating tours: " + error.message);
@@ -263,7 +263,7 @@ const AddTour = () => {
           </p>
         </div>
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/tours")}
           className="flex items-center gap-1.5 px-4 py-2 text-gray-500 hover:text-gray-900 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />

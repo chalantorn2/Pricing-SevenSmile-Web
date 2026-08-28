@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { restaurantsService } from "../../services/api-service";
+import { pushRecentItem } from "../../utils/recentItems";
 
 const UNIT_LABEL = {
   per_person: "/pax",
@@ -68,6 +69,13 @@ export default function RestaurantDetail() {
         return;
       }
       setRestaurant(data);
+      // Remember the visit so the home screen can offer a shortcut back
+      pushRecentItem({
+        type: "restaurant",
+        id: data.slug,
+        name: data.name,
+        meta: data.destination || "",
+      });
     } catch (err) {
       console.error("Error loading restaurant:", err);
       setError(true);

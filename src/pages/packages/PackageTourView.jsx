@@ -1,14 +1,22 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import {
+  Coffee,
+  Sunrise,
+  Sunset,
+  Utensils,
+  UtensilsCrossed,
+  Hotel,
+} from "lucide-react";
 import { packageToursService } from "../../services/api-service";
 
 const TIME_SLOTS = [
-  { key: "breakfast", label: "Breakfast" },
-  { key: "morning_tour", label: "Day Tour" },
-  { key: "lunch", label: "Lunch" },
-  { key: "evening_tour", label: "Evening Tour" },
-  { key: "dinner", label: "Dinner" },
-  { key: "hotel", label: "Hotel" },
+  { key: "breakfast", label: "Breakfast", Icon: Coffee },
+  { key: "morning_tour", label: "Day Tour", Icon: Sunrise },
+  { key: "lunch", label: "Lunch", Icon: Utensils },
+  { key: "evening_tour", label: "Evening Tour", Icon: Sunset },
+  { key: "dinner", label: "Dinner", Icon: UtensilsCrossed },
+  { key: "hotel", label: "Hotel", Icon: Hotel },
 ];
 
 const PackageTourView = () => {
@@ -144,14 +152,7 @@ const PackageTourView = () => {
                 >
                   <td className="border border-gray-300 px-4 py-4 font-medium text-gray-700 bg-gray-100 sticky left-0 z-10">
                     <div className="flex items-center gap-2">
-                      <span className="text-lg">
-                        {slot.key === "breakfast" && "🍳"}
-                        {slot.key === "morning_tour" && "🌄"}
-                        {slot.key === "lunch" && "🍽️"}
-                        {slot.key === "evening_tour" && "🌅"}
-                        {slot.key === "dinner" && "🍴"}
-                        {slot.key === "hotel" && "🏨"}
-                      </span>
+                      <slot.Icon className="w-4 h-4 text-brand-600" />
                       <span>{slot.label}</span>
                     </div>
                   </td>

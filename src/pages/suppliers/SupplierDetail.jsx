@@ -10,6 +10,7 @@ import { DocumentModal } from "../../components/common";
 import { FileDownloads } from "../../components/common";
 import { SupplierModal } from "../../components/suppliers";
 import { Toast } from "../../components/core";
+import { pushRecentItem } from "../../utils/recentItems";
 import {
   ArrowLeft,
   Plus,
@@ -105,6 +106,13 @@ const SupplierDetail = () => {
         return;
       }
       setSupplier(data);
+      // Remember the visit so the home screen can offer a shortcut back
+      pushRecentItem({
+        type: "supplier",
+        id: data.id,
+        name: data.name,
+        meta: "",
+      });
     } catch (error) {
       console.error("Error fetching supplier:", error);
       // The API answers a missing id with a 404 carrying "Supplier not found"

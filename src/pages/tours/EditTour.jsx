@@ -147,12 +147,12 @@ const EditTour = () => {
         }
       } else {
         alert("Tour not found");
-        navigate("/");
+        navigate("/tours");
       }
     } catch (error) {
       console.error("Error fetching tour:", error);
       alert("An error occurred while loading data");
-      navigate("/");
+      navigate("/tours");
     } finally {
       setLoading(false);
     }

@@ -12,6 +12,7 @@ import { toursService } from "../../services/api-service";
 import { TourDetails } from "../../components/tours";
 import { DocumentModal } from "../../components/common";
 import { Toast } from "../../components/core";
+import { pushRecentItem } from "../../utils/recentItems";
 
 const TourDetail = () => {
   const { id } = useParams();
@@ -40,6 +41,13 @@ const TourDetail = () => {
 
       if (found) {
         setTour(found);
+        // Remember the visit so the home screen can offer a shortcut back
+        pushRecentItem({
+          type: "tour",
+          id: found.id,
+          name: found.tour_name,
+          meta: found.destination || "",
+        });
       } else {
         setError("The requested tour was not found");
       }

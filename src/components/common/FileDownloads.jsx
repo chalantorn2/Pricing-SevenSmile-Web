@@ -1,3 +1,4 @@
+import { FileText, Folder, Image as ImageIcon } from "lucide-react";
 import {
   getTourCategoryInfo,
   getSupplierCategoryInfo,
@@ -36,7 +37,7 @@ const FileDownloads = ({
   return (
     <div className="file-downloads-section space-y-4">
       <h3 className="text-sm font-semibold text-gray-900 flex items-center">
-        <span className="mr-2">📁</span>
+        <Folder className="mr-2 w-4 h-4 text-gray-400" />
         {title} ({files.length} files)
       </h3>
 
@@ -62,8 +63,12 @@ const FileDownloads = ({
                   className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                 >
                   <div className="flex items-center space-x-3 flex-1 min-w-0">
-                    <span className="text-lg flex-shrink-0">
-                      {file.file_type === "pdf" ? "📄" : "🖼️"}
+                    <span className="flex-shrink-0 text-gray-400">
+                      {file.file_type === "pdf" ? (
+                        <FileText className="w-5 h-5" />
+                      ) : (
+                        <ImageIcon className="w-5 h-5" />
+                      )}
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-gray-900 truncate">

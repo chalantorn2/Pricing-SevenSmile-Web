@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { usersService } from "../../services/api-service";
 import { useAuth } from "../../hooks/useAuth";
+import { ConfirmDialog, Toast } from "../../components/core";
+import { useI18n } from "../../i18n";
 
 const OFFICES = [
   { value: "sevensmile", label: "Seven Smile" },
@@ -28,6 +30,7 @@ const emptyForm = {
 };
 
 const UserManagement = () => {
+  const { t } = useI18n();
   const { user: currentUser, isAdmin } = useAuth();
   const canManage = isAdmin();
   const [users, setUsers] = useState([]);
@@ -35,6 +38,9 @@ const UserManagement = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState(emptyForm);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     fetchUsers();
@@ -124,18 +130,27 @@ const UserManagement = () => {
     }
   };
 
-  const handleDeleteUser = async (userId, username) => {
-    if (window.confirm(`Do you want to delete user "${username}"?`)) {
-      try {
-        await usersService.deleteUser(userId);
-        alert("User deleted successfully");
-        fetchUsers();
-      } catch (error) {
-        console.error("Error deleting user:", error);
-        alert("An error occurred while deleting the user");
-      }
+  const handleDeleteUser = async () => {
+    if (!deleteTarget) return;
+    try {
+      setDeleting(true);
+      await usersService.deleteUser(deleteTarget.id);
+      setDeleteTarget(null);
+      setToast({ type: "success", message: t("users.deleteSuccess") });
+      fetchUsers();
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      setToast({ type: "error", message: error.message || t("common.deleteError") });
+    } finally {
+      setDeleting(false);
     }
   };
+
+  useEffect(() => {
+    if (!toast) return undefined;
+    const timer = setTimeout(() => setToast(null), 3200);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("th-TH", {
@@ -259,7 +274,7 @@ const UserManagement = () => {
                     </button>
                     {canManage && user.username !== "admin" && (
                       <button
-                        onClick={() => handleDeleteUser(user.id, user.username)}
+                        onClick={() => setDeleteTarget(user)}
                         className="text-danger-600 hover:text-danger-800 transition-colors"
                       >
                         Delete
@@ -454,6 +469,17 @@ const UserManagement = () => {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title={t("users.deleteTitle")}
+        description={t("users.deleteDescription", { name: deleteTarget?.username || "" })}
+        confirmLabel={t("common.delete")}
+        cancelLabel={t("common.cancel")}
+        busy={deleting}
+        onConfirm={handleDeleteUser}
+        onCancel={() => setDeleteTarget(null)}
+      />
+      {toast && <Toast {...toast} onClose={() => setToast(null)} />}
     </div>
   );
 };

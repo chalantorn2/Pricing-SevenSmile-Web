@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
+import { Lock, SearchX } from "lucide-react";
 import { toursService } from "../../services/api-service";
 import TourDetails from "../../components/tours/TourDetails";
 
@@ -47,7 +48,9 @@ const SharedTour = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
-          <div className="text-6xl mb-4">😞</div>
+          <div className="text-6xl mb-4 text-gray-300 flex justify-center">
+            <SearchX className="w-14 h-14" />
+          </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">No data found</h1>
           <p className="text-gray-500 mb-6">{error}</p>
           <Link
@@ -125,7 +128,8 @@ const SharedTour = () => {
                 to="/"
                 className="inline-flex items-center px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors text-sm"
               >
-                🔒 Sign in to manage
+                <Lock className="w-4 h-4" />
+                Sign in to manage
               </Link>
             </div>
           </div>

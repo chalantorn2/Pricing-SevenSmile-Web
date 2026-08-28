@@ -5,8 +5,10 @@ import {
   Navigate,
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
+import { LanguageProvider } from "./i18n";
 import { Layout } from "./components/core";
 import Login from "./pages/auth/Login";
+import HomePage from "./pages/home/HomePage";
 import TourList from "./pages/tours/TourList";
 import TourDetail from "./pages/tours/TourDetail";
 import AddTour from "./pages/tours/AddTour";
@@ -72,16 +74,23 @@ const AppRoutes = () => {
         element={user ? <Navigate to="/" replace /> : <Login />}
       />
 
+      {/* The launcher screen owns the whole viewport — no sidebar — so it sits
+          outside the Layout route. Everything else lives inside it. */}
       <Route
         path="/"
         element={
           <ProtectedRoute>
-            <Layout />
+            <HomePage />
           </ProtectedRoute>
         }
-      >
-        {/* Tours Routes */}
-        <Route index element={<TourList />} />
+      />
+
+      {/* Pathless layout route: wraps module screens in the sidebar chrome
+          without adding anything to their URLs */}
+      <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+        {/* Tours Routes — the list moved from / to /tours when the home screen
+            took over as the landing page */}
+        <Route path="tours" element={<TourList />} />
         <Route path="add" element={<AddTour />} />
         <Route path="tour/:id" element={<TourDetail />} />
         <Route path="edit/:id" element={<EditTour />} />
@@ -126,9 +135,11 @@ const AppRoutes = () => {
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <AppRoutes />
-      </Router>
+      <LanguageProvider>
+        <Router>
+          <AppRoutes />
+        </Router>
+      </LanguageProvider>
     </AuthProvider>
   );
 }

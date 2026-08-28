@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
+import { useI18n } from "../../i18n";
 import { useNavigate } from "react-router-dom";
+import { Palmtree, Globe } from "lucide-react";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -9,6 +11,7 @@ const Login = () => {
   const [error, setError] = useState("");
 
   const { login } = useAuth();
+  const { t, lang, setLang } = useI18n();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -30,12 +33,39 @@ const Login = () => {
     <div className="min-h-screen bg-gradient-to-br from-brand-50 to-brand-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl p-8">
+          {/* Language toggle — the choice is saved before signing in */}
+          <div className="flex justify-end mb-2">
+            <div
+              className="inline-flex rounded-lg bg-gray-100 p-0.5"
+              role="group"
+              aria-label={t("lang.switch")}
+            >
+              {["th", "en"].map((code) => (
+                <button
+                  key={code}
+                  type="button"
+                  onClick={() => setLang(code)}
+                  className={`inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-md transition-colors ${
+                    lang === code
+                      ? "bg-white text-brand-700 shadow-sm"
+                      : "text-gray-500 hover:text-gray-900"
+                  }`}
+                >
+                  {code === "th" ? t("lang.thai") : t("lang.english")}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Logo/Header */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-brand-600 mb-2">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-brand-600 text-white mb-3">
+              <Palmtree className="w-6 h-6" />
+            </div>
+            <h1 className="text-3xl font-bold text-brand-600 mb-1">
               Contract Rate
             </h1>
-            <p className="text-gray-500">Tour Price Management System</p>
+            <p className="text-gray-500">{t("login.subtitle")}</p>
           </div>
 
           {/* Login Form */}
@@ -51,7 +81,7 @@ const Login = () => {
                 htmlFor="username"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
-                Username
+                {t("login.username")}
               </label>
               <input
                 id="username"
@@ -60,7 +90,7 @@ const Login = () => {
                 onChange={(e) => setUsername(e.target.value)}
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors"
-                placeholder="Enter username"
+                placeholder={t("login.usernamePlaceholder")}
               />
             </div>
 
@@ -69,7 +99,7 @@ const Login = () => {
                 htmlFor="password"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
-                Password
+                {t("login.password")}
               </label>
               <input
                 id="password"
@@ -78,7 +108,7 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors"
-                placeholder="Enter password"
+                placeholder={t("login.passwordPlaceholder")}
               />
             </div>
 
@@ -87,12 +117,13 @@ const Login = () => {
               disabled={loading}
               className="w-full bg-brand-600 text-white py-3 px-4 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? t("login.signingIn") : t("login.signIn")}
             </button>
           </form>
 
           {/* Footer */}
-          <div className="mt-8 text-center text-sm text-gray-500">
+          <div className="mt-8 flex items-center justify-center gap-1.5 text-sm text-gray-500">
+            <Globe className="w-3.5 h-3.5 text-gray-400" />
             <p>Contract Rate System</p>
           </div>
         </div>

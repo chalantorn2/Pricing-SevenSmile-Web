@@ -1,4 +1,12 @@
 // Loading Skeleton Components for better UX
+import {
+  AlertTriangle,
+  Inbox,
+  Search,
+  Phone,
+  Palmtree,
+  RotateCw,
+} from "lucide-react";
 
 export const TableSkeleton = ({ rows = 5, columns = 7 }) => (
   <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
@@ -113,44 +121,51 @@ export const ErrorState = ({
   title = "An error occurred",
   message = "Unable to load data. Please try again.",
   onRetry,
-  icon = "😞",
-}) => (
-  <div className="text-center py-12">
-    <div className="text-4xl mb-4">{icon}</div>
-    <h3 className="text-lg font-medium text-gray-900 mb-2">{title}</h3>
-    <p className="text-gray-500 mb-4 max-w-md mx-auto">{message}</p>
-    {onRetry && (
-      <button
-        onClick={onRetry}
-        className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
-      >
-        🔄 Try again
-      </button>
-    )}
-  </div>
-);
+  icon,
+}) => {
+  const Icon = icon || AlertTriangle;
+  return (
+    <div className="text-center py-12">
+      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-warning-50 text-warning-600">
+        <Icon className="w-7 h-7" />
+      </div>
+      <h3 className="text-lg font-medium text-gray-900 mb-2">{title}</h3>
+      <p className="text-gray-500 mb-4 max-w-md mx-auto">{message}</p>
+      {onRetry && (
+        <button onClick={onRetry} className="btn-primary">
+          <RotateCw className="w-4 h-4" /> Try again
+        </button>
+      )}
+    </div>
+  );
+};
 
 export const EmptyState = ({
   title = "No data",
   message = "No data in the system yet",
   actionText,
   onAction,
-  icon = "📭",
-}) => (
-  <div className="text-center py-12">
-    <div className="text-4xl mb-4">{icon}</div>
-    <h3 className="text-lg font-medium text-gray-900 mb-2">{title}</h3>
-    <p className="text-gray-500 mb-4 max-w-md mx-auto">{message}</p>
-    {actionText && onAction && (
-      <button
-        onClick={onAction}
-        className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
-      >
-        {actionText}
-      </button>
-    )}
-  </div>
-);
+  icon,
+}) => {
+  const Icon = icon || Inbox;
+  return (
+    <div className="text-center py-12">
+      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-gray-400">
+        <Icon className="w-7 h-7" />
+      </div>
+      <h3 className="text-lg font-medium text-gray-900 mb-2">{title}</h3>
+      <p className="text-gray-500 mb-4 max-w-md mx-auto">{message}</p>
+      {actionText && onAction && (
+        <button
+          onClick={onAction}
+          className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
+        >
+          {actionText}
+        </button>
+      )}
+    </div>
+  );
+};
 
 // Mobile responsive improvements
 export const MobileOptimizedTable = ({
@@ -245,12 +260,13 @@ export const MobileOptimizedTable = ({
                 <div className="mt-2 space-y-1">
                   {item.phone && (
                     <p className="text-sm text-gray-500 flex items-center">
-                      <span className="mr-1">📞</span> {item.phone}
+                      <Phone className="mr-1.5 w-3.5 h-3.5" /> {item.phone}
                     </p>
                   )}
                   {item.tour_count !== undefined && (
-                    <p className="text-sm text-gray-500">
-                      🏝️ {item.tour_count} tours
+                    <p className="text-sm text-gray-500 flex items-center">
+                      <Palmtree className="mr-1.5 w-3.5 h-3.5" />
+                      {item.tour_count} tours
                     </p>
                   )}
                 </div>
@@ -290,7 +306,7 @@ export const MobileOptimizedTable = ({
         <EmptyState
           title="No data found"
           message="Try changing your search or refreshing the page"
-          icon="🔍"
+          icon={Search}
         />
       )}
     </div>

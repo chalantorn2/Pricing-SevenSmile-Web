@@ -1,8 +1,48 @@
 /* ====================================== */
 /*               GLOBAL                   */
 /* ====================================== */
-@import url("https://fonts.googleapis.com/css2?family=Urbanist:wght@500;800&family=Sarabun:wght@400;700&display=swap");
 @import "tailwindcss";
+
+/* LINE Seed Sans TH — self-hosted from LINE's official release V1.003
+   (seed.line.me; Google Fonts carries only the JP/KR cuts). The five web
+   weights live in public/fonts/. True weights are 300/400/700/800/900, so
+   font-medium (500) renders as regular and font-semibold (600) as bold —
+   the browser snaps to the nearest real weight. */
+@font-face {
+  font-family: "LINE Seed Sans TH";
+  src: url("/fonts/LINESeedSansTH_W_Th.woff2") format("woff2");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "LINE Seed Sans TH";
+  src: url("/fonts/LINESeedSansTH_W_Rg.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "LINE Seed Sans TH";
+  src: url("/fonts/LINESeedSansTH_W_Bd.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "LINE Seed Sans TH";
+  src: url("/fonts/LINESeedSansTH_W_He.woff2") format("woff2");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "LINE Seed Sans TH";
+  src: url("/fonts/LINESeedSansTH_W_XBd.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
 
 /* ====================================== */
 /*            DESIGN TOKENS               */
@@ -10,11 +50,11 @@
 /*
  * Color system — 5 roles, one family each. Never mix in a sixth.
  *
- *   neutral : gray   — text, borders, surfaces
- *   brand   : blue   — primary actions, links, focus rings
- *   success : emerald— confirmed states, prices, active
- *   danger  : red    — errors, destructive actions, expired
- *   warning : amber  — pending, expiring soon
+ *   neutral : gray     — text, borders, surfaces
+ *   brand   : sky blue — primary actions, links, focus rings
+ *   success : emerald  — confirmed states, prices, active
+ *   danger  : red      — errors, destructive actions, expired
+ *   warning : amber    — pending, expiring soon
  *
  * Shade scale (use only these — one job each):
  *   50   soft surface / tinted background
@@ -27,16 +67,27 @@
  *
  * Do NOT introduce green/yellow/orange/slate/indigo — they duplicate
  * roles above and are what made this codebase inconsistent.
+ *
+ * The 2026-08 "friendly" pass moved brand from royal blue (#2563eb) to sky blue
+ * so the whole app reads airier, and every page sits on --color-surface (a
+ * barely-blue off-white) instead of plain gray.
  */
 @theme {
-  /* brand — blue */
-  --color-brand-50: #eff6ff;
-  --color-brand-100: #dbeafe;
-  --color-brand-200: #bfdbfe;
-  --color-brand-500: #3b82f6;
-  --color-brand-600: #2563eb;
-  --color-brand-700: #1d4ed8;
-  --color-brand-800: #1e40af;
+  /* brand — sky blue */
+  --color-brand-50: #f0f9ff;
+  --color-brand-100: #e0f2fe;
+  --color-brand-200: #bae6fd;
+  --color-brand-500: #0ea5e9;
+  --color-brand-600: #0284c7;
+  --color-brand-700: #0369a1;
+  --color-brand-800: #075985;
+
+  /* airy app background — slightly cooler and lighter than gray-50 */
+  --color-surface: #f5f9fc;
+
+  /* soft diffuse shadow for floating cards and panels */
+  --shadow-soft: 0 4px 24px -6px rgb(2 132 199 / 0.12), 0 2px 6px -2px rgb(16 24 40 / 0.06);
+  --shadow-card-hover: 0 18px 36px -18px rgb(2 132 199 / 0.34), 0 8px 16px -10px rgb(16 24 40 / 0.16);
 
   /* success — emerald */
   --color-success-50: #ecfdf5;
@@ -65,14 +116,17 @@
   --color-warning-700: #b45309;
   --color-warning-800: #92400e;
 
-  /* Typography: Urbanist (EN) + Sarabun (TH), 2 weights, 4 sizes */
-  --font-sans: "Urbanist", "Sarabun", sans-serif;
-  --font-weight-normal: 500;
-  --font-weight-bold: 800;
-  --text-sm: 1rem;
-  --text-base: 1.25rem;
-  --text-lg: 1.75rem;
-  --text-xl: 2rem;
+  /* Typography: LINE Seed Sans TH covers both Thai and Latin. The old scale
+     inflated every size by 2-4px ("text-sm" rendered at 16px), which made dense
+     screens feel cramped; sizes now match Tailwind defaults so labels stay
+     quiet and headings carry the hierarchy. */
+  --font-sans: "LINE Seed Sans TH", sans-serif;
+  --font-weight-normal: 400;
+  --font-weight-bold: 700;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
 }
 
 :root {
@@ -84,13 +138,14 @@
   --shadow-modal: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
-* {
-  font-family: var(--font-sans);
-  transition:
-    color 0.15s ease-in-out,
-    background-color 0.15s ease-in-out,
-    border-color 0.15s ease-in-out;
+html {
+  scroll-behavior: smooth;
 }
+
+body {
+  font-family: var(--font-sans);
+}
+
 
 /* Scrollbar */
 ::-webkit-scrollbar {
@@ -105,6 +160,15 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-gray-400);
+}
+
+/* Scrollable strip that never shows a bar (mobile chip rows, top-bar nav) —
+   still swipes by touch and scrolls by wheel/trackpad */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* Global Focus — keyboard only, so mouse clicks stay quiet */
@@ -583,6 +647,81 @@ button,
   }
 }
 
+@keyframes cardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes dialogEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toastEnter {
+  from {
+    opacity: 0;
+    transform: translate3d(20px, -6px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card-enter {
+  animation: cardEnter 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--stagger, 0ms);
+}
+
+.dialog-enter {
+  animation: dialogEnter 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.toast-enter {
+  animation: toastEnter 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.page-enter {
+  animation: pageEnter 0.3s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 .pdf-collapsed {
   display: none;
 }
@@ -626,6 +765,7 @@ button,
   }
 }
 
+
 /* ====================================== */
 /*            COMPONENTS                  */
 /* ====================================== */
@@ -643,7 +783,7 @@ button,
   .btn-ghost,
   .btn-danger,
   .btn-success {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2
            text-sm font-medium transition-colors
            active:scale-[.98] disabled:opacity-50 disabled:pointer-events-none;
   }

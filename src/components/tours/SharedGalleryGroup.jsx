@@ -1,4 +1,11 @@
 import { useState } from "react";
+import {
+  ChevronDown,
+  ChevronRight,
+  Eye,
+  Image as ImageIcon,
+  Trash2,
+} from "lucide-react";
 
 const SharedGalleryGroup = ({
   sourceTourId,
@@ -55,7 +62,11 @@ const SharedGalleryGroup = ({
             onClick={handleToggleExpand}
             className="flex items-center space-x-2 text-brand-700 hover:text-brand-800 transition-colors"
           >
-            <span className="text-lg">{isExpanded ? "🔽" : "▶️"}</span>
+            {isExpanded ? (
+              <ChevronDown className="w-4 h-4" />
+            ) : (
+              <ChevronRight className="w-4 h-4" />
+            )}
             <span className="font-medium">
               From tour "{sourceTourName}" ({files.length} images)
             </span>
@@ -75,7 +86,7 @@ const SharedGalleryGroup = ({
             onClick={handleUnshareAll}
             className="px-3 py-1 text-sm bg-danger-600 text-white rounded hover:bg-danger-700 transition-colors"
           >
-            🗑️ Remove all
+            Remove all
           </button>
         </div>
       </div>
@@ -89,7 +100,7 @@ const SharedGalleryGroup = ({
               className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 "
             >
               <div className="flex items-center space-x-3">
-                <span className="text-lg">🖼️</span>
+                <ImageIcon className="w-5 h-5 text-gray-400" />
                 <div>
                   <p className="text-sm font-medium text-gray-900">
                     {file.original_name}
@@ -105,14 +116,14 @@ const SharedGalleryGroup = ({
                   onClick={(e) => handleViewFile(e, file)}
                   className="px-2 py-1 text-brand-600 hover:bg-brand-100 rounded text-sm"
                 >
-                  👁️ View
+                  View
                 </button>
                 <button
                   type="button"
                   onClick={(e) => handleUnshareFile(e, file)}
                   className="px-2 py-1 text-danger-600 hover:bg-danger-50 rounded text-sm"
                 >
-                  🗑️ Remove
+                  Remove
                 </button>
               </div>
             </div>

@@ -197,6 +197,31 @@ export const authService = {
   },
 };
 
+// Counts and province lists for the home screen cards and the sidebar — one cheap
+// call instead of loading whole tables just to count them (api/stats.php).
+export const statsService = {
+  async getStats() {
+    try {
+      const response = await apiCall("/stats.php");
+      return response.data; // { counts: {...}, provinces: {...} }
+    } catch (error) {
+      console.error("❌ Failed to fetch stats:", error);
+      throw new Error("An error occurred while loading stats: " + error.message);
+    }
+  },
+};
+
+// One search box for everything on the home screen (api/search.php). Returns
+// { q, groups } where each group is { items: [{ id, name, sub }], total }.
+export const searchService = {
+  async getGlobalSearch(q) {
+    const response = await apiCall(
+      `/search.php?q=${encodeURIComponent(q)}`
+    );
+    return response.data;
+  },
+};
+
 // ✨ NEW: Suppliers CRUD functions
 export const suppliersService = {
   // Get all suppliers. `type` is "tour" or "transfer" — different companies, so a

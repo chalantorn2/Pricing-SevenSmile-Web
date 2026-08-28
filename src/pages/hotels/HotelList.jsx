@@ -1,13 +1,18 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import { Hotel, LayoutGrid, List, MapPin, Plus, Rows3, Star } from "lucide-react";
 import { hotelsService } from "../../services/api-service";
 import HotelFormModal from "../../components/hotels/HotelFormModal";
+import { ConfirmDialog, Toast } from "../../components/core";
+import { useI18n } from "../../i18n";
 
 const VIEW_KEY = "hotelsViewMode";
 
 const HotelList = () => {
+  const { t } = useI18n();
   const { province } = useParams();
+  // Quick search on the home screen lands here with ?q= — seed the filter from it.
+  const [searchParams] = useSearchParams();
 
   // "card" | "list" | "compact" — remembered so the choice survives navigation and reloads
   const [viewMode, setViewMode] = useState(
@@ -15,10 +20,13 @@ const HotelList = () => {
   );
   const [hotels, setHotels] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("q") || "");
   const [error, setError] = useState(null);
   // null = closed, {} = create, hotel object = edit
   const [editing, setEditing] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [toast, setToast] = useState(null);
 
   const loadHotels = useCallback(async () => {
     try {
@@ -43,16 +51,36 @@ const HotelList = () => {
     localStorage.setItem(VIEW_KEY, viewMode);
   }, [viewMode]);
 
-  const handleDelete = async (hotel) => {
-    if (!window.confirm(`Delete "${hotel.name}"? This also removes its rates and notices.`))
-      return;
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 767px)");
+    const keepMobileReadable = () => {
+      if (media.matches && viewMode === "compact") setViewMode("list");
+    };
+    keepMobileReadable();
+    media.addEventListener("change", keepMobileReadable);
+    return () => media.removeEventListener("change", keepMobileReadable);
+  }, [viewMode]);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await hotelsService.deleteHotel(hotel.id);
+      setDeleting(true);
+      await hotelsService.deleteHotel(deleteTarget.id);
+      setDeleteTarget(null);
+      setToast({ type: "success", message: t("hotels.deleteSuccess") });
       await loadHotels();
     } catch (err) {
-      alert(err.message);
+      setToast({ type: "error", message: err.message || t("common.deleteError") });
+    } finally {
+      setDeleting(false);
     }
   };
+
+  useEffect(() => {
+    if (!toast) return undefined;
+    const timer = setTimeout(() => setToast(null), 3200);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   // Destination suggestions for the form's datalist
   const destinations = useMemo(
@@ -75,7 +103,7 @@ const HotelList = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl font-semibold text-gray-900">Hotels</h1>
+            <h1 className="text-2xl font-semibold text-gray-900">{t("hotels.title")}</h1>
             {province && (
               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-brand-100 text-brand-700">
                 <MapPin size={14} /> {province}
@@ -83,17 +111,16 @@ const HotelList = () => {
             )}
           </div>
           <p className="text-sm text-gray-500 mt-1">
-            {hotels.length} hotels — this site is the master record;
-            indosmilesouthservices.com pulls from here
+            {t("hotels.count", { count: hotels.length })} · {t("hotels.subtitle")}
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <div className="inline-flex p-1 rounded-lg bg-gray-100">
             {[
-              { id: "card", label: "Card view", Icon: LayoutGrid },
-              { id: "list", label: "List view", Icon: List },
-              { id: "compact", label: "Compact view", Icon: Rows3 },
+              { id: "card", label: t("common.view.card"), Icon: LayoutGrid },
+              { id: "list", label: t("common.view.list"), Icon: List },
+              { id: "compact", label: t("common.view.compact"), Icon: Rows3 },
             ].map((v) => (
               <button
                 key={v.id}
@@ -102,7 +129,7 @@ const HotelList = () => {
                 title={v.label}
                 aria-label={v.label}
                 aria-pressed={viewMode === v.id}
-                className={`p-2 rounded-md transition ${
+                className={`${v.id === "compact" ? "hidden md:flex" : "flex"} min-h-11 min-w-11 items-center justify-center rounded-md transition ${
                   viewMode === v.id
                     ? "bg-white text-brand-700 shadow-sm"
                     : "text-gray-500 hover:text-gray-700"
@@ -114,9 +141,9 @@ const HotelList = () => {
           </div>
           <button
             onClick={() => setEditing({})}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-brand-600 text-white font-medium hover:bg-brand-700"
+            className="btn-primary"
           >
-            <Plus size={16} /> Add hotel
+            <Plus size={16} /> {t("hotels.add")}
           </button>
         </div>
       </div>
@@ -127,15 +154,16 @@ const HotelList = () => {
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search by name or destination…"
-          className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+          placeholder={t("hotels.searchPlaceholder")}
+          aria-label={t("hotels.searchPlaceholder")}
+          className="input"
         />
       </div>
 
       {/* Body */}
       {loading ? (
         <div className="bg-white rounded-xl shadow-sm ring-1 ring-black/5 p-12 text-center text-gray-500">
-          Loading hotels…
+          {t("hotels.loading")}
         </div>
       ) : error ? (
         <div className="bg-danger-50 border border-danger-200 rounded-xl p-6 text-center text-danger-700">
@@ -146,16 +174,15 @@ const HotelList = () => {
           <Hotel size={40} className="mx-auto text-gray-300" />
           <p className="text-gray-500">
             {hotels.length === 0
-              ? "No hotels yet. Click “Add hotel” to create one."
-              : "No hotels match your search."}
+              ? t("hotels.empty")
+              : t("hotels.noResults")}
           </p>
         </div>
       ) : viewMode === "card" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((h) => (
-            <Link
+            <article
               key={h.id}
-              to={`/hotel/view/${encodeURIComponent(h.slug)}`}
               className="bg-white rounded-xl shadow-sm ring-1 ring-black/5 overflow-hidden flex flex-col hover:shadow-md hover:ring-brand-200 transition"
             >
               <div className="h-40 bg-gray-100 relative">
@@ -174,13 +201,13 @@ const HotelList = () => {
                 {/* Status badges share the left corner so the logo owns the right one. */}
                 <div className="absolute top-2 left-2 flex flex-wrap gap-1">
                   {!!h.is_featured && (
-                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-warning-600 text-warning-800">
-                      Featured
+                    <span className="badge-warning">
+                      {t("common.featured")}
                     </span>
                   )}
                   {!h.is_active && (
                     <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-700 text-white">
-                      Inactive
+                      {t("common.inactive")}
                     </span>
                   )}
                 </div>
@@ -195,8 +222,10 @@ const HotelList = () => {
               </div>
               <div className="p-4 flex flex-col gap-1 flex-1">
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-semibold text-gray-900 leading-snug">
-                    {h.name}
+                  <h3 className="font-semibold leading-snug">
+                    <Link to={`/hotel/view/${encodeURIComponent(h.slug)}`} className="text-gray-900 hover:text-brand-700">
+                      {h.name}
+                    </Link>
                   </h3>
                   {h.stars ? (
                     <span className="flex items-center gap-0.5 text-warning-600 shrink-0">
@@ -223,30 +252,29 @@ const HotelList = () => {
                       e.preventDefault();
                       setEditing(h);
                     }}
-                    className="px-3 py-1 text-xs font-medium text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50"
+                    className="btn-secondary btn-sm min-h-10"
                   >
-                    Edit
+                    {t("common.edit")}
                   </button>
                   <button
                     onClick={(e) => {
                       e.preventDefault();
-                      handleDelete(h);
+                      setDeleteTarget(h);
                     }}
-                    className="px-3 py-1 text-xs font-medium text-danger-600 border border-danger-200 rounded-lg hover:bg-danger-50"
+                    className="btn-ghost btn-sm min-h-10 text-danger-600 hover:bg-danger-50 hover:text-danger-700"
                   >
-                    Delete
+                    {t("common.delete")}
                   </button>
                 </div>
               </div>
-            </Link>
+            </article>
           ))}
         </div>
       ) : viewMode === "list" ? (
         <div className="bg-white rounded-xl shadow-sm ring-1 ring-black/5 divide-y divide-gray-100 overflow-hidden">
           {filtered.map((h) => (
-            <Link
+            <article
               key={h.id}
-              to={`/hotel/view/${encodeURIComponent(h.slug)}`}
               className="flex items-center gap-4 p-3 sm:p-4 hover:bg-gray-50 transition"
             >
               <div className="h-16 w-24 shrink-0 rounded-lg bg-gray-100 overflow-hidden">
@@ -266,8 +294,10 @@ const HotelList = () => {
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="font-semibold text-gray-900 leading-snug truncate">
-                    {h.name}
+                  <h3 className="font-semibold leading-snug truncate">
+                    <Link to={`/hotel/view/${encodeURIComponent(h.slug)}`} className="text-gray-900 hover:text-brand-700">
+                      {h.name}
+                    </Link>
                   </h3>
                   {h.stars ? (
                     <span className="flex items-center gap-0.5 text-warning-600 shrink-0">
@@ -277,13 +307,13 @@ const HotelList = () => {
                     </span>
                   ) : null}
                   {!!h.is_featured && (
-                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-warning-600 text-warning-800">
-                      Featured
+                    <span className="badge-warning">
+                      {t("common.featured")}
                     </span>
                   )}
                   {!h.is_active && (
                     <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-700 text-white">
-                      Inactive
+                      {t("common.inactive")}
                     </span>
                   )}
                 </div>
@@ -307,21 +337,21 @@ const HotelList = () => {
                     e.preventDefault();
                     setEditing(h);
                   }}
-                  className="px-3 py-1 text-xs font-medium text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50"
+                  className="btn-secondary btn-sm min-h-10"
                 >
-                  Edit
+                  {t("common.edit")}
                 </button>
                 <button
                   onClick={(e) => {
                     e.preventDefault();
-                    handleDelete(h);
+                    setDeleteTarget(h);
                   }}
-                  className="px-3 py-1 text-xs font-medium text-danger-600 border border-danger-200 rounded-lg hover:bg-danger-50"
+                  className="btn-ghost btn-sm min-h-10 text-danger-600 hover:bg-danger-50 hover:text-danger-700"
                 >
-                  Delete
+                  {t("common.delete")}
                 </button>
               </div>
-            </Link>
+            </article>
           ))}
         </div>
       ) : (
@@ -330,10 +360,10 @@ const HotelList = () => {
             <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
               <tr>
                 <th className="px-4 py-2 text-left font-medium w-12">#</th>
-                <th className="px-4 py-2 text-left font-medium">Hotel</th>
-                <th className="px-4 py-2 text-left font-medium">Destination</th>
-                <th className="px-4 py-2 text-left font-medium w-28">Stars</th>
-                <th className="px-4 py-2 text-right font-medium w-32">Actions</th>
+                <th className="px-4 py-2 text-left font-medium">{t("hotels.col.name")}</th>
+                <th className="px-4 py-2 text-left font-medium">{t("hotels.col.destination")}</th>
+                <th className="px-4 py-2 text-left font-medium w-28">{t("hotels.col.stars")}</th>
+                <th className="px-4 py-2 text-right font-medium w-32">{t("common.actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -349,7 +379,7 @@ const HotelList = () => {
                     </Link>
                     {!h.is_active && (
                       <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-700 text-white">
-                        Inactive
+                        {t("common.inactive")}
                       </span>
                     )}
                   </td>
@@ -369,15 +399,15 @@ const HotelList = () => {
                     <div className="flex justify-end gap-2">
                       <button
                         onClick={() => setEditing(h)}
-                        className="px-3 py-1 text-xs font-medium text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50"
+                        className="btn-secondary btn-sm min-h-10"
                       >
-                        Edit
+                        {t("common.edit")}
                       </button>
                       <button
-                        onClick={() => handleDelete(h)}
-                        className="px-3 py-1 text-xs font-medium text-danger-600 border border-danger-200 rounded-lg hover:bg-danger-50"
+                        onClick={() => setDeleteTarget(h)}
+                        className="btn-ghost btn-sm min-h-10 text-danger-600 hover:bg-danger-50 hover:text-danger-700"
                       >
-                        Delete
+                        {t("common.delete")}
                       </button>
                     </div>
                   </td>
@@ -399,6 +429,18 @@ const HotelList = () => {
           }}
         />
       )}
+
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title={t("hotels.deleteTitle")}
+        description={t("hotels.deleteDescription", { name: deleteTarget?.name || "" })}
+        confirmLabel={t("common.delete")}
+        cancelLabel={t("common.cancel")}
+        busy={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
+      {toast && <Toast {...toast} onClose={() => setToast(null)} />}
     </div>
   );
 };

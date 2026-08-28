@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { suppliersService, toursService } from "../../services/api-service";
 import { SupplierModal } from "../../components/suppliers";
 import { Toast } from "../../components/core";
+import { useI18n } from "../../i18n";
 import * as XLSX from "xlsx";
 import {
   FileSpreadsheet,
@@ -74,6 +75,7 @@ const getPhones = (supplier) =>
   ].filter((phone) => phone?.trim());
 
 const SupplierList = () => {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -82,8 +84,9 @@ const SupplierList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [searchInput, setSearchInput] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
+  // Quick search on the home screen lands here with ?q= — seed the filter from it.
+  const [searchInput, setSearchInput] = useState(searchParams.get("q") || "");
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("q") || "");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [currentPage, setCurrentPage] = useState(1);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -512,9 +515,9 @@ const SupplierList = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Suppliers</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">{t("suppliers.title")}</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Manage supplier contacts and see {TYPES[activeType].blurb}
+            {t("suppliers.subtitle")}
           </p>
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -527,7 +530,7 @@ const SupplierList = () => {
                   key={id}
                   onClick={() => setType(id)}
                   aria-pressed={active}
-                  className={`px-4 py-1.5 rounded-md text-sm font-medium transition ${
+                  className={`min-h-10 px-4 py-1.5 rounded-md text-sm font-medium transition ${
                     active
                       ? "bg-white text-gray-900 shadow-sm"
                       : "text-gray-500 hover:text-gray-700"
@@ -541,7 +544,7 @@ const SupplierList = () => {
           <button
             onClick={handleExportExcel}
             disabled={totalItems === 0}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white bg-success-600 hover:bg-success-700 active:scale-[.98] shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+            className="btn-success"
             title={`Export the ${totalItems} suppliers currently listed`}
           >
             <FileSpreadsheet className="w-4 h-4" />
@@ -549,7 +552,7 @@ const SupplierList = () => {
           </button>
           <button
             onClick={() => setShowAddModal(true)}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white bg-brand-600 hover:bg-brand-700 active:scale-[.98] shadow-sm"
+            className="btn-primary"
           >
             <Plus className="w-4 h-4" />
             <span>Add Supplier</span>
@@ -587,16 +590,16 @@ const SupplierList = () => {
           <input
             id="supplier-search"
             type="text"
-            placeholder="Search: supplier name, phone, Line ID, address..."
+            placeholder={t("suppliers.searchPlaceholder")}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className="w-full pl-9 pr-10 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"
+            className="input pl-9 pr-11"
           />
           {searchInput && (
             <button
               onClick={() => setSearchInput("")}
               aria-label="Clear search"
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-500"
+              className="absolute right-1 top-1/2 flex min-h-10 min-w-10 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-500"
             >
               <X className="w-4 h-4" />
             </button>
@@ -612,7 +615,7 @@ const SupplierList = () => {
                   key={id}
                   onClick={() => setFilter(id)}
                   aria-pressed={active}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition ring-1 ring-inset ${
+                  className={`inline-flex min-h-10 items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition ring-1 ring-inset ${
                     active
                       ? "bg-brand-600 text-white ring-brand-600"
                       : "bg-white text-gray-700 ring-gray-200 hover:bg-gray-50"
