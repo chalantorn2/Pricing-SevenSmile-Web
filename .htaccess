@@ -27,5 +27,9 @@ RewriteRule ^(.*)$ index.html [L]
 <IfModule mod_headers.c>
     Header always set Access-Control-Allow-Origin "*"
     Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-    Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
+    # Must include every custom header the app sends: X-Auth-Token (login session,
+    # see api/_auth.php) and X-API-Key (public API, see api/public/_config.php).
+    # This "set" replaces whatever PHP sent, so keep the list in sync with
+    # api/config.php and api/public/_config.php.
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Auth-Token, X-API-Key"
 </IfModule>

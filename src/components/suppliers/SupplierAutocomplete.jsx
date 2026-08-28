@@ -9,6 +9,10 @@ const SupplierAutocomplete = ({
   placeholder = "Search or select a Supplier...",
   disabled = false,
   required = false,
+  // Tour vendors and transfer vendors are separate companies. Every screen using
+  // this picker is a tour screen, so that is the default; pass "transfer" to look
+  // up the other list.
+  type = "tour",
 }) => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
@@ -53,7 +57,10 @@ const SupplierAutocomplete = ({
 
     setLoading(true);
     try {
-      const searchResults = await suppliersService.searchSuppliers(searchQuery);
+      const searchResults = await suppliersService.searchSuppliers(
+        searchQuery,
+        type
+      );
       setResults(searchResults);
     } catch (error) {
       console.error("Search error:", error);

@@ -16,6 +16,13 @@ import {
 import SupplierFileUpload from "./SupplierFileUpload";
 import { FileDownloads } from "../common";
 
+// A supplier is one kind or the other — the tour vendors and the transfer
+// companies are separate businesses, and nothing appears in both lists.
+const SUPPLIER_TYPES = [
+  { value: "tour", label: "Tour", hint: "sells tours and packages" },
+  { value: "transfer", label: "Transfer", hint: "drives transfer routes" },
+];
+
 const SupplierModal = ({
   isOpen,
   onClose,
@@ -24,6 +31,10 @@ const SupplierModal = ({
   initialName = "",
   supplier = null,
   isEdit = false,
+  // Which list a new supplier joins: "tour" or "transfer". They are different
+  // companies, so the screen that opened this modal decides, and editing keeps
+  // whatever the supplier already is.
+  defaultType = "tour",
 }) => {
   const [loading, setLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -32,6 +43,7 @@ const SupplierModal = ({
   // Form data state - added phone fields
   const [formData, setFormData] = useState({
     name: initialName,
+    type: defaultType,
     address: "",
     phone: "",
     phone_2: "",
@@ -58,6 +70,7 @@ const SupplierModal = ({
     if (isEdit && supplier) {
       setFormData({
         name: supplier.name || "",
+        type: supplier.type || "tour",
         address: supplier.address || "",
         phone: supplier.phone || "",
         phone_2: supplier.phone_2 || "",
@@ -91,6 +104,7 @@ const SupplierModal = ({
     } else {
       setFormData({
         name: initialName,
+        type: defaultType,
         address: "",
         phone: "",
         phone_2: "",
@@ -106,7 +120,7 @@ const SupplierModal = ({
       setVisiblePhoneFields(1);
       setFiles([]);
     }
-  }, [isEdit, supplier, initialName]);
+  }, [isEdit, supplier, initialName, defaultType]);
 
   // Load supplier files
   const loadSupplierFiles = async (supplierId) => {
@@ -318,6 +332,40 @@ const SupplierModal = ({
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                           placeholder="Enter Supplier name"
                         />
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                          Supplier type <span className="text-danger-600">*</span>
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {SUPPLIER_TYPES.map((option) => {
+                            const active = formData.type === option.value;
+                            return (
+                              <label
+                                key={option.value}
+                                className={`flex-1 min-w-[10rem] cursor-pointer rounded-lg border px-3 py-2 text-sm transition ${
+                                  active
+                                    ? "border-brand-500 bg-brand-50 text-brand-800"
+                                    : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                                }`}
+                              >
+                                <input
+                                  type="radio"
+                                  name="type"
+                                  value={option.value}
+                                  checked={active}
+                                  onChange={handleChange}
+                                  className="sr-only"
+                                />
+                                <span className="font-medium">{option.label}</span>
+                                <span className="block text-xs text-gray-500 mt-0.5">
+                                  {option.hint}
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
                       </div>
 
                       <div className="md:col-span-2">

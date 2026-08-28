@@ -185,6 +185,10 @@ const SupplierDetail = () => {
     [supplierTours],
   );
 
+  // Transfer companies never carry tours, so everything tour-shaped on this page
+  // is hidden for them; the contacts and the files are what they are here for.
+  const isTourSupplier = supplier?.type !== "transfer";
+
   const phones = useMemo(() => {
     if (!supplier) return [];
     return [
@@ -265,7 +269,10 @@ const SupplierDetail = () => {
   const renderSectionSkeleton = (rows = 3) => (
     <div className="divide-y divide-gray-100">
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="flex items-center gap-4 px-6 py-4 animate-pulse">
+        <div
+          key={i}
+          className="flex items-center gap-4 px-6 py-4 animate-pulse"
+        >
           <div className="h-4 flex-1 rounded bg-gray-200" />
           <div className="h-6 w-24 rounded bg-gray-200" />
           <div className="h-8 w-28 rounded bg-gray-200" />
@@ -351,16 +358,25 @@ const SupplierDetail = () => {
 
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div className="min-w-0">
-            <h1 className="text-2xl font-semibold text-gray-900">
-              {supplier.name}
-            </h1>
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="text-2xl font-semibold text-gray-900">
+                {supplier.name}
+              </h1>
+              {!isTourSupplier && (
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-100 text-brand-700">
+                  Transfer
+                </span>
+              )}
+            </div>
             {/* At-a-glance meta so the page answers the basics without scrolling */}
             <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500">
-              <span className="inline-flex items-center gap-1.5">
-                <Palmtree className="w-4 h-4" />
-                {toursLoading ? "…" : `${supplierTours.length} tours`}
-              </span>
-              {expiredCount > 0 && (
+              {isTourSupplier && (
+                <span className="inline-flex items-center gap-1.5">
+                  <Palmtree className="w-4 h-4" />
+                  {toursLoading ? "…" : `${supplierTours.length} tours`}
+                </span>
+              )}
+              {isTourSupplier && expiredCount > 0 && (
                 <span className="inline-flex items-center gap-1.5 text-danger-700">
                   <AlertTriangle className="w-4 h-4" />
                   {expiredCount} expired
@@ -377,20 +393,24 @@ const SupplierDetail = () => {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 shrink-0">
-            <Link
-              to={`/add?supplier=${supplier.id}`}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 active:scale-[.98]"
-            >
-              <Plus className="w-4 h-4" />
-              Add tour
-            </Link>
-            <Link
-              to={`/edit-tours/${supplier.id}`}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 active:scale-[.98]"
-            >
-              <ListChecks className="w-4 h-4" />
-              Edit tour prices
-            </Link>
+            {isTourSupplier && (
+              <>
+                <Link
+                  to={`/add?supplier=${supplier.id}`}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 active:scale-[.98]"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add tour
+                </Link>
+                <Link
+                  to={`/edit-tours/${supplier.id}`}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 active:scale-[.98]"
+                >
+                  <ListChecks className="w-4 h-4" />
+                  Edit tour prices
+                </Link>
+              </>
+            )}
             <button
               onClick={() => setShowEditModal(true)}
               className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm text-white bg-brand-600 hover:bg-brand-700 active:scale-[.98] shadow-sm"
@@ -403,7 +423,7 @@ const SupplierDetail = () => {
       </div>
 
       {/* Expired tours warning */}
-      {!toursLoading && expiredCount > 0 && (
+      {isTourSupplier && !toursLoading && expiredCount > 0 && (
         <div className="flex flex-wrap items-center gap-2 rounded-xl bg-danger-50 px-4 py-3 ring-1 ring-danger-200 text-sm text-danger-800">
           <AlertTriangle className="w-4 h-4 shrink-0" />
           <span>
@@ -572,189 +592,191 @@ const SupplierDetail = () => {
       </div>
 
       {/* Tours */}
-      <div className="bg-white rounded-xl shadow-sm ring-1 ring-black/5 overflow-hidden">
-        <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-gray-100">
-          <h2 className="font-semibold text-gray-900 inline-flex items-center gap-2">
-            <Palmtree className="w-4 h-4 text-gray-400" />
-            Tours from this supplier
-            {!toursLoading && (
-              <span className="text-sm font-normal text-gray-500">
-                ({supplierTours.length})
-              </span>
+      {isTourSupplier && (
+        <div className="bg-white rounded-xl shadow-sm ring-1 ring-black/5 overflow-hidden">
+          <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-gray-100">
+            <h2 className="font-semibold text-gray-900 inline-flex items-center gap-2">
+              <Palmtree className="w-4 h-4 text-gray-400" />
+              Tours from this supplier
+              {!toursLoading && (
+                <span className="text-sm font-normal text-gray-500">
+                  ({supplierTours.length})
+                </span>
+              )}
+            </h2>
+            {supplierTours.length > 0 && (
+              <Link
+                to={`/add?supplier=${supplier.id}`}
+                className="inline-flex items-center gap-1.5 text-sm text-brand-700 hover:text-brand-900"
+              >
+                <Plus className="w-4 h-4" />
+                Add tour
+              </Link>
             )}
-          </h2>
-          {supplierTours.length > 0 && (
-            <Link
-              to={`/add?supplier=${supplier.id}`}
-              className="inline-flex items-center gap-1.5 text-sm text-brand-700 hover:text-brand-900"
-            >
-              <Plus className="w-4 h-4" />
-              Add tour
-            </Link>
-          )}
-        </div>
-
-        {toursLoading ? (
-          renderSectionSkeleton(3)
-        ) : supplierTours.length === 0 ? (
-          <div className="text-center py-12 px-6">
-            <p className="font-medium text-gray-500">No tours yet</p>
-            <p className="text-sm text-gray-500 mt-1">
-              Add the first tour price for this supplier.
-            </p>
-            <Link
-              to={`/add?supplier=${supplier.id}`}
-              className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white bg-brand-600 hover:bg-brand-700 text-sm"
-            >
-              <Plus className="w-4 h-4" />
-              Add tour
-            </Link>
           </div>
-        ) : (
-          <>
-            {/* Desktop table */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="min-w-full text-sm">
-                <thead className="bg-gray-50 text-gray-500">
-                  <tr className="border-b border-gray-200">
-                    {[
-                      "Tour name",
-                      "Departure from",
-                      "Adult price",
-                      "Child price",
-                      "End date",
-                    ].map((label, i) => (
-                      <th
-                        key={label}
-                        scope="col"
-                        className={`px-6 py-3 uppercase tracking-wider text-[11px] font-semibold ${
-                          i === 2 || i === 3 ? "text-right" : "text-left"
-                        }`}
-                      >
-                        {label}
-                      </th>
-                    ))}
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-right uppercase tracking-wider text-[11px] font-semibold"
-                    >
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
 
-                <tbody className="divide-y divide-gray-100">
-                  {supplierTours.map((tour) => {
-                    const expired = isExpired(tour.end_date);
-
-                    return (
-                      <tr
-                        key={tour.id}
-                        className={
-                          expired
-                            ? "bg-danger-50/40 hover:bg-danger-50"
-                            : "hover:bg-gray-50"
-                        }
-                      >
-                        <td className="px-6 py-3 align-top">
-                          <div className="flex items-start gap-2">
-                            <span className="font-medium text-gray-900 leading-5">
-                              {tour.tour_name}
-                            </span>
-                            {expired && (
-                              <span className="inline-flex items-center gap-1 shrink-0 rounded-full bg-danger-100 px-2 py-0.5 text-[11px] font-semibold text-danger-700 ring-1 ring-inset ring-danger-200">
-                                <AlertTriangle className="w-3 h-3" />
-                                Expired
-                              </span>
-                            )}
-                          </div>
-                          {tour.pier && (
-                            <div className="mt-1 text-xs text-gray-500">
-                              Pier: {tour.pier}
-                            </div>
-                          )}
-                        </td>
-
-                        <td className="px-6 py-3 whitespace-nowrap text-gray-900">
-                          {tour.departure_from || "-"}
-                        </td>
-
-                        <td className="px-6 py-3 whitespace-nowrap text-right">
-                          <span className="inline-flex items-baseline rounded-md bg-success-50 px-2 py-1 ring-1 ring-success-200 font-semibold text-success-700 tabular-nums">
-                            THB {formatPrice(tour.adult_price)}
-                          </span>
-                        </td>
-
-                        <td className="px-6 py-3 whitespace-nowrap text-right">
-                          <span className="inline-flex items-baseline rounded-md bg-brand-50 px-2 py-1 ring-1 ring-brand-200 font-semibold text-brand-700 tabular-nums">
-                            THB {formatPrice(tour.child_price)}
-                          </span>
-                        </td>
-
-                        <td
-                          className={`px-6 py-3 whitespace-nowrap ${
-                            expired ? "text-danger-700" : "text-gray-500"
+          {toursLoading ? (
+            renderSectionSkeleton(3)
+          ) : supplierTours.length === 0 ? (
+            <div className="text-center py-12 px-6">
+              <p className="font-medium text-gray-500">No tours yet</p>
+              <p className="text-sm text-gray-500 mt-1">
+                Add the first tour price for this supplier.
+              </p>
+              <Link
+                to={`/add?supplier=${supplier.id}`}
+                className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white bg-brand-600 hover:bg-brand-700 text-sm"
+              >
+                <Plus className="w-4 h-4" />
+                Add tour
+              </Link>
+            </div>
+          ) : (
+            <>
+              {/* Desktop table */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead className="bg-gray-50 text-gray-500">
+                    <tr className="border-b border-gray-200">
+                      {[
+                        "Tour name",
+                        "Departure from",
+                        "Adult price",
+                        "Child price",
+                        "End date",
+                      ].map((label, i) => (
+                        <th
+                          key={label}
+                          scope="col"
+                          className={`px-6 py-3 uppercase tracking-wider text-[11px] font-semibold ${
+                            i === 2 || i === 3 ? "text-right" : "text-left"
                           }`}
                         >
-                          {formatDate(tour.end_date)}
-                        </td>
+                          {label}
+                        </th>
+                      ))}
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-right uppercase tracking-wider text-[11px] font-semibold"
+                      >
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
 
-                        <td className="px-6 py-3 whitespace-nowrap text-right">
-                          {renderTourActions(tour)}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                  <tbody className="divide-y divide-gray-100">
+                    {supplierTours.map((tour) => {
+                      const expired = isExpired(tour.end_date);
 
-            {/* Mobile cards */}
-            <div className="md:hidden divide-y divide-gray-100">
-              {supplierTours.map((tour) => {
-                const expired = isExpired(tour.end_date);
+                      return (
+                        <tr
+                          key={tour.id}
+                          className={
+                            expired
+                              ? "bg-danger-50/40 hover:bg-danger-50"
+                              : "hover:bg-gray-50"
+                          }
+                        >
+                          <td className="px-6 py-3 align-top">
+                            <div className="flex items-start gap-2">
+                              <span className="font-medium text-gray-900 leading-5">
+                                {tour.tour_name}
+                              </span>
+                              {expired && (
+                                <span className="inline-flex items-center gap-1 shrink-0 rounded-full bg-danger-100 px-2 py-0.5 text-[11px] font-semibold text-danger-700 ring-1 ring-inset ring-danger-200">
+                                  <AlertTriangle className="w-3 h-3" />
+                                  Expired
+                                </span>
+                              )}
+                            </div>
+                            {tour.pier && (
+                              <div className="mt-1 text-xs text-gray-500">
+                                Pier: {tour.pier}
+                              </div>
+                            )}
+                          </td>
 
-                return (
-                  <div
-                    key={tour.id}
-                    className={`p-4 space-y-3 ${
-                      expired ? "bg-danger-50/40" : ""
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className="font-medium text-gray-900 leading-5">
-                          {tour.tour_name}
+                          <td className="px-6 py-3 whitespace-nowrap text-gray-900">
+                            {tour.departure_from || "-"}
+                          </td>
+
+                          <td className="px-6 py-3 whitespace-nowrap text-right">
+                            <span className="inline-flex items-baseline rounded-md bg-success-50 px-2 py-1 ring-1 ring-success-200 font-semibold text-success-700 tabular-nums">
+                              THB {formatPrice(tour.adult_price)}
+                            </span>
+                          </td>
+
+                          <td className="px-6 py-3 whitespace-nowrap text-right">
+                            <span className="inline-flex items-baseline rounded-md bg-brand-50 px-2 py-1 ring-1 ring-brand-200 font-semibold text-brand-700 tabular-nums">
+                              THB {formatPrice(tour.child_price)}
+                            </span>
+                          </td>
+
+                          <td
+                            className={`px-6 py-3 whitespace-nowrap ${
+                              expired ? "text-danger-700" : "text-gray-500"
+                            }`}
+                          >
+                            {formatDate(tour.end_date)}
+                          </td>
+
+                          <td className="px-6 py-3 whitespace-nowrap text-right">
+                            {renderTourActions(tour)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile cards */}
+              <div className="md:hidden divide-y divide-gray-100">
+                {supplierTours.map((tour) => {
+                  const expired = isExpired(tour.end_date);
+
+                  return (
+                    <div
+                      key={tour.id}
+                      className={`p-4 space-y-3 ${
+                        expired ? "bg-danger-50/40" : ""
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="font-medium text-gray-900 leading-5">
+                            {tour.tour_name}
+                          </div>
+                          <div className="mt-1 text-xs text-gray-500">
+                            {tour.departure_from || "-"}
+                          </div>
                         </div>
-                        <div className="mt-1 text-xs text-gray-500">
-                          {tour.departure_from || "-"}
-                        </div>
+                        {expired && (
+                          <span className="inline-flex items-center gap-1 shrink-0 rounded-full bg-danger-100 px-2 py-0.5 text-[11px] font-semibold text-danger-700 ring-1 ring-inset ring-danger-200">
+                            <AlertTriangle className="w-3 h-3" />
+                            Expired
+                          </span>
+                        )}
                       </div>
-                      {expired && (
-                        <span className="inline-flex items-center gap-1 shrink-0 rounded-full bg-danger-100 px-2 py-0.5 text-[11px] font-semibold text-danger-700 ring-1 ring-inset ring-danger-200">
-                          <AlertTriangle className="w-3 h-3" />
-                          Expired
+
+                      <div className="flex flex-wrap items-center gap-2 text-sm">
+                        <span className="rounded-md bg-success-50 px-2 py-1 ring-1 ring-success-200 font-semibold text-success-700 tabular-nums">
+                          Adult THB {formatPrice(tour.adult_price)}
                         </span>
-                      )}
-                    </div>
+                        <span className="rounded-md bg-brand-50 px-2 py-1 ring-1 ring-brand-200 font-semibold text-brand-700 tabular-nums">
+                          Child THB {formatPrice(tour.child_price)}
+                        </span>
+                      </div>
 
-                    <div className="flex flex-wrap items-center gap-2 text-sm">
-                      <span className="rounded-md bg-success-50 px-2 py-1 ring-1 ring-success-200 font-semibold text-success-700 tabular-nums">
-                        Adult THB {formatPrice(tour.adult_price)}
-                      </span>
-                      <span className="rounded-md bg-brand-50 px-2 py-1 ring-1 ring-brand-200 font-semibold text-brand-700 tabular-nums">
-                        Child THB {formatPrice(tour.child_price)}
-                      </span>
+                      {renderTourActions(tour)}
                     </div>
-
-                    {renderTourActions(tour)}
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        )}
-      </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Modals */}
       <TourDetailsModal

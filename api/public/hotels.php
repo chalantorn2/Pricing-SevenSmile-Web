@@ -26,7 +26,7 @@ publicApiInit($VALID_API_KEY);
 // Columns sent for each hotel. Listed explicitly so a future internal column
 // cannot leak by accident.
 $HOTEL_COLUMNS = 'id, source_id, name, slug, destination, stars, description,
-    short_description, rating, review_count, main_image, amenities, check_in_time,
+    short_description, rating, review_count, main_image, logo, amenities, check_in_time,
     check_out_time, address, contact_phone, contact_email, website, is_featured,
     is_active, images, room_types, rate_validity, child_policy, rate_terms,
     created_at, updated_at';

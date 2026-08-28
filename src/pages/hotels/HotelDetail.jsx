@@ -1,6 +1,27 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Ban, Tag, CalendarDays, Table2 } from "lucide-react";
+import {
+  Ban,
+  Tag,
+  CalendarDays,
+  Table2,
+  ArrowLeft,
+  BedDouble,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Globe,
+  Link2,
+  Mail,
+  MapPin,
+  Maximize2,
+  Pencil,
+  Phone,
+  Star,
+  Users,
+  X,
+} from "lucide-react";
 import { hotelsService } from "../../services/api-service";
 import NoticeCalendar from "../../components/hotels/NoticeCalendar";
 
@@ -256,8 +277,11 @@ export default function HotelDetail() {
   if (error || !hotel) {
     return (
       <div className="space-y-4">
-        <Link to="/hotel" className="text-brand-600 hover:underline text-sm">
-          ← Back to hotels
+        <Link
+          to="/hotel"
+          className="inline-flex items-center gap-1 text-brand-600 hover:underline text-sm"
+        >
+          <ArrowLeft size={14} /> Back to hotels
         </Link>
         <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-12 text-center space-y-4">
           <h2 className="text-2xl font-semibold text-gray-900">
@@ -285,7 +309,7 @@ export default function HotelDetail() {
           <Link to="/hotel" className="hover:text-brand-700">
             Hotels
           </Link>
-          <span className="text-gray-400">›</span>
+          <ChevronRight size={14} className="text-gray-400" />
           <span className="text-gray-900 font-medium truncate max-w-[220px]">
             {hotel.name}
           </span>
@@ -306,7 +330,7 @@ export default function HotelDetail() {
             className="absolute top-6 right-6 bg-black/30 backdrop-blur-md text-white/80 hover:text-white hover:bg-black/50 p-3 rounded-full transition"
             title="Share"
           >
-            {copied ? "✓" : "🔗"}
+            {copied ? <Check size={18} /> : <Link2 size={18} />}
           </button>
           {copied && (
             <span className="absolute top-6 right-20 bg-black/60 text-white text-xs px-3 py-2 rounded-full">
@@ -323,9 +347,13 @@ export default function HotelDetail() {
             {hotel.stars ? (
               <div className="flex gap-1 bg-black/30 backdrop-blur-md px-3 py-1 rounded-full">
                 {Array.from({ length: parseInt(hotel.stars) || 0 }).map((_, i) => (
-                  <span key={i} className="text-warning-600 text-sm">
-                    ★
-                  </span>
+                  <Star
+                    key={i}
+                    size={14}
+                    className="text-warning-600"
+                    fill="currentColor"
+                    strokeWidth={0}
+                  />
                 ))}
               </div>
             ) : null}
@@ -336,15 +364,30 @@ export default function HotelDetail() {
             )}
           </div>
 
+          {hotel.logo && (
+            <img
+              src={hotel.logo}
+              alt=""
+              className="h-16 md:h-20 w-auto max-w-[220px] object-contain rounded-lg bg-white/90 ring-1 ring-black/5 p-2 mb-4"
+            />
+          )}
+
           <h1 className="text-3xl md:text-5xl font-semibold text-white mb-3 leading-tight">
             {hotel.name}
           </h1>
 
           <div className="flex items-center text-white/90 gap-6 text-sm md:text-base">
-            <span className="flex items-center gap-2">📍 {hotel.destination}</span>
+            <span className="flex items-center gap-2">
+              <MapPin size={16} /> {hotel.destination}
+            </span>
             {parseFloat(hotel.rating) > 0 && (
               <span className="flex items-center gap-2">
-                <span className="text-warning-600">★</span>
+                <Star
+                  size={16}
+                  className="text-warning-600"
+                  fill="currentColor"
+                  strokeWidth={0}
+                />
                 <span className="font-semibold">{hotel.rating} / 5.0</span>
                 <span className="text-white/60">
                   ({hotel.review_count} reviews)
@@ -627,13 +670,15 @@ export default function HotelDetail() {
                 {(hotel.check_in_time || hotel.check_out_time) && (
                   <div className="mt-6 flex flex-wrap gap-6 text-gray-500">
                     {hotel.check_in_time && (
-                      <span>
-                        🕐 Check-in: <strong>{hotel.check_in_time}</strong>
+                      <span className="flex items-center gap-2">
+                        <Clock size={16} /> Check-in:{" "}
+                        <strong>{hotel.check_in_time}</strong>
                       </span>
                     )}
                     {hotel.check_out_time && (
-                      <span>
-                        🕐 Check-out: <strong>{hotel.check_out_time}</strong>
+                      <span className="flex items-center gap-2">
+                        <Clock size={16} /> Check-out:{" "}
+                        <strong>{hotel.check_out_time}</strong>
                       </span>
                     )}
                   </div>
@@ -651,7 +696,7 @@ export default function HotelDetail() {
                   {amenities.map((a, idx) => (
                     <div key={idx} className="flex items-center gap-3 text-gray-700">
                       <span className="w-9 h-9 rounded-full bg-warning-100 flex items-center justify-center text-success-600 shrink-0">
-                        ✓
+                        <Check size={16} />
                       </span>
                       <span className="font-medium text-sm md:text-base">{a}</span>
                     </div>
@@ -712,9 +757,21 @@ export default function HotelDetail() {
                           </p>
                         )}
                         <div className="flex flex-wrap gap-3 text-sm text-gray-500">
-                          {room.bed_type && <span>🛏 {room.bed_type} Bed</span>}
-                          {room.max_guests && <span>👥 Max {room.max_guests} guests</span>}
-                          {room.room_size && <span>📐 {room.room_size} sqm</span>}
+                          {room.bed_type && (
+                            <span className="flex items-center gap-1.5">
+                              <BedDouble size={16} /> {room.bed_type} Bed
+                            </span>
+                          )}
+                          {room.max_guests && (
+                            <span className="flex items-center gap-1.5">
+                              <Users size={16} /> Max {room.max_guests} guests
+                            </span>
+                          )}
+                          {room.room_size && (
+                            <span className="flex items-center gap-1.5">
+                              <Maximize2 size={16} /> {room.room_size} sqm
+                            </span>
+                          )}
                         </div>
                         {room.amenities && room.amenities.length > 0 && (
                           <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100">
@@ -790,17 +847,19 @@ export default function HotelDetail() {
               <div className="space-y-3 text-sm text-gray-700">
                 {hotel.contact_phone && (
                   <div className="flex items-center gap-3">
-                    📞 <span>{hotel.contact_phone}</span>
+                    <Phone size={16} className="text-gray-400 shrink-0" />
+                    <span>{hotel.contact_phone}</span>
                   </div>
                 )}
                 {hotel.contact_email && (
                   <div className="flex items-center gap-3 break-all">
-                    ✉️ <span>{hotel.contact_email}</span>
+                    <Mail size={16} className="text-gray-400 shrink-0" />
+                    <span>{hotel.contact_email}</span>
                   </div>
                 )}
                 {hotel.website && (
                   <div className="flex items-center gap-3">
-                    🌐{" "}
+                    <Globe size={16} className="text-gray-400 shrink-0" />
                     <a
                       href={hotel.website}
                       target="_blank"
@@ -816,7 +875,7 @@ export default function HotelDetail() {
               {hotel.address && (
                 <div className="pt-4 border-t border-gray-100">
                   <div className="flex items-start gap-3 text-sm text-gray-500">
-                    📍
+                    <MapPin size={16} className="text-gray-400 shrink-0 mt-0.5" />
                     <div>
                       <span>{hotel.address}</span>
                       <a
@@ -825,9 +884,9 @@ export default function HotelDetail() {
                         )}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block mt-1.5 text-brand-600 hover:underline font-medium text-xs"
+                        className="inline-flex items-center gap-1 mt-1.5 text-brand-600 hover:underline font-medium text-xs"
                       >
-                        View on Google Maps →
+                        View on Google Maps <ChevronRight size={12} />
                       </a>
                     </div>
                   </div>
@@ -836,23 +895,23 @@ export default function HotelDetail() {
 
               <Link
                 to={`/hotel/rates/${slug}`}
-                className="block text-center w-full bg-brand-600 text-white px-4 py-2.5 rounded-xl font-medium hover:bg-brand-700"
+                className="flex items-center justify-center gap-2 w-full bg-brand-600 text-white px-4 py-2.5 rounded-xl font-medium hover:bg-brand-700"
               >
-                ✎ Edit net rates
+                <Pencil size={16} /> Edit net rates
               </Link>
 
               <Link
                 to={`/hotel/notices/${slug}`}
-                className="block text-center w-full border border-warning-200 text-warning-700 bg-warning-50 px-4 py-2.5 rounded-xl font-medium hover:bg-warning-100"
+                className="flex items-center justify-center gap-2 w-full border border-warning-200 text-warning-700 bg-warning-50 px-4 py-2.5 rounded-xl font-medium hover:bg-warning-100"
               >
-                🗓 Stop Sale &amp; Promotions
+                <CalendarDays size={16} /> Stop Sale &amp; Promotions
               </Link>
 
               <Link
                 to="/hotel"
-                className="block text-center w-full border border-gray-200 text-gray-500 px-4 py-2.5 rounded-xl font-medium hover:bg-gray-50"
+                className="flex items-center justify-center gap-2 w-full border border-gray-200 text-gray-500 px-4 py-2.5 rounded-xl font-medium hover:bg-gray-50"
               >
-                ← Back to hotels
+                <ArrowLeft size={16} /> Back to hotels
               </Link>
             </div>
           </div>
@@ -907,16 +966,16 @@ export default function HotelDetail() {
           )}
 
           <button
-            className="absolute top-6 right-6 text-white/70 hover:text-white p-2 z-10 text-3xl leading-none"
+            className="absolute top-6 right-6 text-white/70 hover:text-white p-2 z-10"
             onClick={closeLightbox}
           >
-            ✕
+            <X size={28} />
           </button>
           <button
-            className="absolute left-4 md:left-8 text-white/70 hover:text-white p-4 bg-black/20 hover:bg-black/50 rounded-full text-2xl"
+            className="absolute left-4 md:left-8 text-white/70 hover:text-white p-4 bg-black/20 hover:bg-black/50 rounded-full"
             onClick={prevImage}
           >
-            ‹
+            <ChevronLeft size={24} />
           </button>
           <img
             src={lightboxImages[lightboxIndex]?.image_url}
@@ -925,10 +984,10 @@ export default function HotelDetail() {
             onClick={(e) => e.stopPropagation()}
           />
           <button
-            className="absolute right-4 md:right-8 text-white/70 hover:text-white p-4 bg-black/20 hover:bg-black/50 rounded-full text-2xl"
+            className="absolute right-4 md:right-8 text-white/70 hover:text-white p-4 bg-black/20 hover:bg-black/50 rounded-full"
             onClick={nextImage}
           >
-            ›
+            <ChevronRight size={24} />
           </button>
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3">
             {lightboxImages[lightboxIndex]?.caption && (

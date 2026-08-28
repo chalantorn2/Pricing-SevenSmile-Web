@@ -1,36 +1,37 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { hotelsService } from "../../services/api-service";
+import { restaurantsService } from "../../services/api-service";
 
 const PRESET_CATEGORIES = [
   "Exterior",
-  "Lobby",
-  "Bedroom",
-  "Bathroom",
-  "Restaurant",
-  "Pool",
-  "Spa",
-  "Gym",
+  "Interior",
+  "Dining Area",
+  "Private Room",
+  "Food",
+  "Bar",
+  "Kitchen",
   "View",
 ];
-const BED_TYPES = ["King", "Queen", "Twin", "Double", "Single", "Bunk"];
+const MENU_KINDS = ["Set Menu", "Buffet", "A La Carte", "Course", "Coffee Break"];
 
 const EMPTY = {
   name: "",
   destination: "",
-  stars: 4,
+  cuisine: "",
   description: "",
   short_description: "",
   address: "",
+  map_url: "",
   contact_phone: "",
   contact_email: "",
   website: "",
-  check_in_time: "",
-  check_out_time: "",
+  open_time: "",
+  close_time: "",
+  seating_capacity: "",
   main_image: "",
   logo: "",
   rating: 0,
   review_count: 0,
-  amenities: "",
+  facilities: "",
   is_featured: false,
   is_active: true,
 };
@@ -38,7 +39,7 @@ const EMPTY = {
 const TABS = [
   { key: "basic", label: "Basic Info" },
   { key: "media", label: "Media" },
-  { key: "rooms", label: "Room Types" },
+  { key: "menus", label: "Menus" },
   { key: "settings", label: "Settings" },
 ];
 
@@ -77,41 +78,44 @@ const SectionCard = ({ title, right, children }) => (
   </div>
 );
 
-function hotelToForm(h) {
+function restaurantToForm(r) {
   return {
     ...EMPTY,
-    name: h.name || "",
-    destination: h.destination || "",
-    stars: h.stars ?? 4,
-    description: h.description || "",
-    short_description: h.short_description || "",
-    address: h.address || "",
-    contact_phone: h.contact_phone || "",
-    contact_email: h.contact_email || "",
-    website: h.website || "",
-    check_in_time: h.check_in_time || "",
-    check_out_time: h.check_out_time || "",
-    main_image: h.main_image || "",
-    logo: h.logo || "",
-    rating: h.rating ?? 0,
-    review_count: h.review_count ?? 0,
-    amenities: Array.isArray(h.amenities) ? h.amenities.join("\n") : "",
-    is_featured: Number(h.is_featured) === 1,
-    is_active: Number(h.is_active) === 1,
+    name: r.name || "",
+    destination: r.destination || "",
+    cuisine: r.cuisine || "",
+    description: r.description || "",
+    short_description: r.short_description || "",
+    address: r.address || "",
+    map_url: r.map_url || "",
+    contact_phone: r.contact_phone || "",
+    contact_email: r.contact_email || "",
+    website: r.website || "",
+    open_time: r.open_time || "",
+    close_time: r.close_time || "",
+    seating_capacity: r.seating_capacity ?? "",
+    main_image: r.main_image || "",
+    logo: r.logo || "",
+    rating: r.rating ?? 0,
+    review_count: r.review_count ?? 0,
+    facilities: Array.isArray(r.facilities) ? r.facilities.join("\n") : "",
+    is_featured: Number(r.is_featured) === 1,
+    is_active: Number(r.is_active) === 1,
   };
 }
 
 /**
- * Create/edit a hotel by hand. Ported from the indosmilesouthservices.com admin
- * modal — same tabs, category-grouped gallery (bulk category / delete, drag
- * reorder) and room-type builder — restyled to this app's UI.
+ * Create/edit a restaurant by hand. Built on the same shape as HotelFormModal —
+ * same tabs, category-grouped gallery and repeatable builder — with the room-type
+ * builder replaced by a menu builder. Menus carry no price here; prices live in
+ * the (future) restaurant rate editor, the same split hotels use.
  */
-const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
-  const isEdit = Boolean(hotel);
+const RestaurantFormModal = ({ restaurant, destinations, cuisines, onClose, onSaved }) => {
+  const isEdit = Boolean(restaurant);
   const [tab, setTab] = useState("basic");
   const [form, setForm] = useState(EMPTY);
   const [gallery, setGallery] = useState([]); // { image_url, category, caption }[]
-  const [rooms, setRooms] = useState([]);
+  const [menus, setMenus] = useState([]);
   const [selected, setSelected] = useState(() => new Set()); // gallery indexes
   const [uploadCategory, setUploadCategory] = useState("Uncategorized");
   const [customCategory, setCustomCategory] = useState("");
@@ -123,48 +127,47 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
   const dragIndex = useRef(null);
 
   useEffect(() => {
-    if (hotel) {
-      setForm(hotelToForm(hotel));
+    if (restaurant) {
+      setForm(restaurantToForm(restaurant));
       setGallery(
-        Array.isArray(hotel.images)
-          ? hotel.images.map((img) => ({
+        Array.isArray(restaurant.images)
+          ? restaurant.images.map((img) => ({
               image_url: img.image_url,
               category: img.category || "Uncategorized",
               caption: img.caption || "",
             }))
           : []
       );
-      setRooms(
-        Array.isArray(hotel.room_types)
-          ? hotel.room_types.map((r) => ({
-              name: r.name || "",
-              bed_type: r.bed_type || "",
-              max_guests: r.max_guests ?? 2,
-              room_size: r.room_size ?? "",
-              description: r.description || "",
-              amenities: Array.isArray(r.amenities) ? r.amenities.join(", ") : "",
+      setMenus(
+        Array.isArray(restaurant.menu_types)
+          ? restaurant.menu_types.map((m) => ({
+              name: m.name || "",
+              kind: m.kind || "",
+              min_pax: m.min_pax ?? "",
+              description: m.description || "",
+              items: Array.isArray(m.items) ? m.items.join(", ") : "",
             }))
           : []
       );
     } else {
       setForm(EMPTY);
       setGallery([]);
-      setRooms([]);
+      setMenus([]);
     }
     setSelected(new Set());
     setTab("basic");
     setError("");
-  }, [hotel]);
+  }, [restaurant]);
 
   const set = (key) => (e) => {
     const value = e.target.type === "checkbox" ? e.target.checked : e.target.value;
     setForm((f) => ({ ...f, [key]: value }));
   };
 
-  // --- category options for the gallery (presets + room names + custom in use) ---
-  const roomNames = useMemo(
-    () => rooms.map((r) => r.name.trim()).filter(Boolean),
-    [rooms]
+  // --- category options for the gallery (presets + menu names + custom in use) ---
+  const menuNames = useMemo(
+    () => menus.map((m) => m.name.trim()).filter(Boolean),
+    [menus]
   );
   const categoryOptions = useMemo(() => {
     const used = new Set(gallery.map((g) => g.category));
@@ -173,10 +176,10 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
         c &&
         c !== "Uncategorized" &&
         !PRESET_CATEGORIES.includes(c) &&
-        !roomNames.includes(c)
+        !menuNames.includes(c)
     );
-    return { presets: PRESET_CATEGORIES, rooms: roomNames, custom };
-  }, [gallery, roomNames]);
+    return { presets: PRESET_CATEGORIES, menus: menuNames, custom };
+  }, [gallery, menuNames]);
 
   const resolveUploadCategory = () => {
     if (uploadCategory === "__custom__")
@@ -189,7 +192,7 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
     if (!files?.[0]) return;
     setMainUploading(true);
     try {
-      const data = await hotelsService.uploadHotelImages([files[0]]);
+      const data = await restaurantsService.uploadRestaurantImages([files[0]]);
       if (data.url) setForm((f) => ({ ...f, main_image: data.url }));
     } catch (err) {
       setError(err.message);
@@ -202,7 +205,7 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
     if (!files?.[0]) return;
     setLogoUploading(true);
     try {
-      const data = await hotelsService.uploadHotelImages([files[0]]);
+      const data = await restaurantsService.uploadRestaurantImages([files[0]]);
       if (data.url) setForm((f) => ({ ...f, logo: data.url }));
     } catch (err) {
       setError(err.message);
@@ -216,7 +219,7 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
     const category = resolveUploadCategory();
     setGalleryUploading(true);
     try {
-      const data = await hotelsService.uploadHotelImages(files);
+      const data = await restaurantsService.uploadRestaurantImages(files);
       setGallery((g) => [
         ...g,
         ...(data.urls || []).map((url) => ({
@@ -225,7 +228,8 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
           caption: "",
         })),
       ]);
-      if (data.errors?.length) setError("Some uploads failed: " + data.errors.join(", "));
+      if (data.errors?.length)
+        setError("Some uploads failed: " + data.errors.join(", "));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -244,7 +248,9 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
 
   const applyCategory = (category) => {
     if (!category) return;
-    setGallery((g) => g.map((img, i) => (selected.has(i) ? { ...img, category } : img)));
+    setGallery((g) =>
+      g.map((img, i) => (selected.has(i) ? { ...img, category } : img))
+    );
     setSelected(new Set());
   };
 
@@ -274,15 +280,15 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
     setSelected(new Set());
   };
 
-  // --- room builder ---
-  const addRoom = () =>
-    setRooms((r) => [
-      ...r,
-      { name: "", bed_type: "", max_guests: 2, room_size: "", description: "", amenities: "" },
+  // --- menu builder ---
+  const addMenu = () =>
+    setMenus((m) => [
+      ...m,
+      { name: "", kind: "Set Menu", min_pax: "", description: "", items: "" },
     ]);
-  const updateRoom = (i, key, value) =>
-    setRooms((r) => r.map((x, idx) => (idx === i ? { ...x, [key]: value } : x)));
-  const removeRoom = (i) => setRooms((r) => r.filter((_, idx) => idx !== i));
+  const updateMenu = (i, key, value) =>
+    setMenus((m) => m.map((x, idx) => (idx === i ? { ...x, [key]: value } : x)));
+  const removeMenu = (i) => setMenus((m) => m.filter((_, idx) => idx !== i));
 
   // grouped gallery view (keeps original indexes)
   const grouped = useMemo(() => {
@@ -301,32 +307,33 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
   const buildPayload = () => ({
     name: form.name,
     destination: form.destination,
-    stars: parseInt(form.stars, 10) || 0,
+    cuisine: form.cuisine || null,
     description: form.description,
     short_description: form.short_description,
     address: form.address || null,
+    map_url: form.map_url || null,
     contact_phone: form.contact_phone || null,
     contact_email: form.contact_email || null,
     website: form.website || null,
-    check_in_time: form.check_in_time || null,
-    check_out_time: form.check_out_time || null,
+    open_time: form.open_time || null,
+    close_time: form.close_time || null,
+    seating_capacity: form.seating_capacity === "" ? null : parseInt(form.seating_capacity, 10) || null,
     main_image: form.main_image,
     logo: form.logo || null,
     rating: parseFloat(form.rating) || 0,
     review_count: parseInt(form.review_count, 10) || 0,
-    amenities: linesToArray(form.amenities),
+    facilities: linesToArray(form.facilities),
     is_featured: form.is_featured ? 1 : 0,
     is_active: form.is_active ? 1 : 0,
     images: gallery.map((img, index) => ({ ...img, sort_order: index })),
-    room_types: rooms
-      .filter((r) => r.name.trim())
-      .map((r, index) => ({
-        name: r.name.trim(),
-        description: r.description.trim() || null,
-        max_guests: parseInt(r.max_guests, 10) || 2,
-        bed_type: r.bed_type || null,
-        room_size: parseFloat(r.room_size) || null,
-        amenities: csvToArray(r.amenities),
+    menu_types: menus
+      .filter((m) => m.name.trim())
+      .map((m, index) => ({
+        name: m.name.trim(),
+        kind: m.kind || null,
+        min_pax: parseInt(m.min_pax, 10) || null,
+        description: m.description.trim() || null,
+        items: csvToArray(m.items),
         sort_order: index,
       })),
   });
@@ -334,7 +341,7 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     for (const [key, label] of [
-      ["name", "Hotel Name"],
+      ["name", "Restaurant Name"],
       ["destination", "Destination"],
       ["description", "Full Description"],
     ]) {
@@ -348,9 +355,11 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
     setError("");
     try {
       const payload = buildPayload();
-      if (isEdit) await hotelsService.updateHotel(hotel.id, payload);
-      else await hotelsService.createHotel(payload);
-      onSaved(isEdit ? "Hotel updated successfully" : "Hotel created successfully");
+      if (isEdit) await restaurantsService.updateRestaurant(restaurant.id, payload);
+      else await restaurantsService.createRestaurant(payload);
+      onSaved(
+        isEdit ? "Restaurant updated successfully" : "Restaurant created successfully"
+      );
     } catch (err) {
       setError(err.message);
     } finally {
@@ -368,12 +377,12 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">
-              {isEdit ? "Edit Hotel" : "Add New Hotel"}
+              {isEdit ? "Edit Restaurant" : "Add New Restaurant"}
             </h2>
             <p className="text-sm text-gray-500 mt-0.5">
               {isEdit
-                ? "Update the hotel property details"
-                : "Fill in the details to add a hotel property"}
+                ? "Update the restaurant details"
+                : "Fill in the details to add a restaurant"}
             </p>
           </div>
           <button
@@ -403,18 +412,22 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
           ))}
         </div>
 
-        <form id="hotelForm" onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
+        <form
+          id="restaurantForm"
+          onSubmit={handleSubmit}
+          className="flex-1 overflow-y-auto p-6"
+        >
           {/* Basic */}
           {tab === "basic" && (
             <div>
-              <SectionCard title="Hotel Identity">
+              <SectionCard title="Restaurant Identity">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                  <Field label="Hotel Name" required>
+                  <Field label="Restaurant Name" required>
                     <input
                       className={inputClass}
                       value={form.name}
                       onChange={set("name")}
-                      placeholder="e.g. The Naka Island Resort"
+                      placeholder="e.g. Ruen Mai Seafood"
                     />
                   </Field>
                   <Field label="Destination" required>
@@ -422,25 +435,42 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                       className={inputClass}
                       value={form.destination}
                       onChange={set("destination")}
-                      list="hotel-destinations"
-                      placeholder="e.g. Phuket, Thailand"
+                      list="restaurant-destinations"
+                      placeholder="e.g. Krabi, Thailand"
                     />
-                    <datalist id="hotel-destinations">
+                    <datalist id="restaurant-destinations">
                       {(destinations || []).map((d) => (
                         <option key={d} value={d} />
                       ))}
                     </datalist>
                   </Field>
                 </div>
-                <Field label="Stars">
-                  <select className={inputClass} value={form.stars} onChange={set("stars")}>
-                    {[1, 2, 3, 4, 5].map((n) => (
-                      <option key={n} value={n}>
-                        {n} Star{n === 1 ? "" : "s"}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="Cuisine" hint="(e.g. Thai, Seafood, Halal)">
+                    <input
+                      className={inputClass}
+                      value={form.cuisine}
+                      onChange={set("cuisine")}
+                      list="restaurant-cuisines"
+                      placeholder="Thai / Seafood"
+                    />
+                    <datalist id="restaurant-cuisines">
+                      {(cuisines || []).map((c) => (
+                        <option key={c} value={c} />
+                      ))}
+                    </datalist>
+                  </Field>
+                  <Field label="Seating Capacity" hint="(max pax)">
+                    <input
+                      type="number"
+                      min="0"
+                      className={inputClass}
+                      value={form.seating_capacity}
+                      onChange={set("seating_capacity")}
+                      placeholder="120"
+                    />
+                  </Field>
+                </div>
               </SectionCard>
 
               <SectionCard title="Description">
@@ -461,7 +491,7 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                     className={`${inputClass} resize-y`}
                     value={form.description}
                     onChange={set("description")}
-                    placeholder="Describe the property..."
+                    placeholder="Describe the restaurant..."
                   />
                 </Field>
               </SectionCard>
@@ -474,6 +504,16 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                       value={form.address}
                       onChange={set("address")}
                       placeholder="Full address"
+                    />
+                  </Field>
+                </div>
+                <div className="mb-4">
+                  <Field label="Google Maps Link">
+                    <input
+                      className={inputClass}
+                      value={form.map_url}
+                      onChange={set("map_url")}
+                      placeholder="https://maps.google.com/..."
                     />
                   </Field>
                 </div>
@@ -492,7 +532,7 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                       className={inputClass}
                       value={form.contact_email}
                       onChange={set("contact_email")}
-                      placeholder="reservations@hotel.com"
+                      placeholder="reservations@restaurant.com"
                     />
                   </Field>
                 </div>
@@ -508,20 +548,20 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                   <div />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="Check-in Time">
+                  <Field label="Opening Time">
                     <input
                       className={inputClass}
-                      value={form.check_in_time}
-                      onChange={set("check_in_time")}
-                      placeholder="14:00"
+                      value={form.open_time}
+                      onChange={set("open_time")}
+                      placeholder="10:00"
                     />
                   </Field>
-                  <Field label="Check-out Time">
+                  <Field label="Closing Time">
                     <input
                       className={inputClass}
-                      value={form.check_out_time}
-                      onChange={set("check_out_time")}
-                      placeholder="12:00"
+                      value={form.close_time}
+                      onChange={set("close_time")}
+                      placeholder="22:00"
                     />
                   </Field>
                 </div>
@@ -532,8 +572,6 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
           {/* Media */}
           {tab === "media" && (
             <div>
-              {/* Logo and cover sit side by side so the whole media tab fits
-                  without much scrolling. */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <SectionCard title="Logo" right="brand mark">
                   {form.logo ? (
@@ -626,9 +664,9 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                           </option>
                         ))}
                       </optgroup>
-                      {categoryOptions.rooms.length > 0 && (
-                        <optgroup label="Room Types">
-                          {categoryOptions.rooms.map((c) => (
+                      {categoryOptions.menus.length > 0 && (
+                        <optgroup label="Menus">
+                          {categoryOptions.menus.map((c) => (
                             <option key={c} value={c}>
                               {c}
                             </option>
@@ -694,7 +732,7 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                           {c}
                         </option>
                       ))}
-                      {categoryOptions.rooms.map((c) => (
+                      {categoryOptions.menus.map((c) => (
                         <option key={c} value={c}>
                           {c}
                         </option>
@@ -799,90 +837,85 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
             </div>
           )}
 
-          {/* Rooms */}
-          {tab === "rooms" && (
+          {/* Menus */}
+          {tab === "menus" && (
             <SectionCard
-              title="Room Types"
-              right={`${rooms.length} room type${rooms.length === 1 ? "" : "s"}`}
+              title="Menus"
+              right={`${menus.length} menu${menus.length === 1 ? "" : "s"}`}
             >
+              <p className="text-xs text-gray-400 mb-3">
+                Define what the restaurant sells. Prices are entered later in the rate
+                editor, so a menu can be set up before its contract rate is agreed.
+              </p>
               <div className="flex flex-col gap-3">
-                {rooms.map((room, i) => (
+                {menus.map((menu, i) => (
                   <div key={i} className="rounded-lg border border-gray-200 p-4">
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-sm font-semibold text-gray-900">
-                        Room Type {i + 1}
+                        Menu {i + 1}
                       </span>
                       <button
                         type="button"
-                        onClick={() => removeRoom(i)}
+                        onClick={() => removeMenu(i)}
                         className="text-sm text-danger-600 hover:underline"
                       >
                         Remove
                       </button>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-                      <Field label="Room Name" required>
+                      <Field label="Menu Name" required>
                         <input
                           className={inputClass}
-                          value={room.name}
-                          onChange={(e) => updateRoom(i, "name", e.target.value)}
-                          placeholder="e.g. Deluxe Ocean View"
+                          value={menu.name}
+                          onChange={(e) => updateMenu(i, "name", e.target.value)}
+                          placeholder="e.g. Seafood Set A"
                         />
                       </Field>
-                      <Field label="Bed Type">
+                      <Field label="Menu Type">
                         <select
                           className={inputClass}
-                          value={room.bed_type}
-                          onChange={(e) => updateRoom(i, "bed_type", e.target.value)}
+                          value={menu.kind}
+                          onChange={(e) => updateMenu(i, "kind", e.target.value)}
                         >
                           <option value="">Select…</option>
-                          {BED_TYPES.map((b) => (
-                            <option key={b} value={b}>
-                              {b}
+                          {MENU_KINDS.map((k) => (
+                            <option key={k} value={k}>
+                              {k}
                             </option>
                           ))}
                         </select>
                       </Field>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-                      <Field label="Max Guests">
+                      <Field label="Minimum Pax">
                         <input
                           type="number"
                           min="1"
                           className={inputClass}
-                          value={room.max_guests}
-                          onChange={(e) => updateRoom(i, "max_guests", e.target.value)}
+                          value={menu.min_pax}
+                          onChange={(e) => updateMenu(i, "min_pax", e.target.value)}
+                          placeholder="10"
                         />
                       </Field>
-                      <Field label="Room Size (sqm)">
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.1"
-                          className={inputClass}
-                          value={room.room_size}
-                          onChange={(e) => updateRoom(i, "room_size", e.target.value)}
-                          placeholder="32"
-                        />
-                      </Field>
+                      <div />
                     </div>
                     <div className="mb-3">
                       <Field label="Description">
                         <textarea
                           rows={2}
                           className={`${inputClass} resize-y`}
-                          value={room.description}
-                          onChange={(e) => updateRoom(i, "description", e.target.value)}
-                          placeholder="Describe this room type..."
+                          value={menu.description}
+                          onChange={(e) => updateMenu(i, "description", e.target.value)}
+                          placeholder="Describe this menu..."
                         />
                       </Field>
                     </div>
-                    <Field label="Amenities" hint="(comma-separated)">
+                    <Field label="Dishes" hint="(comma-separated)">
                       <input
                         className={inputClass}
-                        value={room.amenities}
-                        onChange={(e) => updateRoom(i, "amenities", e.target.value)}
-                        placeholder="WiFi, TV, Minibar, Balcony"
+                        value={menu.items}
+                        onChange={(e) => updateMenu(i, "items", e.target.value)}
+                        placeholder="Tom Yum Goong, Fried Rice, Steamed Fish, Fresh Fruit"
                       />
                     </Field>
                   </div>
@@ -890,10 +923,10 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
               </div>
               <button
                 type="button"
-                onClick={addRoom}
+                onClick={addMenu}
                 className="mt-3 w-full px-4 py-3 border-2 border-dashed border-gray-200 rounded-lg text-sm text-gray-500 hover:border-brand-500 hover:text-brand-600 transition"
               >
-                + Add Room Type
+                + Add Menu
               </button>
             </SectionCard>
           )}
@@ -925,14 +958,16 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                   </Field>
                 </div>
               </SectionCard>
-              <SectionCard title="Hotel Amenities">
-                <Field label="Amenities" hint="(one per line)">
+              <SectionCard title="Facilities">
+                <Field label="Facilities" hint="(one per line)">
                   <textarea
                     rows={5}
                     className={`${inputClass} resize-y`}
-                    value={form.amenities}
-                    onChange={set("amenities")}
-                    placeholder={"Free WiFi\nSwimming Pool\nSpa\nFitness Center"}
+                    value={form.facilities}
+                    onChange={set("facilities")}
+                    placeholder={
+                      "Air Conditioning\nPrivate Room\nParking\nSea View\nHalal Kitchen"
+                    }
                   />
                 </Field>
               </SectionCard>
@@ -945,8 +980,12 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                     className="w-4 h-4 accent-brand-600"
                   />
                   <div>
-                    <span className="text-sm font-medium text-gray-700">Featured Hotel</span>
-                    <p className="text-xs text-gray-400">Highlighted in the hotel list</p>
+                    <span className="text-sm font-medium text-gray-700">
+                      Featured Restaurant
+                    </span>
+                    <p className="text-xs text-gray-400">
+                      Highlighted in the restaurant list
+                    </p>
                   </div>
                 </label>
                 <label className="flex items-center gap-3 cursor-pointer">
@@ -979,11 +1018,11 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
             </button>
             <button
               type="submit"
-              form="hotelForm"
+              form="restaurantForm"
               disabled={saving}
               className="px-6 py-2 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {saving ? "Saving…" : "Save Hotel"}
+              {saving ? "Saving…" : "Save Restaurant"}
             </button>
           </div>
         </div>
@@ -992,4 +1031,4 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
   );
 };
 
-export default HotelFormModal;
+export default RestaurantFormModal;

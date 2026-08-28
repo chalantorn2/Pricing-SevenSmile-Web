@@ -1,5 +1,9 @@
 <?php
 // api/suppliers.php - Updated to support website field
+//
+// Suppliers come in two kinds and they are different companies: 'tour' vendors and
+// 'transfer' vendors, never both. GET takes ?type= to list one kind; without it
+// every supplier comes back, which is what the shared lookups still want.
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
@@ -30,6 +34,22 @@ try {
     ));
 
     $method = $_SERVER['REQUEST_METHOD'];
+
+    // Only the two kinds exist; anything else is a typo and is treated as "no
+    // filter" rather than silently matching nothing.
+    $SUPPLIER_TYPES = array('tour', 'transfer');
+    $typeFilter = (isset($_GET['type']) && in_array($_GET['type'], $SUPPLIER_TYPES, true))
+        ? $_GET['type']
+        : null;
+
+    // A supplier's kind is fixed when it is created and only ever set to one of the
+    // two; anything unrecognised falls back to 'tour', which is what every existing
+    // row is.
+    $requestedType = function ($data) use ($SUPPLIER_TYPES) {
+        return (isset($data['type']) && in_array($data['type'], $SUPPLIER_TYPES, true))
+            ? $data['type']
+            : 'tour';
+    };
 
     switch ($method) {
         case 'GET':
@@ -74,26 +94,34 @@ try {
 
             if ($search) {
                 // For AutoComplete - search by name and all phone numbers
-                $sql = "SELECT id, name, phone, phone_2, phone_3, phone_4, phone_5, line, website 
-                        FROM suppliers 
-                        WHERE name LIKE ? 
-                        OR phone LIKE ? OR phone_2 LIKE ? OR phone_3 LIKE ? OR phone_4 LIKE ? OR phone_5 LIKE ?
-                        ORDER BY name ASC 
-                        LIMIT 10";
-                $stmt = $pdo->prepare($sql);
+                $sql = "SELECT id, name, type, phone, phone_2, phone_3, phone_4, phone_5, line, website
+                        FROM suppliers
+                        WHERE (name LIKE ?
+                        OR phone LIKE ? OR phone_2 LIKE ? OR phone_3 LIKE ? OR phone_4 LIKE ? OR phone_5 LIKE ?)";
                 $searchParam = '%' . $search . '%';
-                $stmt->execute(array($searchParam, $searchParam, $searchParam, $searchParam, $searchParam, $searchParam));
+                $params = array($searchParam, $searchParam, $searchParam, $searchParam, $searchParam, $searchParam);
+                if ($typeFilter !== null) {
+                    $sql .= " AND type = ?";
+                    $params[] = $typeFilter;
+                }
+                $sql .= " ORDER BY name ASC LIMIT 10";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute($params);
             } else {
                 // Get all suppliers with tour count
-                $sql = "SELECT sa.*, 
+                $sql = "SELECT sa.*,
                               COUNT(t.id) as tour_count,
                               MAX(t.updated_at) as last_tour_update
                        FROM suppliers sa
-                       LEFT JOIN tours t ON sa.id = t.supplier_id
-                       GROUP BY sa.id
-                       ORDER BY sa.updated_at DESC";
+                       LEFT JOIN tours t ON sa.id = t.supplier_id";
+                $params = array();
+                if ($typeFilter !== null) {
+                    $sql .= " WHERE sa.type = ?";
+                    $params[] = $typeFilter;
+                }
+                $sql .= " GROUP BY sa.id ORDER BY sa.updated_at DESC";
                 $stmt = $pdo->prepare($sql);
-                $stmt->execute();
+                $stmt->execute($params);
             }
 
             $suppliers = $stmt->fetchAll();
@@ -123,12 +151,13 @@ try {
                 throw new Exception("This Supplier name already exists");
             }
 
-            $sql = "INSERT INTO suppliers (name, address, phone, phone_2, phone_3, phone_4, phone_5, line, facebook, whatsapp, website, email)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $sql = "INSERT INTO suppliers (name, type, address, phone, phone_2, phone_3, phone_4, phone_5, line, facebook, whatsapp, website, email)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             $stmt = $pdo->prepare($sql);
             $result = $stmt->execute(array(
                 $data['name'],
+                $requestedType($data),
                 isset($data['address']) ? $data['address'] : null,
                 isset($data['phone']) ? $data['phone'] : null,
                 isset($data['phone_2']) ? $data['phone_2'] : null,
@@ -180,8 +209,15 @@ try {
                 throw new Exception("This Supplier name already exists");
             }
 
+            // `type` is only written when the caller actually sends one, so an older
+            // form that knows nothing about it cannot quietly turn a transfer
+            // supplier into a tour supplier.
+            $typeUpdate = (isset($data['type']) && in_array($data['type'], $SUPPLIER_TYPES, true))
+                ? "type='" . $data['type'] . "', "
+                : "";
+
             $sql = "UPDATE suppliers
-                    SET name=?, address=?, phone=?, phone_2=?, phone_3=?, phone_4=?, phone_5=?, line=?, facebook=?, whatsapp=?, website=?, email=?, updated_at=NOW()
+                    SET name=?, {$typeUpdate}address=?, phone=?, phone_2=?, phone_3=?, phone_4=?, phone_5=?, line=?, facebook=?, whatsapp=?, website=?, email=?, updated_at=NOW()
                     WHERE id=?";
 
             $stmt = $pdo->prepare($sql);

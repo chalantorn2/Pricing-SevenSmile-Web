@@ -199,11 +199,14 @@ export const authService = {
 
 // ✨ NEW: Suppliers CRUD functions
 export const suppliersService = {
-  // Get all suppliers
-  async getAllSuppliers() {
+  // Get all suppliers. `type` is "tour" or "transfer" — different companies, so a
+  // caller almost always wants one kind; omit it only for a genuinely mixed list.
+  async getAllSuppliers(type) {
     try {
-      console.log("🏢 Fetching all suppliers...");
-      const response = await apiCall("/suppliers.php");
+      console.log("🏢 Fetching all suppliers...", type || "all types");
+      const response = await apiCall(
+        `/suppliers.php${type ? `?type=${encodeURIComponent(type)}` : ""}`
+      );
       console.log(
         "✅ Suppliers fetched successfully:",
         response.data?.length,
@@ -219,11 +222,13 @@ export const suppliersService = {
   },
 
   // Search suppliers (for AutoComplete)
-  async searchSuppliers(query) {
+  async searchSuppliers(query, type) {
     try {
-      console.log("🔍 Searching suppliers:", query);
+      console.log("🔍 Searching suppliers:", query, type || "all types");
       const response = await apiCall(
-        `/suppliers.php?search=${encodeURIComponent(query)}`
+        `/suppliers.php?search=${encodeURIComponent(query)}${
+          type ? `&type=${encodeURIComponent(type)}` : ""
+        }`
       );
       console.log(
         "✅ Suppliers search results:",
@@ -1077,6 +1082,291 @@ export const hotelsService = {
     } catch (error) {
       console.error("❌ Failed to delete hotel notice:", error);
       throw new Error("An error occurred while deleting the notice: " + error.message);
+    }
+  },
+};
+
+// Restaurants are entered by hand here — there is no external source to sync
+// from, so this is the master record. Same endpoint shape as hotelsService.
+export const restaurantsService = {
+  async getAllRestaurants(filters = {}) {
+    try {
+      const params = new URLSearchParams();
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+          params.append(key, value);
+        }
+      });
+      const query = params.toString();
+      const response = await apiCall(`/restaurants.php${query ? `?${query}` : ""}`);
+      return response;
+    } catch (error) {
+      console.error("❌ Failed to fetch restaurants:", error);
+      throw new Error(
+        "An error occurred while loading restaurants: " + error.message
+      );
+    }
+  },
+
+  // Get one restaurant by slug
+  async getRestaurantBySlug(slug) {
+    try {
+      const response = await apiCall(
+        `/restaurants.php?slug=${encodeURIComponent(slug)}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("❌ Failed to fetch restaurant:", error);
+      throw new Error(
+        "An error occurred while loading the restaurant: " + error.message
+      );
+    }
+  },
+
+  // Get one restaurant by id
+  async getRestaurantById(id) {
+    try {
+      const response = await apiCall(
+        `/restaurants.php?id=${encodeURIComponent(id)}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("❌ Failed to fetch restaurant:", error);
+      throw new Error(
+        "An error occurred while loading the restaurant: " + error.message
+      );
+    }
+  },
+
+  async createRestaurant(payload) {
+    try {
+      const response = await apiCall("/restaurant-manage.php", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      return response.data;
+    } catch (error) {
+      console.error("❌ Failed to create restaurant:", error);
+      throw new Error(
+        "An error occurred while saving the restaurant: " + error.message
+      );
+    }
+  },
+
+  async updateRestaurant(id, payload) {
+    try {
+      const response = await apiCall(
+        `/restaurant-manage.php?id=${encodeURIComponent(id)}`,
+        {
+          method: "PUT",
+          body: JSON.stringify(payload),
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("❌ Failed to update restaurant:", error);
+      throw new Error(
+        "An error occurred while saving the restaurant: " + error.message
+      );
+    }
+  },
+
+  async deleteRestaurant(id) {
+    try {
+      await apiCall(`/restaurant-manage.php?id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+      return true;
+    } catch (error) {
+      console.error("❌ Failed to delete restaurant:", error);
+      throw new Error(
+        "An error occurred while deleting the restaurant: " + error.message
+      );
+    }
+  },
+
+  // Upload one or more restaurant images, returns their public URLs
+  async uploadRestaurantImages(files) {
+    try {
+      const formData = new FormData();
+      Array.from(files).forEach((file) => formData.append("files[]", file));
+
+      const response = await fetch(`${API_BASE_URL}/restaurant-upload.php`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: formData,
+      });
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.error ||
+            (result.data?.errors || []).join(", ") ||
+            "Upload failed"
+        );
+      }
+      return result.data;
+    } catch (error) {
+      console.error("❌ Failed to upload restaurant image:", error);
+      throw new Error(
+        "An error occurred while uploading the image: " + error.message
+      );
+    }
+  },
+
+  // Net rates + free-text conditions for one restaurant (for the rate editor)
+  async getRestaurantRates(restaurantId) {
+    try {
+      const response = await apiCall(
+        `/restaurant-rates.php?restaurant_id=${encodeURIComponent(restaurantId)}`
+      );
+      return response.data; // { rates:[...], conditions:{...} }
+    } catch (error) {
+      console.error("❌ Failed to fetch restaurant rates:", error);
+      throw new Error(
+        "An error occurred while loading restaurant rates: " + error.message
+      );
+    }
+  },
+
+  // Bulk replace all rates for a restaurant (and optionally its conditions)
+  async saveRestaurantRates(restaurantId, rates, conditions) {
+    try {
+      const body = { restaurant_id: restaurantId, rates };
+      if (conditions) body.conditions = conditions;
+      const response = await apiCall("/restaurant-rates.php", {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+      return response;
+    } catch (error) {
+      console.error("❌ Failed to save restaurant rates:", error);
+      throw new Error(
+        "An error occurred while saving restaurant rates: " + error.message
+      );
+    }
+  },
+};
+
+// Transfers are a price matrix rather than a catalogue of vendors, so this
+// service is shaped around the three tables behind it (locations, vehicles and
+// the routes that pair them) instead of the get/create/update/delete-one-thing
+// pattern the hotel and restaurant services use.
+export const transfersService = {
+  // One call for the whole screen: { locations, vehicles, suppliers, routes }.
+  // Locations, vehicles and suppliers always come back in full; `province` and
+  // `supplier` only narrow the routes — `supplier` keeps a route's prices down to
+  // that one rate sheet.
+  async getTransferData(filters = {}) {
+    try {
+      const params = new URLSearchParams();
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+          params.append(key, value);
+        }
+      });
+      const query = params.toString();
+      const response = await apiCall(`/transfers.php${query ? `?${query}` : ""}`);
+      return response.data; // { locations, vehicles, suppliers, routes }
+    } catch (error) {
+      console.error("❌ Failed to fetch transfers:", error);
+      throw new Error(
+        "An error occurred while loading transfers: " + error.message
+      );
+    }
+  },
+
+  // One resource on its own — "locations", "vehicles", "routes" or "suppliers".
+  async getTransferResource(resource, filters = {}) {
+    try {
+      const params = new URLSearchParams({ resource });
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+          params.append(key, value);
+        }
+      });
+      const response = await apiCall(`/transfers.php?${params.toString()}`);
+      return response.data;
+    } catch (error) {
+      console.error(`❌ Failed to fetch transfer ${resource}:`, error);
+      throw new Error(
+        `An error occurred while loading transfer ${resource}: ` + error.message
+      );
+    }
+  },
+
+  // Create / update / delete take the same resource name. A route payload carries
+  // one supplier's full price set: `supplier_id` plus `prices`:
+  // [{ vehicle_id, price }]. Only that supplier's prices are replaced — the route
+  // is shared, so the other rate sheets on it stay as they were.
+  async createTransferItem(resource, payload) {
+    try {
+      const response = await apiCall(`/transfer-manage.php?resource=${resource}`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      return response.data;
+    } catch (error) {
+      console.error(`❌ Failed to create transfer ${resource}:`, error);
+      throw new Error("An error occurred while saving: " + error.message);
+    }
+  },
+
+  async updateTransferItem(resource, id, payload) {
+    try {
+      const response = await apiCall(
+        `/transfer-manage.php?resource=${resource}&id=${encodeURIComponent(id)}`,
+        {
+          method: "PUT",
+          body: JSON.stringify(payload),
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error(`❌ Failed to update transfer ${resource}:`, error);
+      throw new Error("An error occurred while saving: " + error.message);
+    }
+  },
+
+  async deleteTransferItem(resource, id) {
+    try {
+      const response = await apiCall(
+        `/transfer-manage.php?resource=${resource}&id=${encodeURIComponent(id)}`,
+        { method: "DELETE" }
+      );
+      return response.data;
+    } catch (error) {
+      console.error(`❌ Failed to delete transfer ${resource}:`, error);
+      throw new Error("An error occurred while deleting: " + error.message);
+    }
+  },
+
+  // Vehicle photo. Multipart, so it bypasses apiCall and sets its own headers.
+  async uploadTransferImage(file) {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch(`${API_BASE_URL}/transfer-upload.php`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: formData,
+      });
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.error ||
+            (result.data?.errors || []).join(", ") ||
+            "Upload failed"
+        );
+      }
+      return result.data; // { url, urls, errors }
+    } catch (error) {
+      console.error("❌ Failed to upload transfer image:", error);
+      throw new Error(
+        "An error occurred while uploading the image: " + error.message
+      );
     }
   },
 };

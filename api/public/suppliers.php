@@ -9,6 +9,7 @@ try {
     $sql = "SELECT
               s.id,
               s.name,
+              s.type,
               s.address,
               s.phone,
               s.phone_2,
@@ -35,6 +36,11 @@ try {
     if (isset($_GET['search']) && $_GET['search'] !== '') {
         $where[] = "s.name LIKE ?";
         $params[] = '%' . $_GET['search'] . '%';
+    }
+    // 'tour' or 'transfer' — different companies, so callers usually want one kind.
+    if (isset($_GET['type']) && in_array($_GET['type'], array('tour', 'transfer'), true)) {
+        $where[] = "s.type = ?";
+        $params[] = $_GET['type'];
     }
 
     if (count($where) > 0) {

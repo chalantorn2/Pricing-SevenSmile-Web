@@ -1,14 +1,10 @@
 <?php
-// api/hotel-manage.php
-// Create / update / delete hotels. This site is the master record for hotel data:
-// every hotel is editable here, including the ones originally imported from
-// indosmilesouthservices.com. `source_id` is kept only as a reference to the row
-// the data first came from (see api/public/hotels.php, which INDO Smile now pulls
-// from) and no longer restricts editing.
+// api/restaurant-manage.php
+// Create / update / delete restaurants. Mirrors api/hotel-manage.php.
 //
-// POST            -> create   (JSON body, source_id stays NULL)
+// POST            -> create   (JSON body)
 // PUT    ?id=123  -> update   (JSON body)
-// DELETE ?id=123  -> delete   (also drops its rates/notices)
+// DELETE ?id=123  -> delete
 
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
@@ -49,7 +45,7 @@ function makeSlug($name)
     $s = preg_replace('/[^a-z0-9]+/', '-', $s);
     $s = trim($s, '-');
     if ($s === '') {
-        $s = 'hotel-' . date('YmdHis');
+        $s = 'restaurant-' . date('YmdHis');
     }
     return substr($s, 0, 200);
 }
@@ -57,7 +53,7 @@ function makeSlug($name)
 // Append -2, -3 ... until the slug is free (ignoring $exceptId, the row we edit).
 function uniqueSlug($pdo, $slug, $exceptId = null)
 {
-    $stmt = $pdo->prepare('SELECT id FROM hotels WHERE slug = ? AND (? IS NULL OR id <> ?) LIMIT 1');
+    $stmt = $pdo->prepare('SELECT id FROM restaurants WHERE slug = ? AND (? IS NULL OR id <> ?) LIMIT 1');
     $candidate = $slug;
     $n = 1;
     while (true) {
@@ -70,31 +66,33 @@ function uniqueSlug($pdo, $slug, $exceptId = null)
     }
 }
 
-// Map the JSON body onto the hotels columns. Shared by create and update so both
-// accept exactly the payload the form builds.
+// Map the JSON body onto the restaurants columns. Shared by create and update so
+// both accept exactly the payload the form builds.
 function fieldsFromBody($b)
 {
     return array(
         ':name'              => isset($b['name']) ? trim($b['name']) : '',
         ':destination'       => isset($b['destination']) ? trim($b['destination']) : null,
-        ':stars'             => isset($b['stars']) && $b['stars'] !== '' ? (int) $b['stars'] : null,
+        ':cuisine'           => !empty($b['cuisine']) ? trim($b['cuisine']) : null,
         ':description'       => isset($b['description']) ? $b['description'] : null,
         ':short_description' => isset($b['short_description']) ? $b['short_description'] : null,
         ':rating'            => isset($b['rating']) && $b['rating'] !== '' ? (float) $b['rating'] : null,
         ':review_count'      => isset($b['review_count']) ? (int) $b['review_count'] : 0,
         ':main_image'        => !empty($b['main_image']) ? $b['main_image'] : null,
         ':logo'              => !empty($b['logo']) ? $b['logo'] : null,
-        ':amenities'         => isset($b['amenities']) ? json_encode($b['amenities'], JSON_UNESCAPED_UNICODE) : null,
-        ':check_in_time'     => !empty($b['check_in_time']) ? $b['check_in_time'] : null,
-        ':check_out_time'    => !empty($b['check_out_time']) ? $b['check_out_time'] : null,
+        ':facilities'        => isset($b['facilities']) ? json_encode($b['facilities'], JSON_UNESCAPED_UNICODE) : null,
+        ':open_time'         => !empty($b['open_time']) ? $b['open_time'] : null,
+        ':close_time'        => !empty($b['close_time']) ? $b['close_time'] : null,
+        ':seating_capacity'  => isset($b['seating_capacity']) && $b['seating_capacity'] !== '' ? (int) $b['seating_capacity'] : null,
         ':address'           => !empty($b['address']) ? $b['address'] : null,
+        ':map_url'           => !empty($b['map_url']) ? $b['map_url'] : null,
         ':contact_phone'     => !empty($b['contact_phone']) ? $b['contact_phone'] : null,
         ':contact_email'     => !empty($b['contact_email']) ? $b['contact_email'] : null,
         ':website'           => !empty($b['website']) ? $b['website'] : null,
         ':is_featured'       => !empty($b['is_featured']) ? 1 : 0,
         ':is_active'         => isset($b['is_active']) && !$b['is_active'] ? 0 : 1,
         ':images'            => json_encode(isset($b['images']) ? $b['images'] : array(), JSON_UNESCAPED_UNICODE),
-        ':room_types'        => json_encode(isset($b['room_types']) ? $b['room_types'] : array(), JSON_UNESCAPED_UNICODE),
+        ':menu_types'        => json_encode(isset($b['menu_types']) ? $b['menu_types'] : array(), JSON_UNESCAPED_UNICODE),
     );
 }
 
@@ -112,22 +110,22 @@ try {
     if ($method === 'POST') {
         $b = body();
         if (!isset($b['name']) || trim($b['name']) === '') {
-            fail(400, 'Hotel name is required');
+            fail(400, 'Restaurant name is required');
         }
 
         $fields = fieldsFromBody($b);
         $fields[':slug'] = uniqueSlug($pdo, makeSlug($b['name']));
 
-        $sql = 'INSERT INTO hotels
-                    (source_id, name, slug, destination, stars, description, short_description,
-                     rating, review_count, main_image, logo, amenities, check_in_time, check_out_time,
-                     address, contact_phone, contact_email, website, is_featured, is_active,
-                     images, room_types)
+        $sql = 'INSERT INTO restaurants
+                    (name, slug, destination, cuisine, description, short_description,
+                     rating, review_count, main_image, logo, facilities, open_time, close_time,
+                     seating_capacity, address, map_url, contact_phone, contact_email, website,
+                     is_featured, is_active, images, menu_types)
                 VALUES
-                    (NULL, :name, :slug, :destination, :stars, :description, :short_description,
-                     :rating, :review_count, :main_image, :logo, :amenities, :check_in_time, :check_out_time,
-                     :address, :contact_phone, :contact_email, :website, :is_featured, :is_active,
-                     :images, :room_types)';
+                    (:name, :slug, :destination, :cuisine, :description, :short_description,
+                     :rating, :review_count, :main_image, :logo, :facilities, :open_time, :close_time,
+                     :seating_capacity, :address, :map_url, :contact_phone, :contact_email, :website,
+                     :is_featured, :is_active, :images, :menu_types)';
         $stmt = $pdo->prepare($sql);
         $stmt->execute($fields);
 
@@ -138,36 +136,37 @@ try {
         exit;
     }
 
-    // Everything below needs an existing hotel.
+    // Everything below needs an existing restaurant.
     if ($id <= 0) {
-        fail(400, 'Missing hotel id');
+        fail(400, 'Missing restaurant id');
     }
-    $check = $pdo->prepare('SELECT id FROM hotels WHERE id = ? LIMIT 1');
+    $check = $pdo->prepare('SELECT id FROM restaurants WHERE id = ? LIMIT 1');
     $check->execute(array($id));
     if (!$check->fetch()) {
-        fail(404, 'Hotel not found');
+        fail(404, 'Restaurant not found');
     }
 
     // --- UPDATE ---
     if ($method === 'PUT') {
         $b = body();
         if (!isset($b['name']) || trim($b['name']) === '') {
-            fail(400, 'Hotel name is required');
+            fail(400, 'Restaurant name is required');
         }
 
         $fields = fieldsFromBody($b);
         $fields[':slug'] = uniqueSlug($pdo, makeSlug($b['name']), $id);
         $fields[':id'] = $id;
 
-        $sql = 'UPDATE hotels SET
-                    name = :name, slug = :slug, destination = :destination, stars = :stars,
+        $sql = 'UPDATE restaurants SET
+                    name = :name, slug = :slug, destination = :destination, cuisine = :cuisine,
                     description = :description, short_description = :short_description,
                     rating = :rating, review_count = :review_count, main_image = :main_image,
-                    logo = :logo, amenities = :amenities, check_in_time = :check_in_time,
-                    check_out_time = :check_out_time, address = :address,
-                    contact_phone = :contact_phone, contact_email = :contact_email,
-                    website = :website, is_featured = :is_featured, is_active = :is_active,
-                    images = :images, room_types = :room_types
+                    logo = :logo, facilities = :facilities, open_time = :open_time,
+                    close_time = :close_time, seating_capacity = :seating_capacity,
+                    address = :address, map_url = :map_url, contact_phone = :contact_phone,
+                    contact_email = :contact_email, website = :website,
+                    is_featured = :is_featured, is_active = :is_active,
+                    images = :images, menu_types = :menu_types
                 WHERE id = :id';
         $stmt = $pdo->prepare($sql);
         $stmt->execute($fields);
@@ -181,16 +180,16 @@ try {
 
     // --- DELETE ---
     if ($method === 'DELETE') {
-        // Rates/notices have no FK cascade, so clear them first. Missing tables
-        // (pre-migration) are not an error.
-        foreach (array('hotel_rates', 'hotel_notices') as $table) {
+        // Rate tables for restaurants don't exist yet; clear them defensively so
+        // this keeps working once they are added.
+        foreach (array('restaurant_rates', 'restaurant_notices') as $table) {
             try {
-                $pdo->prepare("DELETE FROM $table WHERE hotel_id = ?")->execute(array($id));
+                $pdo->prepare("DELETE FROM $table WHERE restaurant_id = ?")->execute(array($id));
             } catch (PDOException $e) {
-                // table not migrated yet — nothing to clean up
+                // table not created yet — nothing to clean up
             }
         }
-        $stmt = $pdo->prepare('DELETE FROM hotels WHERE id = ?');
+        $stmt = $pdo->prepare('DELETE FROM restaurants WHERE id = ?');
         $stmt->execute(array($id));
 
         echo json_encode(array('success' => true, 'data' => array('id' => $id)));

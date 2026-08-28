@@ -209,8 +209,11 @@ export default function HotelNoticeEditor() {
   if (error || !hotel) {
     return (
       <div className="space-y-4">
-        <Link to="/hotel" className="text-brand-600 hover:underline text-sm">
-          ← Back to hotels
+        <Link
+          to="/hotel"
+          className="inline-flex items-center gap-1 text-brand-600 hover:underline text-sm"
+        >
+          <ArrowLeft size={14} /> Back to hotels
         </Link>
         <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-12 text-center space-y-4">
           <h2 className="text-2xl font-semibold text-gray-900">Hotel not found</h2>

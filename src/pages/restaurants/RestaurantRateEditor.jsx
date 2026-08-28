@@ -1,33 +1,44 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, Trash2, Save, Copy } from "lucide-react";
-import { hotelsService } from "../../services/api-service";
+import { restaurantsService } from "../../services/api-service";
 import Toast from "../../components/core/Toast";
 
-// Manual rate editor for a hotel. Loads existing rows from hotel-rates.php,
-// lets staff add/edit/delete rate rows + free-text conditions, then bulk-saves
-// (POST replaces all rows for the hotel). Room metadata is pulled from the
-// hotel API; only price/period data is entered here.
+// Manual rate editor for a restaurant. Loads existing rows from
+// restaurant-rates.php, lets staff add/edit/delete rate rows + free-text
+// conditions, then bulk-saves (POST replaces all rows for the restaurant).
+// Menu names come from the restaurant's menu_types as a datalist, but the field
+// stays free text so a rate can name a menu that was never set up in the form.
+const PRICE_UNITS = [
+  { value: "per_person", label: "per person" },
+  { value: "per_set", label: "per set" },
+  { value: "per_table", label: "per table" },
+];
+
 const emptyRow = () => ({
   _key: Math.random().toString(36).slice(2),
   id: null,
-  room_type: "",
+  menu_name: "",
   period_label: "",
   period_start: "",
   period_end: "",
-  meal_plan: "",
   price: "",
+  price_unit: "per_person",
+  min_pax: "",
+  note: "",
 });
 
-export default function HotelRateEditor() {
+const cellClass =
+  "w-full px-2.5 py-1.5 rounded-lg border border-gray-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none";
+
+export default function RestaurantRateEditor() {
   const { slug } = useParams();
   const navigate = useNavigate();
 
-  const [hotel, setHotel] = useState(null);
+  const [restaurant, setRestaurant] = useState(null);
   const [rows, setRows] = useState([]);
   const [conditions, setConditions] = useState({
     rate_validity: "",
-    child_policy: "",
     rate_terms: "",
   });
   const [loading, setLoading] = useState(true);
@@ -44,27 +55,28 @@ export default function HotelRateEditor() {
     try {
       setLoading(true);
       setError(false);
-      const h = await hotelsService.getHotelBySlug(slug);
-      if (!h) {
+      const r = await restaurantsService.getRestaurantBySlug(slug);
+      if (!r) {
         setError(true);
         return;
       }
-      setHotel(h);
-      const data = await hotelsService.getHotelRates(h.id);
-      const loaded = (data?.rates || []).map((r) => ({
+      setRestaurant(r);
+      const data = await restaurantsService.getRestaurantRates(r.id);
+      const loaded = (data?.rates || []).map((x) => ({
         _key: Math.random().toString(36).slice(2),
-        id: r.id,
-        room_type: r.room_type || "",
-        period_label: r.period_label || "",
-        period_start: r.period_start || "",
-        period_end: r.period_end || "",
-        meal_plan: r.meal_plan || "",
-        price: r.price ?? "",
+        id: x.id,
+        menu_name: x.menu_name || "",
+        period_label: x.period_label || "",
+        period_start: x.period_start || "",
+        period_end: x.period_end || "",
+        price: x.price ?? "",
+        price_unit: x.price_unit || "per_person",
+        min_pax: x.min_pax ?? "",
+        note: x.note || "",
       }));
       setRows(loaded.length ? loaded : [emptyRow()]);
       setConditions({
         rate_validity: data?.conditions?.rate_validity || "",
-        child_policy: data?.conditions?.child_policy || "",
         rate_terms: data?.conditions?.rate_terms || "",
       });
     } catch (err) {
@@ -79,6 +91,10 @@ export default function HotelRateEditor() {
     load();
   }, [load]);
 
+  const menuNames = Array.isArray(restaurant?.menu_types)
+    ? restaurant.menu_types.map((m) => m.name).filter(Boolean)
+    : [];
+
   const updateRow = (key, field, value) =>
     setRows((prev) =>
       prev.map((r) => (r._key === key ? { ...r, [field]: value } : r))
@@ -89,9 +105,11 @@ export default function HotelRateEditor() {
       const row = emptyRow();
       if (!afterKey) return [...prev, row];
       const idx = prev.findIndex((r) => r._key === afterKey);
-      // carry the room type/period down so adding a season for the same room is quick
+      // carry the menu and unit down so adding a season for the same menu is quick
       const src = prev[idx];
-      row.room_type = src.room_type;
+      row.menu_name = src.menu_name;
+      row.price_unit = src.price_unit;
+      row.min_pax = src.min_pax;
       const next = [...prev];
       next.splice(idx + 1, 0, row);
       return next;
@@ -100,39 +118,50 @@ export default function HotelRateEditor() {
   const duplicateRow = (key) =>
     setRows((prev) => {
       const idx = prev.findIndex((r) => r._key === key);
-      const copy = { ...prev[idx], _key: Math.random().toString(36).slice(2), id: null };
+      const copy = {
+        ...prev[idx],
+        _key: Math.random().toString(36).slice(2),
+        id: null,
+      };
       const next = [...prev];
       next.splice(idx + 1, 0, copy);
       return next;
     });
 
-  const removeRow = (key) =>
-    setRows((prev) => prev.filter((r) => r._key !== key));
+  const removeRow = (key) => setRows((prev) => prev.filter((r) => r._key !== key));
 
   const handleSave = async () => {
-    // keep only rows that have a room type and a numeric price
+    // keep only rows that have a menu name and a numeric price
     const cleaned = rows
-      .filter((r) => r.room_type.trim() && r.price !== "" && !isNaN(Number(r.price)))
+      .filter(
+        (r) => r.menu_name.trim() && r.price !== "" && !isNaN(Number(r.price))
+      )
       .map((r, i) => ({
-        room_type: r.room_type.trim(),
+        menu_name: r.menu_name.trim(),
         period_label: r.period_label.trim() || null,
         period_start: r.period_start || null,
         period_end: r.period_end || null,
-        meal_plan: r.meal_plan || null,
         price: Number(r.price),
+        price_unit: r.price_unit || "per_person",
+        min_pax: r.min_pax === "" ? null : Number(r.min_pax),
+        note: r.note.trim() || null,
         sort_order: i,
       }));
 
     if (!cleaned.length) {
-      notify("Add at least one row with a room type and price.", "warning");
+      notify("Add at least one row with a menu and price.", "warning");
       return;
     }
 
     try {
       setSaving(true);
-      await hotelsService.saveHotelRates(hotel.id, cleaned, conditions);
+      await restaurantsService.saveRestaurantRates(
+        restaurant.id,
+        cleaned,
+        conditions
+      );
       notify(`Saved ${cleaned.length} rate rows.`);
-      setTimeout(() => navigate(`/hotel/view/${slug}`), 800);
+      setTimeout(() => navigate(`/restaurant/view/${slug}`), 800);
     } catch (err) {
       console.error("Error saving rates:", err);
       notify("Save failed: " + err.message, "error");
@@ -152,17 +181,19 @@ export default function HotelRateEditor() {
     );
   }
 
-  if (error || !hotel) {
+  if (error || !restaurant) {
     return (
       <div className="space-y-4">
         <Link
-          to="/hotel"
+          to="/restaurant"
           className="inline-flex items-center gap-1 text-brand-600 hover:underline text-sm"
         >
-          <ArrowLeft size={14} /> Back to hotels
+          <ArrowLeft size={14} /> Back to restaurants
         </Link>
         <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-12 text-center space-y-4">
-          <h2 className="text-2xl font-semibold text-gray-900">Hotel not found</h2>
+          <h2 className="text-2xl font-semibold text-gray-900">
+            Restaurant not found
+          </h2>
           <button
             onClick={load}
             className="px-5 py-2.5 bg-brand-600 text-white rounded-xl font-medium hover:bg-brand-700"
@@ -182,13 +213,13 @@ export default function HotelRateEditor() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <Link
-            to={`/hotel/view/${slug}`}
+            to={`/restaurant/view/${slug}`}
             className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-brand-700 mb-2"
           >
-            <ArrowLeft size={16} /> Back to {hotel.name}
+            <ArrowLeft size={16} /> Back to {restaurant.name}
           </Link>
           <h1 className="text-2xl font-semibold text-gray-900">Edit Net Rates</h1>
-          <p className="text-sm text-gray-500">{hotel.name}</p>
+          <p className="text-sm text-gray-500">{restaurant.name}</p>
         </div>
       </div>
 
@@ -196,7 +227,10 @@ export default function HotelRateEditor() {
       <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-4 md:p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">
-            Rates <span className="text-gray-400 font-normal">({rows.length} rows · THB)</span>
+            Rates{" "}
+            <span className="text-gray-400 font-normal">
+              ({rows.length} rows · THB)
+            </span>
           </h2>
           <button
             onClick={() => addRow()}
@@ -206,16 +240,24 @@ export default function HotelRateEditor() {
           </button>
         </div>
 
+        <datalist id="restaurant-menu-names">
+          {menuNames.map((m) => (
+            <option key={m} value={m} />
+          ))}
+        </datalist>
+
         <div className="overflow-x-auto">
           <table className="w-full text-sm border-separate border-spacing-0">
             <thead>
               <tr className="text-left text-gray-500">
-                <th className="px-2 py-2 font-medium min-w-[180px]">Room type</th>
-                <th className="px-2 py-2 font-medium min-w-[200px]">Period label</th>
+                <th className="px-2 py-2 font-medium min-w-[180px]">Menu</th>
+                <th className="px-2 py-2 font-medium min-w-[190px]">Period label</th>
                 <th className="px-2 py-2 font-medium">Start</th>
                 <th className="px-2 py-2 font-medium">End</th>
-                <th className="px-2 py-2 font-medium">Meal</th>
                 <th className="px-2 py-2 font-medium text-right">Price</th>
+                <th className="px-2 py-2 font-medium">Unit</th>
+                <th className="px-2 py-2 font-medium text-right">Min pax</th>
+                <th className="px-2 py-2 font-medium min-w-[160px]">Note</th>
                 <th className="px-2 py-2" />
               </tr>
             </thead>
@@ -224,25 +266,30 @@ export default function HotelRateEditor() {
                 <tr key={r._key} className="align-top">
                   <td className="px-2 py-1.5">
                     <input
-                      value={r.room_type}
-                      onChange={(e) => updateRow(r._key, "room_type", e.target.value)}
-                      placeholder="Deluxe"
-                      className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
+                      value={r.menu_name}
+                      onChange={(e) => updateRow(r._key, "menu_name", e.target.value)}
+                      list="restaurant-menu-names"
+                      placeholder="Seafood Set A"
+                      className={cellClass}
                     />
                   </td>
                   <td className="px-2 py-1.5">
                     <input
                       value={r.period_label}
-                      onChange={(e) => updateRow(r._key, "period_label", e.target.value)}
+                      onChange={(e) =>
+                        updateRow(r._key, "period_label", e.target.value)
+                      }
                       placeholder="01 Nov 25 – 25 Dec 25"
-                      className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
+                      className={cellClass}
                     />
                   </td>
                   <td className="px-2 py-1.5">
                     <input
                       type="date"
                       value={r.period_start}
-                      onChange={(e) => updateRow(r._key, "period_start", e.target.value)}
+                      onChange={(e) =>
+                        updateRow(r._key, "period_start", e.target.value)
+                      }
                       className="px-2 py-1.5 rounded-lg border border-gray-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
                     />
                   </td>
@@ -250,20 +297,11 @@ export default function HotelRateEditor() {
                     <input
                       type="date"
                       value={r.period_end}
-                      onChange={(e) => updateRow(r._key, "period_end", e.target.value)}
+                      onChange={(e) =>
+                        updateRow(r._key, "period_end", e.target.value)
+                      }
                       className="px-2 py-1.5 rounded-lg border border-gray-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
                     />
-                  </td>
-                  <td className="px-2 py-1.5">
-                    <select
-                      value={r.meal_plan}
-                      onChange={(e) => updateRow(r._key, "meal_plan", e.target.value)}
-                      className="px-2 py-1.5 rounded-lg border border-gray-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none bg-white"
-                    >
-                      <option value="">— none —</option>
-                      <option value="RO">RO (room only)</option>
-                      <option value="RB">RB (breakfast)</option>
-                    </select>
                   </td>
                   <td className="px-2 py-1.5">
                     <input
@@ -273,13 +311,47 @@ export default function HotelRateEditor() {
                       value={r.price}
                       onChange={(e) => updateRow(r._key, "price", e.target.value)}
                       placeholder="0"
-                      className="w-28 px-2.5 py-1.5 rounded-lg border border-gray-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-right"
+                      className="w-24 px-2.5 py-1.5 rounded-lg border border-gray-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-right"
+                    />
+                  </td>
+                  <td className="px-2 py-1.5">
+                    <select
+                      value={r.price_unit}
+                      onChange={(e) =>
+                        updateRow(r._key, "price_unit", e.target.value)
+                      }
+                      className="px-2 py-1.5 rounded-lg border border-gray-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none bg-white"
+                    >
+                      {PRICE_UNITS.map((u) => (
+                        <option key={u.value} value={u.value}>
+                          {u.label}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-2 py-1.5">
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={r.min_pax}
+                      onChange={(e) => updateRow(r._key, "min_pax", e.target.value)}
+                      placeholder="—"
+                      className="w-20 px-2.5 py-1.5 rounded-lg border border-gray-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-right"
+                    />
+                  </td>
+                  <td className="px-2 py-1.5">
+                    <input
+                      value={r.note}
+                      onChange={(e) => updateRow(r._key, "note", e.target.value)}
+                      placeholder="incl. soft drinks"
+                      className={cellClass}
                     />
                   </td>
                   <td className="px-1 py-1.5 whitespace-nowrap">
                     <button
                       onClick={() => addRow(r._key)}
-                      title="Add row below (same room)"
+                      title="Add row below (same menu)"
                       className="p-1.5 text-gray-400 hover:text-brand-600"
                     >
                       <Plus size={16} />
@@ -310,12 +382,21 @@ export default function HotelRateEditor() {
       <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-4 md:p-6 mb-6 space-y-4">
         <h2 className="text-lg font-semibold text-gray-900">Rate conditions</h2>
         {[
-          ["rate_validity", "Validity & Market", "Validity / sales-stay period / market / booking code"],
-          ["child_policy", "Children & Extra Bed", "Child rates, extra bed, max occupancy…"],
-          ["rate_terms", "Terms & Conditions", "Cancellation, inclusions, check-in/out…"],
+          [
+            "rate_validity",
+            "Validity & Market",
+            "Validity / sales period / market / booking code",
+          ],
+          [
+            "rate_terms",
+            "Terms & Conditions",
+            "Cancellation, inclusions, surcharges, service charge…",
+          ],
         ].map(([field, label, ph]) => (
           <div key={field}>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              {label}
+            </label>
             <textarea
               rows={field === "rate_terms" ? 5 : 3}
               value={conditions[field]}
@@ -333,7 +414,7 @@ export default function HotelRateEditor() {
       <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur border-t border-gray-200 px-4 py-3 z-40">
         <div className="max-w-7xl mx-auto flex items-center justify-end gap-3">
           <Link
-            to={`/hotel/view/${slug}`}
+            to={`/restaurant/view/${slug}`}
             className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-500 font-medium hover:bg-gray-50"
           >
             Cancel

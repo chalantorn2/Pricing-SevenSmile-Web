@@ -25,3 +25,8 @@ deploy.secret.ps1
 *.njsproj
 *.sln
 *.sw?
+
+# Runtime data, not source: uploaded files and local database dumps
+api/uploads/*
+!api/uploads/.htaccess
+database/backups/

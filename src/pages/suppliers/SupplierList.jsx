@@ -24,10 +24,23 @@ import {
 
 const PAGE_SIZE = 25;
 
-// A single-select quick filter keeps the toolbar to one row of chips.
+// Tour vendors and transfer companies are different businesses kept in one table,
+// so the page shows one list at a time rather than mixing them.
+const TYPES = {
+  tour: { label: "Tour", blurb: "the tours linked to each one" },
+  transfer: { label: "Transfer", blurb: "the transfer routes they price" },
+};
+const DEFAULT_TYPE = "tour";
+
+// A single-select quick filter keeps the toolbar to one row of chips. The
+// tour-derived ones are hidden on the transfer list, where they mean nothing.
 const FILTERS = {
   all: { label: "All", match: () => true },
-  no_tours: { label: "No tours", match: (s) => s.tour_count === 0 },
+  no_tours: {
+    label: "No tours",
+    match: (s) => s.tour_count === 0,
+    tourOnly: true,
+  },
   no_contact: {
     label: "No contact",
     match: (s) => !s.phone && !s.line && !s.whatsapp,
@@ -35,6 +48,7 @@ const FILTERS = {
   expiring_soon: {
     label: "Tours expiring 30d",
     match: (s) => s.expiring_tours > 0,
+    tourOnly: true,
   },
   recent: {
     label: "Updated 7d",
@@ -75,13 +89,29 @@ const SupplierList = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [toast, setToast] = useState(null);
 
-  const activeFilter = FILTERS[searchParams.get("filter")]
-    ? searchParams.get("filter")
-    : "all";
+  const activeType = TYPES[searchParams.get("type")]
+    ? searchParams.get("type")
+    : DEFAULT_TYPE;
+  const isTourList = activeType === "tour";
+
+  const requestedFilter = searchParams.get("filter");
+  // A tour-only chip left in the URL would silently empty the transfer list.
+  const activeFilter =
+    FILTERS[requestedFilter] && (isTourList || !FILTERS[requestedFilter].tourOnly)
+      ? requestedFilter
+      : "all";
+
+  const visibleFilters = useMemo(
+    () =>
+      Object.entries(FILTERS).filter(
+        ([, filter]) => isTourList || !filter.tourOnly
+      ),
+    [isTourList]
+  );
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [activeType]);
 
   // Debounce the search box so typing stays responsive on large lists
   useEffect(() => {
@@ -104,7 +134,7 @@ const SupplierList = () => {
       setLoading(true);
       setError(null);
       const [suppliersData, toursData] = await Promise.all([
-        suppliersService.getAllSuppliers(),
+        suppliersService.getAllSuppliers(activeType),
         toursService.getAllTours(),
       ]);
       setSuppliers(suppliersData);
@@ -125,6 +155,19 @@ const SupplierList = () => {
       next.delete("filter");
     } else {
       next.set("filter", filterId);
+    }
+    setSearchParams(next, { replace: true });
+  };
+
+  // Switching lists drops the chip too: the two lists are filtered by different
+  // things, so carrying one over would only confuse the counts.
+  const setType = (typeId) => {
+    const next = new URLSearchParams(searchParams);
+    next.delete("filter");
+    if (typeId === DEFAULT_TYPE) {
+      next.delete("type");
+    } else {
+      next.set("type", typeId);
     }
     setSearchParams(next, { replace: true });
   };
@@ -160,12 +203,12 @@ const SupplierList = () => {
   const filterCounts = useMemo(
     () =>
       Object.fromEntries(
-        Object.entries(FILTERS).map(([id, filter]) => [
+        visibleFilters.map(([id, filter]) => [
           id,
           enrichedSuppliers.filter(filter.match).length,
         ]),
       ),
-    [enrichedSuppliers],
+    [enrichedSuppliers, visibleFilters],
   );
 
   const filteredSuppliers = useMemo(() => {
@@ -260,17 +303,19 @@ const SupplierList = () => {
       Facebook: supplier.facebook || "-",
       WhatsApp: supplier.whatsapp || "-",
       Address: supplier.address || "-",
-      "Tour count": supplier.tour_count,
+      ...(isTourList ? { "Tour count": supplier.tour_count } : {}),
       "Created at": formatDate(supplier.created_at),
       "Last updated": formatDate(supplier.latest_activity),
     }));
 
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Suppliers List");
+    XLSX.utils.book_append_sheet(wb, ws, `${TYPES[activeType].label} Suppliers`);
     XLSX.writeFile(
       wb,
-      `Suppliers_List_${new Date().toLocaleDateString("en-US")}.xlsx`,
+      `${TYPES[activeType].label}_Suppliers_${new Date().toLocaleDateString(
+        "en-US",
+      )}.xlsx`,
     );
 
     setToast({
@@ -420,9 +465,11 @@ const SupplierList = () => {
 
     return (
       <div className="text-center py-12 px-6">
-        <p className="font-medium text-gray-500">No suppliers yet</p>
+        <p className="font-medium text-gray-500">
+          No {TYPES[activeType].label.toLowerCase()} suppliers yet
+        </p>
         <p className="text-sm text-gray-500 mt-1">
-          Add your first supplier to get started.
+          Add your first one to get started.
         </p>
         <button
           onClick={() => setShowAddModal(true)}
@@ -438,7 +485,8 @@ const SupplierList = () => {
   const sortableColumns = [
     { key: "name", label: "Supplier" },
     { key: "contact", label: "Contact", sortable: false },
-    { key: "tour_count", label: "Tours" },
+    // Transfer suppliers never carry tours, so the column would be a row of zeroes.
+    ...(isTourList ? [{ key: "tour_count", label: "Tours" }] : []),
     { key: "latest_activity", label: "Last updated" },
   ];
 
@@ -466,10 +514,30 @@ const SupplierList = () => {
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Suppliers</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Manage supplier contacts and see the tours linked to each one
+            Manage supplier contacts and see {TYPES[activeType].blurb}
           </p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          {/* Which list: tour vendors or transfer companies */}
+          <div className="inline-flex self-start sm:self-auto rounded-lg bg-gray-100 p-1">
+            {Object.entries(TYPES).map(([id, type]) => {
+              const active = activeType === id;
+              return (
+                <button
+                  key={id}
+                  onClick={() => setType(id)}
+                  aria-pressed={active}
+                  className={`px-4 py-1.5 rounded-md text-sm font-medium transition ${
+                    active
+                      ? "bg-white text-gray-900 shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  {type.label}
+                </button>
+              );
+            })}
+          </div>
           <button
             onClick={handleExportExcel}
             disabled={totalItems === 0}
@@ -537,7 +605,7 @@ const SupplierList = () => {
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            {Object.entries(FILTERS).map(([id, filter]) => {
+            {visibleFilters.map(([id, filter]) => {
               const active = activeFilter === id;
               return (
                 <button
@@ -653,9 +721,11 @@ const SupplierList = () => {
 
                       <td className="px-6 py-3">{renderContact(supplier)}</td>
 
-                      <td className="px-6 py-3 whitespace-nowrap">
-                        {renderTourBadge(supplier)}
-                      </td>
+                      {isTourList && (
+                        <td className="px-6 py-3 whitespace-nowrap">
+                          {renderTourBadge(supplier)}
+                        </td>
+                      )}
 
                       <td className="px-6 py-3 whitespace-nowrap text-gray-500">
                         {formatDate(supplier.latest_activity)}
@@ -695,7 +765,7 @@ const SupplierList = () => {
                         </div>
                       )}
                     </div>
-                    {renderTourBadge(supplier)}
+                    {isTourList && renderTourBadge(supplier)}
                   </div>
 
                   {renderContact(supplier)}
@@ -750,6 +820,7 @@ const SupplierList = () => {
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
         onSuccess={handleSupplierCreated}
+        defaultType={activeType}
       />
 
       {toast && <Toast message={toast.message} type={toast.type} />}

@@ -24,8 +24,8 @@ const Layout = () => {
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 border-r border-gray-200 shadow-sm transform transition-all duration-300 ease-in-out lg:translate-x-0 ${
-          collapsed ? "lg:w-16" : "lg:w-64"
+        className={`fixed inset-y-0 left-0 z-50 w-56 shadow-sm transform transition-all duration-300 ease-in-out lg:translate-x-0 ${
+          collapsed ? "lg:w-14" : "lg:w-56"
         } ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
         <Sidebar
@@ -38,7 +38,7 @@ const Layout = () => {
       {/* Main content */}
       <div
         className={`transition-all duration-300 ${
-          collapsed ? "lg:pl-16" : "lg:pl-64"
+          collapsed ? "lg:pl-14" : "lg:pl-56"
         }`}
       >
         {/* Mobile: floating button to open the drawer */}

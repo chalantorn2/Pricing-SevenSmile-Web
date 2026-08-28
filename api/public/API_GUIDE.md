@@ -103,6 +103,7 @@ GET /api/public/suppliers.php
 |---|---|---|
 | `id` | `?id=7` | One supplier |
 | `search` | `?search=orchid` | Match supplier name |
+| `type` | `?type=transfer` | `tour` or `transfer` — these are different companies |
 
 Each supplier includes a `files` array. Every file has a ready-to-use `file_url`.
 
@@ -110,6 +111,7 @@ Each supplier includes a `files` array. Every file has a ready-to-use `file_url`
 {
   "id": 7,
   "name": "Orchid",
+  "type": "tour",
   "address": "20/1 หมู่ที่ 2 ตำบลอ่าวนาง อำเภอเมืองกระบี่ จ.กระบี่ 81000",
   "phone": "0984541233",
   "phone_2": "",
@@ -207,7 +209,7 @@ GET /api/public/hotels.php
 
 Hotel fields: `id`, `source_id`, `name`, `slug`, `destination`, `stars`,
 `description`, `short_description`, `rating`, `review_count`, `main_image`,
-`amenities[]`, `check_in_time`, `check_out_time`, `address`, `contact_phone`,
+`logo`, `amenities[]`, `check_in_time`, `check_out_time`, `address`, `contact_phone`,
 `contact_email`, `website`, `is_featured`, `is_active`, `rate_validity`,
 `child_policy`, `rate_terms`, `created_at`, `updated_at`
 

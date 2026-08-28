@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { toursService } from "../../services/api-service";
@@ -9,8 +9,7 @@ import {
   UtensilsCrossed,
   Building2,
   Users,
-  Package,
-  ChevronDown,
+  ChevronRight,
   MapPin,
   LayoutList,
   LogOut,
@@ -18,7 +17,7 @@ import {
   PanelLeftClose,
 } from "lucide-react";
 
-// Static province list for modules without data yet (Hotels / Transfers)
+// Static province list for modules without data yet (Hotels / Restaurants)
 const STATIC_PROVINCES = [
   "Krabi",
   "Phuket",
@@ -28,6 +27,8 @@ const STATIC_PROVINCES = [
   "Hua Hin",
 ];
 
+const FLYOUT_WIDTH = 200;
+
 const Sidebar = ({ onNavigate, collapsed = false, onSetCollapsed }) => {
   const { user, logout, isAdmin } = useAuth();
   const location = useLocation();
@@ -35,7 +36,9 @@ const Sidebar = ({ onNavigate, collapsed = false, onSetCollapsed }) => {
   const activeProvince = searchParams.get("province");
 
   const [tourProvinces, setTourProvinces] = useState([]);
-  const [openGroups, setOpenGroups] = useState({});
+  // { key, top, left } of the province flyout, or null when nothing is open
+  const [flyout, setFlyout] = useState(null);
+  const closeTimer = useRef(null);
 
   // collapse only affects the lg viewport; the mobile drawer is always full
   const lgHide = collapsed ? "lg:hidden" : "";
@@ -71,54 +74,42 @@ const Sidebar = ({ onNavigate, collapsed = false, onSetCollapsed }) => {
         key: "tours",
         label: "Tours",
         icon: Palmtree,
-        children: [
-          { label: "All Tours", to: "/", end: true },
-          ...tourProvinces.map((p) => ({
-            label: p,
-            to: `/?province=${encodeURIComponent(p)}`,
-            province: p,
-          })),
-        ],
+        to: "/",
+        children: tourProvinces.map((p) => ({
+          label: p,
+          to: `/?province=${encodeURIComponent(p)}`,
+          province: p,
+        })),
       },
       {
         key: "hotels",
         label: "Hotels",
         icon: Hotel,
-        children: [
-          { label: "All Hotels", to: "/hotel", end: true },
-          ...STATIC_PROVINCES.map((p) => ({
-            label: p,
-            to: `/hotel/${encodeURIComponent(p)}`,
-          })),
-        ],
+        to: "/hotel",
+        children: STATIC_PROVINCES.map((p) => ({
+          label: p,
+          to: `/hotel/${encodeURIComponent(p)}`,
+        })),
       },
       {
         key: "restaurants",
         label: "Restaurants",
         icon: UtensilsCrossed,
-        children: [
-          { label: "All Restaurants", to: "/restaurant", end: true },
-          ...STATIC_PROVINCES.map((p) => ({
-            label: p,
-            to: `/restaurant/${encodeURIComponent(p)}`,
-          })),
-        ],
-      },
-      {
-        key: "transfers",
-        label: "Transfers",
-        icon: Car,
+        to: "/restaurant",
         children: STATIC_PROVINCES.map((p) => ({
           label: p,
-          to: `/transfer/${encodeURIComponent(p)}`,
+          to: `/restaurant/${encodeURIComponent(p)}`,
         })),
       },
+      // No province children: a transfer route links two provinces rather than
+      // sitting in one, so splitting the rate sheet by province hides half of it.
+      // The screen itself is where you narrow the routes down.
+      { key: "transfers", label: "Transfers", icon: Car, to: "/transfer", children: [] },
     ],
     [tourProvinces]
   );
 
   const singles = [
-    // { label: "Tour Packages", to: "/packages", icon: Package },
     { label: "Suppliers", to: "/suppliers", icon: Building2 },
     {
       label: isAdmin() ? "Users" : "My Account",
@@ -136,47 +127,65 @@ const Sidebar = ({ onNavigate, collapsed = false, onSetCollapsed }) => {
     return false;
   };
 
-  // Auto-open the group matching the current route
-  useEffect(() => {
-    setOpenGroups((prev) => {
-      const next = { ...prev };
-      ["tours", "hotels", "restaurants", "transfers"].forEach((key) => {
-        if (isGroupActive(key)) next[key] = true;
-      });
-      return next;
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname, location.search]);
-
-  const handleGroupClick = (key) => {
-    // when collapsed, clicking a group expands the rail first then opens it
-    if (collapsed) {
-      onSetCollapsed?.(false);
-      setOpenGroups((prev) => ({ ...prev, [key]: true }));
-      return;
-    }
-    setOpenGroups((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
-
   const isChildActive = (child, groupKey) => {
     if (groupKey === "tours") {
-      if (child.end) return location.pathname === "/" && !activeProvince;
       return location.pathname === "/" && activeProvince === child.province;
     }
     return location.pathname === child.to.split("?")[0];
   };
 
+  const isAllActive = (group) => {
+    if (group.key === "tours")
+      return location.pathname === "/" && !activeProvince;
+    return location.pathname === group.to;
+  };
+
+  // Flyout is positioned fixed so the scrollable nav never clips it
+  const openFlyout = useCallback((key, el) => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    const rect = el.getBoundingClientRect();
+    const maxHeight = Math.min(window.innerHeight * 0.7, 420);
+    setFlyout({
+      key,
+      top: Math.max(
+        8,
+        Math.min(rect.top, window.innerHeight - maxHeight - 8)
+      ),
+      left: rect.right + 6,
+    });
+  }, []);
+
+  const scheduleClose = useCallback(() => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    closeTimer.current = setTimeout(() => setFlyout(null), 140);
+  }, []);
+
+  const cancelClose = useCallback(() => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+  }, []);
+
+  useEffect(() => () => clearTimeout(closeTimer.current), []);
+
+  // Close the flyout whenever the route changes or the rail is scrolled
+  useEffect(() => {
+    setFlyout(null);
+  }, [location.pathname, location.search]);
+
+  const activeGroup = flyout
+    ? groups.find((g) => g.key === flyout.key)
+    : null;
+
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-brand-800 text-white">
       {/* Logo */}
       <div
-        className={`group flex items-center h-16 border-b border-gray-200 px-5 ${
+        className={`flex items-center h-16 border-b border-brand-700 px-4 ${
           collapsed ? "lg:px-0 lg:justify-center" : ""
         }`}
       >
-        <div className="flex items-center gap-3 overflow-hidden">
+        <div className="flex items-center gap-2.5 overflow-hidden">
           <div
-            className={`relative flex items-center justify-center w-9 h-9 rounded-lg bg-brand-600 text-white shadow-sm shrink-0 ${
+            className={`flex items-center justify-center w-8 h-8 rounded-lg bg-white text-brand-700 shrink-0 ${
               collapsed ? "lg:hidden" : ""
             }`}
           >
@@ -187,8 +196,8 @@ const Sidebar = ({ onNavigate, collapsed = false, onSetCollapsed }) => {
               collapsed ? "lg:w-0 lg:opacity-0" : "opacity-100"
             }`}
           >
-            <p className="text-sm font-bold text-gray-900">Contract Rate</p>
-            <p className="text-[11px] text-gray-400">Price Management</p>
+            <p className="text-sm font-bold">Contract Rate</p>
+            <p className="text-[11px] text-brand-200">Price Management</p>
           </div>
         </div>
 
@@ -196,7 +205,7 @@ const Sidebar = ({ onNavigate, collapsed = false, onSetCollapsed }) => {
         <button
           onClick={() => onSetCollapsed?.(!collapsed)}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className={`hidden lg:inline-flex p-2 rounded-md text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-colors ${
+          className={`hidden lg:inline-flex p-1.5 rounded-md text-brand-200 hover:text-white hover:bg-brand-700 transition-colors ${
             collapsed ? "" : "ml-auto"
           }`}
         >
@@ -209,88 +218,75 @@ const Sidebar = ({ onNavigate, collapsed = false, onSetCollapsed }) => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+      <nav
+        className="flex-1 overflow-y-auto px-2 py-3 space-y-0.5"
+        onScroll={() => setFlyout(null)}
+      >
         <p
-          className={`px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400 ${lgHide}`}
+          className={`px-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-brand-200/70 ${lgHide}`}
         >
           Catalog
         </p>
 
         {groups.map((group) => {
           const Icon = group.icon;
-          const open = openGroups[group.key];
           const groupActive = isGroupActive(group.key);
+          // A group with nothing to branch into is a plain link: no chevron, and
+          // hovering it closes whatever flyout another group left open.
+          const hasChildren = group.children.length > 0;
           return (
-            <div key={group.key}>
-              <button
-                onClick={() => handleGroupClick(group.key)}
+            <div
+              key={group.key}
+              data-group-row
+              className={`flex items-center rounded-lg transition-colors ${
+                groupActive
+                  ? "bg-brand-600 text-white"
+                  : "text-brand-100 hover:bg-brand-700 hover:text-white"
+              }`}
+              onMouseEnter={(e) =>
+                hasChildren ? openFlyout(group.key, e.currentTarget) : setFlyout(null)
+              }
+              onMouseLeave={hasChildren ? scheduleClose : undefined}
+            >
+              <Link
+                to={group.to}
+                onClick={onNavigate}
                 title={collapsed ? group.label : undefined}
-                className={`group w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-150 ${lgCenter} ${
-                  groupActive
-                    ? "text-brand-700 bg-brand-50"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
+                className={`flex-1 min-w-0 flex items-center gap-2.5 pl-2.5 py-2 text-sm font-medium ${lgCenter}`}
               >
                 <Icon
-                  className={`w-5 h-5 shrink-0 transition-transform duration-150 group-hover:scale-110 ${
-                    groupActive ? "text-brand-600" : "text-gray-400"
+                  className={`w-5 h-5 shrink-0 ${
+                    groupActive ? "text-white" : "text-brand-200"
                   }`}
                 />
-                <span className={`flex-1 text-left whitespace-nowrap ${lgHide}`}>
-                  {group.label}
-                </span>
-                <ChevronDown
-                  className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${lgHide} ${
-                    open ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-
-              {/* Submenu — animated open/close via grid-rows */}
-              <div
-                className={`grid transition-[grid-template-rows] duration-200 ease-in-out ${lgHide} ${
-                  open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
-                }`}
-              >
-                <div className="overflow-hidden">
-                  <div className="mt-1 mb-1 ml-4 pl-3 border-l border-gray-200 space-y-0.5">
-                    {group.children.map((child) => {
-                      const active = isChildActive(child, group.key);
-                      return (
-                        <Link
-                          key={child.label}
-                          to={child.to}
-                          onClick={onNavigate}
-                          className={`flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors ${
-                            active
-                              ? "bg-brand-100 text-brand-700 font-medium"
-                              : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
-                          }`}
-                        >
-                          {child.province !== undefined ||
-                          group.key !== "tours" ? (
-                            <MapPin className="w-3.5 h-3.5 shrink-0 opacity-70" />
-                          ) : (
-                            <LayoutList className="w-3.5 h-3.5 shrink-0 opacity-70" />
-                          )}
-                          <span className="truncate">{child.label}</span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
+                <span className={`truncate ${lgHide}`}>{group.label}</span>
+              </Link>
+              {/* Touch devices have no hover — this opens the flyout on tap */}
+              {hasChildren && (
+                <button
+                  type="button"
+                  aria-label={`Show ${group.label} provinces`}
+                  onClick={(e) => {
+                    const row = e.currentTarget.closest("[data-group-row]");
+                    if (flyout?.key === group.key) setFlyout(null);
+                    else openFlyout(group.key, row);
+                  }}
+                  className={`px-2 py-2 shrink-0 ${lgHide}`}
+                >
+                  <ChevronRight className="w-4 h-4 text-brand-200" />
+                </button>
+              )}
             </div>
           );
         })}
 
         {/* Divider shown only in collapsed rail (desktop) */}
         {collapsed && (
-          <div className="hidden lg:block mx-2 my-2 border-t border-gray-200" />
+          <div className="hidden lg:block mx-2 my-2 border-t border-brand-700" />
         )}
 
         <p
-          className={`px-3 pt-4 pb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400 ${lgHide}`}
+          className={`px-2 pt-4 pb-1 text-[11px] font-semibold uppercase tracking-wider text-brand-200/70 ${lgHide}`}
         >
           Management
         </p>
@@ -303,43 +299,91 @@ const Sidebar = ({ onNavigate, collapsed = false, onSetCollapsed }) => {
               key={item.to}
               to={item.to}
               onClick={onNavigate}
+              onMouseEnter={() => setFlyout(null)}
               title={collapsed ? item.label : undefined}
-              className={`group flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-150 ${lgCenter} ${
+              className={`flex items-center gap-2.5 px-2.5 py-2 text-sm font-medium rounded-lg transition-colors ${lgCenter} ${
                 active
-                  ? "text-brand-700 bg-brand-50"
-                  : "text-gray-700 hover:bg-gray-100"
+                  ? "bg-brand-600 text-white"
+                  : "text-brand-100 hover:bg-brand-700 hover:text-white"
               }`}
             >
               <Icon
-                className={`w-5 h-5 shrink-0 transition-transform duration-150 group-hover:scale-110 ${
-                  active ? "text-brand-600" : "text-gray-400"
+                className={`w-5 h-5 shrink-0 ${
+                  active ? "text-white" : "text-brand-200"
                 }`}
               />
-              <span className={`whitespace-nowrap ${lgHide}`}>{item.label}</span>
+              <span className={`truncate ${lgHide}`}>{item.label}</span>
             </Link>
           );
         })}
       </nav>
 
-      {/* User footer */}
-      <div className="border-t border-gray-200 p-3">
+      {/* Province flyout — fixed so the scrolling nav cannot clip it */}
+      {activeGroup && (
         <div
-          className={`flex items-center gap-3 px-2 py-2 rounded-lg ${lgCenter}`}
+          className="fixed z-[60] rounded-lg bg-white shadow-xl border border-gray-200 py-1 overflow-y-auto"
+          style={{
+            top: flyout.top,
+            left: flyout.left,
+            width: FLYOUT_WIDTH,
+            maxHeight: "min(70vh, 420px)",
+          }}
+          onMouseEnter={cancelClose}
+          onMouseLeave={scheduleClose}
         >
-          <div className="flex items-center justify-center w-9 h-9 rounded-full bg-brand-100 text-brand-700 font-semibold text-sm uppercase shrink-0">
+          <p className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+            {activeGroup.label}
+          </p>
+          <Link
+            to={activeGroup.to}
+            onClick={onNavigate}
+            className={`flex items-center gap-2 px-3 py-1.5 text-sm transition-colors ${
+              isAllActive(activeGroup)
+                ? "bg-brand-50 text-brand-700 font-medium"
+                : "text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            <LayoutList className="w-3.5 h-3.5 shrink-0 opacity-70" />
+            <span className="truncate">All {activeGroup.label}</span>
+          </Link>
+          {activeGroup.children.map((child) => {
+            const active = isChildActive(child, activeGroup.key);
+            return (
+              <Link
+                key={child.label}
+                to={child.to}
+                onClick={onNavigate}
+                className={`flex items-center gap-2 px-3 py-1.5 text-sm transition-colors ${
+                  active
+                    ? "bg-brand-50 text-brand-700 font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                <MapPin className="w-3.5 h-3.5 shrink-0 opacity-70" />
+                <span className="truncate">{child.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
+      {/* User footer */}
+      <div className="border-t border-brand-700 p-2">
+        <div
+          className={`flex items-center gap-2.5 px-1.5 py-1.5 rounded-lg ${lgCenter}`}
+        >
+          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-brand-600 text-white font-semibold text-sm uppercase shrink-0">
             {user?.username?.charAt(0) || "U"}
           </div>
           <div className={`flex-1 min-w-0 ${lgHide}`}>
-            <p className="text-sm font-medium text-gray-900 truncate">
-              {user?.username}
-            </p>
-            <p className="text-xs text-gray-400">
+            <p className="text-sm font-medium truncate">{user?.username}</p>
+            <p className="text-xs text-brand-200">
               {user?.role === "admin" ? "Administrator" : "User"}
             </p>
           </div>
           <button
             onClick={logout}
-            className={`p-2 rounded-md text-gray-400 hover:text-danger-600 hover:bg-danger-50 transition-colors ${lgHide}`}
+            className={`p-1.5 rounded-md text-brand-200 hover:text-white hover:bg-danger-600 transition-colors ${lgHide}`}
             title="Log out"
           >
             <LogOut className="w-5 h-5" />
