@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { filesService } from "../../services/api-service";
+import { useI18n } from "../../i18n";
 
 const ShareGalleryManager = ({ currentTourId, onGalleryShared }) => {
+  const { t } = useI18n();
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -23,7 +25,7 @@ const ShareGalleryManager = ({ currentTourId, onGalleryShared }) => {
       setSearchResults(filteredTours);
     } catch (error) {
       console.error("Search error:", error);
-      alert("An error occurred while searching");
+      alert(t("tour.gallery.searchError"));
     } finally {
       setLoading(false);
     }
@@ -31,10 +33,10 @@ const ShareGalleryManager = ({ currentTourId, onGalleryShared }) => {
 
   const handleShareGallery = async (sourceTour) => {
     if (
-      !window.confirm(
-        `Do you want to use the Gallery images from "${sourceTour.tour_name}"?\n\n` +
-          `You will get: ${sourceTour.gallery_count} images`
-      )
+      !window.confirm(t("tour.gallery.useConfirm", {
+        count: sourceTour.gallery_count,
+        name: sourceTour.tour_name,
+      }))
     ) {
       return;
     }
@@ -46,7 +48,7 @@ const ShareGalleryManager = ({ currentTourId, onGalleryShared }) => {
         currentTourId
       );
 
-      alert(`Gallery images added successfully: ${result.shared_count} images`);
+      alert(t("tour.gallery.shareSuccess", { count: result.shared_count }));
 
       if (onGalleryShared) {
         onGalleryShared();
@@ -57,7 +59,7 @@ const ShareGalleryManager = ({ currentTourId, onGalleryShared }) => {
       setSearchResults([]);
     } catch (error) {
       console.error("Share error:", error);
-      alert("An error occurred while sharing images: " + error.message);
+      alert(t("tour.upload.error", { message: error.message }));
     } finally {
       setSharing(false);
     }
@@ -73,7 +75,7 @@ const ShareGalleryManager = ({ currentTourId, onGalleryShared }) => {
       <div className="mb-4">
         <input
           type="text"
-          placeholder="Search tours with Gallery images (type at least 2 characters)"
+          placeholder={t("home.searchPlaceholder")}
           value={searchTerm}
           onChange={(e) => {
             const term = e.target.value;
@@ -116,7 +118,7 @@ const ShareGalleryManager = ({ currentTourId, onGalleryShared }) => {
                   disabled={sharing}
                   className="px-4 py-2 bg-success-600 text-white rounded-lg hover:bg-success-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                 >
-                  {sharing ? "Adding..." : "Select this tour"}
+                  {sharing ? t("tour.gallery.adding") : t("tour.gallery.selectTour")}
                 </button>
               </div>
             </div>

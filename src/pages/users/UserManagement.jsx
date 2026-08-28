@@ -52,7 +52,7 @@ const UserManagement = () => {
       setUsers(data);
     } catch (error) {
       console.error("Error fetching users:", error);
-      alert("An error occurred while loading users");
+      alert(t("users.loadError"));
     } finally {
       setLoading(false);
     }
@@ -91,12 +91,12 @@ const UserManagement = () => {
 
     try {
       if (!formData.username.trim()) {
-        alert("Please enter a username");
+        alert(t("users.usernameRequired"));
         return;
       }
 
       if (!editingUser && !formData.password.trim()) {
-        alert("Please enter a password");
+        alert(t("users.passwordRequired"));
         return;
       }
 
@@ -116,17 +116,17 @@ const UserManagement = () => {
 
       if (editingUser) {
         await usersService.updateUser(editingUser.id, submitData);
-        alert("User updated successfully");
+        alert(t("users.updateSuccess"));
       } else {
         await usersService.addUser(submitData);
-        alert("User added successfully");
+        alert(t("users.addSuccess"));
       }
 
       handleCloseModal();
       fetchUsers();
     } catch (error) {
       console.error("Error saving user:", error);
-      alert(error.message || "An error occurred while saving data");
+      alert(error.message || t("users.saveError"));
     }
   };
 
@@ -179,14 +179,14 @@ const UserManagement = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl font-bold text-gray-900">
-          {canManage ? "User Management" : "My User"}
+          {canManage ? t("users.title") : t("users.myAccount")}
         </h1>
         {canManage && (
           <button
             onClick={() => handleOpenModal()}
             className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
           >
-            Add New User
+            {t("users.add")}
           </button>
         )}
       </div>
@@ -198,25 +198,25 @@ const UserManagement = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Username
+                  {t("users.username")}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Name
+                  {t("common.name")}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Office
+                  {t("users.office")}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Position
+                  {t("users.position")}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Role
+                  {t("users.role")}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Created At
+                  {t("users.createdAt")}
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
+                  {t("common.actions")}
                 </th>
               </tr>
             </thead>
@@ -259,7 +259,9 @@ const UserManagement = () => {
                           : "bg-success-100 text-success-800"
                       }`}
                     >
-                      {user.role === "admin" ? "Admin" : "User"}
+                      {user.role === "admin"
+                        ? t("users.role.admin")
+                        : t("users.role.user")}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -270,14 +272,14 @@ const UserManagement = () => {
                       onClick={() => handleOpenModal(user)}
                       className="text-brand-600 hover:text-brand-800 transition-colors"
                     >
-                      Edit
+                      {t("common.edit")}
                     </button>
                     {canManage && user.username !== "admin" && (
                       <button
                         onClick={() => setDeleteTarget(user)}
                         className="text-danger-600 hover:text-danger-800 transition-colors"
                       >
-                        Delete
+                        {t("common.delete")}
                       </button>
                     )}
                   </td>
@@ -289,7 +291,7 @@ const UserManagement = () => {
 
         {visibleUsers.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-500">No users found</p>
+            <p className="text-gray-500">{t("users.noResults")}</p>
           </div>
         )}
       </div>
@@ -301,16 +303,16 @@ const UserManagement = () => {
             <div className="p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 {!canManage
-                  ? "Change Password"
+                  ? t("users.changePassword")
                   : editingUser
-                  ? "Edit User"
-                  : "Add New User"}
+                  ? t("users.edit")
+                  : t("users.add")}
               </h2>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Username <span className="text-danger-600">*</span>
+                    {t("users.username")} <span className="text-danger-600">*</span>
                   </label>
                   <input
                     type="text"
@@ -322,14 +324,14 @@ const UserManagement = () => {
                     className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ${
                       !canManage ? "bg-gray-100 text-gray-500" : ""
                     }`}
-                    placeholder="Enter username"
+                    placeholder={t("users.usernamePlaceholder")}
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nickname
+                      {t("users.nickname")}
                     </label>
                     <input
                       type="text"
@@ -340,13 +342,13 @@ const UserManagement = () => {
                       className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ${
                         !canManage ? "bg-gray-100 text-gray-500" : ""
                       }`}
-                      placeholder="e.g. Nui"
+                      placeholder={t("users.nicknamePlaceholder")}
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Full Name
+                      {t("users.fullName")}
                     </label>
                     <input
                       type="text"
@@ -357,14 +359,14 @@ const UserManagement = () => {
                       className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ${
                         !canManage ? "bg-gray-100 text-gray-500" : ""
                       }`}
-                      placeholder="e.g. Somchai Jaidee"
+                      placeholder={t("users.fullNamePlaceholder")}
                     />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Office <span className="text-danger-600">*</span>
+                    {t("users.office")} <span className="text-danger-600">*</span>
                   </label>
                   <select
                     name="office"
@@ -386,7 +388,7 @@ const UserManagement = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Position
+                    {t("users.position")}
                   </label>
                   <input
                     type="text"
@@ -397,18 +399,18 @@ const UserManagement = () => {
                     className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ${
                       !canManage ? "bg-gray-100 text-gray-500" : ""
                     }`}
-                    placeholder="e.g. GM, Sales Manager"
+                    placeholder={t("users.positionPlaceholder")}
                   />
                   {canManage && (
                     <p className="text-xs text-gray-500 mt-1">
-                      More than one position can be entered, separated by commas
+                      {t("users.positionHint")}
                     </p>
                   )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Password{" "}
+                    {t("users.password")}{" "}
                     {editingUser ? "" : <span className="text-danger-600">*</span>}
                   </label>
                   <input
@@ -420,13 +422,13 @@ const UserManagement = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                     placeholder={
                       editingUser
-                        ? "Leave blank if unchanged"
-                        : "Enter password"
+                        ? t("users.passwordUnchangedPlaceholder")
+                        : t("users.passwordPlaceholder")
                     }
                   />
                   {editingUser && (
                     <p className="text-xs text-gray-500 mt-1">
-                      Leave blank if you do not want to change the password
+                      {t("users.passwordHint")}
                     </p>
                   )}
                 </div>
@@ -434,7 +436,7 @@ const UserManagement = () => {
                 {canManage && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Role <span className="text-danger-600">*</span>
+                      {t("users.role")} <span className="text-danger-600">*</span>
                     </label>
                     <select
                       name="role"
@@ -443,8 +445,8 @@ const UserManagement = () => {
                       required
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                     >
-                      <option value="user">User</option>
-                      <option value="admin">Admin</option>
+                      <option value="user">{t("users.role.user")}</option>
+                      <option value="admin">{t("users.role.admin")}</option>
                     </select>
                   </div>
                 )}
@@ -454,14 +456,14 @@ const UserManagement = () => {
                     type="submit"
                     className="flex-1 bg-brand-600 text-white py-2 px-4 rounded-lg hover:bg-brand-700 transition-colors"
                   >
-                    {editingUser ? "Update" : "Add User"}
+                    {editingUser ? t("users.update") : t("users.addAction")}
                   </button>
                   <button
                     type="button"
                     onClick={handleCloseModal}
                     className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors"
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </button>
                 </div>
               </form>

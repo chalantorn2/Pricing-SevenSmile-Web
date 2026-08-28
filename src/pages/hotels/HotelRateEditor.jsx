@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, Trash2, Save, Copy } from "lucide-react";
 import { hotelsService } from "../../services/api-service";
 import Toast from "../../components/core/Toast";
+import { useI18n } from "../../i18n";
 
 // Manual rate editor for a hotel. Loads existing rows from hotel-rates.php,
 // lets staff add/edit/delete rate rows + free-text conditions, then bulk-saves
@@ -20,6 +21,7 @@ const emptyRow = () => ({
 });
 
 export default function HotelRateEditor() {
+  const { t } = useI18n();
   const { slug } = useParams();
   const navigate = useNavigate();
 
@@ -124,7 +126,7 @@ export default function HotelRateEditor() {
       }));
 
     if (!cleaned.length) {
-      notify("Add at least one row with a room type and price.", "warning");
+      notify(t("hotels.validation.rateRow"), "warning");
       return;
     }
 
@@ -135,7 +137,7 @@ export default function HotelRateEditor() {
       setTimeout(() => navigate(`/hotel/view/${slug}`), 800);
     } catch (err) {
       console.error("Error saving rates:", err);
-      notify("Save failed: " + err.message, "error");
+      notify(t("common.saveFailed", { message: err.message }), "error");
     } finally {
       setSaving(false);
     }
@@ -146,7 +148,7 @@ export default function HotelRateEditor() {
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500" />
-          <p className="mt-4 text-gray-500">Loading rates…</p>
+          <p className="mt-4 text-gray-500">{t("rates.loading")}</p>
         </div>
       </div>
     );
@@ -159,15 +161,15 @@ export default function HotelRateEditor() {
           to="/hotel"
           className="inline-flex items-center gap-1 text-brand-600 hover:underline text-sm"
         >
-          <ArrowLeft size={14} /> Back to hotels
+          <ArrowLeft size={14} /> {t("hotels.back")}
         </Link>
         <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-12 text-center space-y-4">
-          <h2 className="text-2xl font-semibold text-gray-900">Hotel not found</h2>
+          <h2 className="text-2xl font-semibold text-gray-900">{t("hotels.notFound")}</h2>
           <button
             onClick={load}
             className="px-5 py-2.5 bg-brand-600 text-white rounded-xl font-medium hover:bg-brand-700"
           >
-            Try again
+            {t("common.retry")}
           </button>
         </div>
       </div>
@@ -185,9 +187,9 @@ export default function HotelRateEditor() {
             to={`/hotel/view/${slug}`}
             className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-brand-700 mb-2"
           >
-            <ArrowLeft size={16} /> Back to {hotel.name}
+            <ArrowLeft size={16} /> {t("common.backTo", { name: hotel.name })}
           </Link>
-          <h1 className="text-2xl font-semibold text-gray-900">Edit Net Rates</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">{t("hotels.editRates")}</h1>
           <p className="text-sm text-gray-500">{hotel.name}</p>
         </div>
       </div>
@@ -196,13 +198,13 @@ export default function HotelRateEditor() {
       <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-4 md:p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">
-            Rates <span className="text-gray-400 font-normal">({rows.length} rows · THB)</span>
+            {t("restaurants.rates")} <span className="text-gray-400 font-normal">({t("rates.rowCount", { count: rows.length })} · THB)</span>
           </h2>
           <button
             onClick={() => addRow()}
             className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-brand-50 text-brand-700 rounded-lg hover:bg-brand-100"
           >
-            <Plus size={16} /> Add row
+            <Plus size={16} /> {t("rates.addRow")}
           </button>
         </div>
 
@@ -210,12 +212,12 @@ export default function HotelRateEditor() {
           <table className="w-full text-sm border-separate border-spacing-0">
             <thead>
               <tr className="text-left text-gray-500">
-                <th className="px-2 py-2 font-medium min-w-[180px]">Room type</th>
-                <th className="px-2 py-2 font-medium min-w-[200px]">Period label</th>
-                <th className="px-2 py-2 font-medium">Start</th>
-                <th className="px-2 py-2 font-medium">End</th>
-                <th className="px-2 py-2 font-medium">Meal</th>
-                <th className="px-2 py-2 font-medium text-right">Price</th>
+                <th className="px-2 py-2 font-medium min-w-[180px]">{t("hotels.roomType")}</th>
+                <th className="px-2 py-2 font-medium min-w-[200px]">{t("common.periodLabel")}</th>
+                <th className="px-2 py-2 font-medium">{t("common.start")}</th>
+                <th className="px-2 py-2 font-medium">{t("common.end")}</th>
+                <th className="px-2 py-2 font-medium">{t("hotels.meal")}</th>
+                <th className="px-2 py-2 font-medium text-right">{t("common.price")}</th>
                 <th className="px-2 py-2" />
               </tr>
             </thead>
@@ -226,7 +228,7 @@ export default function HotelRateEditor() {
                     <input
                       value={r.room_type}
                       onChange={(e) => updateRow(r._key, "room_type", e.target.value)}
-                      placeholder="Deluxe"
+                      placeholder={t("hotels.rateRoomPlaceholder")}
                       className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
                     />
                   </td>
@@ -260,9 +262,9 @@ export default function HotelRateEditor() {
                       onChange={(e) => updateRow(r._key, "meal_plan", e.target.value)}
                       className="px-2 py-1.5 rounded-lg border border-gray-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none bg-white"
                     >
-                      <option value="">— none —</option>
-                      <option value="RO">RO (room only)</option>
-                      <option value="RB">RB (breakfast)</option>
+                      <option value="">{t("common.none")}</option>
+                      <option value="RO">{t("hotels.roomOnly")}</option>
+                      <option value="RB">{t("hotels.breakfast")}</option>
                     </select>
                   </td>
                   <td className="px-2 py-1.5">
@@ -279,21 +281,21 @@ export default function HotelRateEditor() {
                   <td className="px-1 py-1.5 whitespace-nowrap">
                     <button
                       onClick={() => addRow(r._key)}
-                      title="Add row below (same room)"
+                      title={t("rates.addBelow")}
                       className="p-1.5 text-gray-400 hover:text-brand-600"
                     >
                       <Plus size={16} />
                     </button>
                     <button
                       onClick={() => duplicateRow(r._key)}
-                      title="Duplicate row"
+                      title={t("rates.duplicate")}
                       className="p-1.5 text-gray-400 hover:text-brand-600"
                     >
                       <Copy size={15} />
                     </button>
                     <button
                       onClick={() => removeRow(r._key)}
-                      title="Delete row"
+                      title={t("rates.deleteRow")}
                       className="p-1.5 text-gray-400 hover:text-danger-600"
                     >
                       <Trash2 size={16} />
@@ -308,11 +310,11 @@ export default function HotelRateEditor() {
 
       {/* Conditions */}
       <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-4 md:p-6 mb-6 space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">Rate conditions</h2>
+        <h2 className="text-lg font-semibold text-gray-900">{t("common.rateConditions")}</h2>
         {[
-          ["rate_validity", "Validity & Market", "Validity / sales-stay period / market / booking code"],
-          ["child_policy", "Children & Extra Bed", "Child rates, extra bed, max occupancy…"],
-          ["rate_terms", "Terms & Conditions", "Cancellation, inclusions, check-in/out…"],
+          ["rate_validity", t("common.validityMarket"), t("rates.validityPlaceholder")],
+          ["child_policy", t("hotels.childrenExtraBed"), t("rates.childPolicyPlaceholder")],
+          ["rate_terms", t("common.termsConditions"), t("rates.termsPlaceholder")],
         ].map(([field, label, ph]) => (
           <div key={field}>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>
@@ -336,7 +338,7 @@ export default function HotelRateEditor() {
             to={`/hotel/view/${slug}`}
             className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-500 font-medium hover:bg-gray-50"
           >
-            Cancel
+            {t("common.cancel")}
           </Link>
           <button
             onClick={handleSave}
@@ -344,7 +346,7 @@ export default function HotelRateEditor() {
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-600 text-white font-medium hover:bg-brand-700 disabled:opacity-60"
           >
             <Save size={18} />
-            {saving ? "Saving…" : "Save rates"}
+            {saving ? t("common.saving") : t("rates.save")}
           </button>
         </div>
       </div>

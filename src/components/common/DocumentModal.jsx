@@ -16,6 +16,7 @@ import {
   getTourCategoryInfo,
   getSupplierCategoryInfo,
 } from "../../utils/file-categories";
+import { useI18n } from "../../i18n";
 
 const CATEGORY_ORDER = [
   "contact_rate",
@@ -50,6 +51,7 @@ const formatDate = (dateString) => {
 };
 
 const Thumbnail = ({ file, onOpen }) => {
+  const { t } = useI18n();
   const [broken, setBroken] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const name = getDisplayName(file);
@@ -59,14 +61,14 @@ const Thumbnail = ({ file, onOpen }) => {
       type="button"
       onClick={onOpen}
       title={name}
-      aria-label={`View ${name}`}
+      aria-label={t("common.viewNamed", { name })}
       className="group relative aspect-square bg-gray-100 rounded-xl overflow-hidden shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all duration-200"
     >
       {broken ? (
         <span className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 gap-1">
           <ImageOff className="h-6 w-6" />
           <span className="text-[10px] px-1 truncate max-w-full">
-            Unavailable
+            {t("document.unavailable")}
           </span>
         </span>
       ) : (
@@ -89,6 +91,7 @@ const Thumbnail = ({ file, onOpen }) => {
 };
 
 const DocumentModal = ({ isOpen, onClose, tour }) => {
+  const { t } = useI18n();
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -135,7 +138,7 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
       } catch (err) {
         if (requestId !== requestRef.current) return;
         console.error("Error fetching files:", err);
-        setError(err.message || "An error occurred while loading files");
+        setError(err.message || t("document.loadError"));
       } finally {
         if (requestId === requestRef.current) setLoading(false);
       }
@@ -255,7 +258,7 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Attachments"
+          aria-label={t("document.attachments")}
           className="modal-content document-modal-large bg-white rounded-lg shadow-xl flex flex-col"
           style={{ overflow: "hidden" }}
         >
@@ -263,7 +266,7 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
           <div className="modal-header border-b border-gray-200 px-4 sm:px-6 py-4 flex items-center justify-between gap-4 shrink-0">
             <div className="min-w-0">
               <h2 className="text-xl font-semibold text-gray-900">
-                Attachments
+                {t("document.attachments")}
               </h2>
               <p className="text-sm text-gray-500 mt-1 truncate">
                 {tour.tour_name}
@@ -271,7 +274,7 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
             </div>
             <button
               onClick={onClose}
-              aria-label="Close attachments"
+              aria-label={t("document.closeAttachments")}
               className="text-gray-400 hover:text-gray-600 transition-colors shrink-0"
             >
               <X className="w-6 h-6" />
@@ -282,7 +285,7 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
           {!loading && !error && fileGroups.length > 0 && (
             <div
               role="tablist"
-              aria-label="Attachment categories"
+              aria-label={t("document.categories")}
               className="border-b border-gray-200 px-4 sm:px-6 py-3 flex items-center gap-2 overflow-x-auto shrink-0"
             >
               <button
@@ -296,7 +299,7 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
                 }`}
               >
                 <Layers className="h-4 w-4" />
-                All
+                {t("common.all")}
                 <span className="text-xs opacity-75">({files.length})</span>
               </button>
 
@@ -320,7 +323,7 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
                     <CategoryIcon className="h-4 w-4" />
                     {group.categoryInfo.label}
                     <span className="text-xs opacity-75">
-                      {group.source === "supplier" ? "Supplier" : "Tour"} (
+                      {group.source === "supplier" ? t("tour.field.supplier") : t("nav.tours")} (
                       {total})
                     </span>
                   </button>
@@ -334,7 +337,7 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
             {loading ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500 mx-auto mb-2"></div>
-                <p className="text-sm text-gray-500">Loading files...</p>
+                <p className="text-sm text-gray-500">{t("document.loading")}</p>
               </div>
             ) : error ? (
               <div className="text-center py-8">
@@ -342,7 +345,7 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
                   <AlertCircle className="w-8 h-8 text-danger-500" />
                 </div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Could not load attachments
+                  {t("document.loadError")}
                 </h3>
                 <p className="text-gray-500">{error}</p>
               </div>
@@ -368,12 +371,12 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
                             {group.categoryInfo.label}
                           </span>
                           <span className="ml-2 text-xs opacity-75">
-                            ({group.source === "supplier" ? "Supplier" : "Tour"}
+                            ({group.source === "supplier" ? t("tour.field.supplier") : t("nav.tours")}
                             )
                           </span>
                         </div>
                         <span className="text-sm text-gray-500">
-                          {total} {total === 1 ? "file" : "files"}
+                          {t("document.fileCount", { count: total })}
                         </span>
                       </div>
 
@@ -381,11 +384,8 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
                       {group.images.length > 0 && (
                         <div className="space-y-3 mb-4">
                           <div className="flex items-center justify-between text-xs text-gray-500">
-                            <span>Click an image to view full size</span>
-                            <span>
-                              {group.images.length}{" "}
-                              {group.images.length === 1 ? "image" : "images"}
-                            </span>
+                            <span>{t("document.openImage")}</span>
+                            <span>{t("common.imageCount", { count: group.images.length })}</span>
                           </div>
                           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                             {group.images.map((file, index) => (
@@ -428,21 +428,22 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
                                         }`}
                                       >
                                         {file.source === "supplier"
-                                          ? "Supplier"
-                                          : "Tour"}
+                                          ? t("tour.field.supplier")
+                                          : t("nav.tours")}
                                       </span>
                                     </div>
                                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-500 mt-0.5">
                                       <span>{file.file_size_formatted}</span>
                                       <span>&middot;</span>
                                       <span>
-                                        Uploaded on{" "}
-                                        {formatDate(file.uploaded_at)}
+                                        {t("document.uploadedOn", {
+                                          date: formatDate(file.uploaded_at),
+                                        })}
                                       </span>
                                       {file.uploaded_by && (
                                         <>
                                           <span>&middot;</span>
-                                          <span>by {file.uploaded_by}</span>
+                                          <span>{t("document.by", { name: file.uploaded_by })}</span>
                                         </>
                                       )}
                                     </div>
@@ -454,14 +455,14 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
                                     className="inline-flex items-center gap-1.5 px-3 py-2 text-brand-600 hover:bg-brand-50 rounded-lg transition-colors text-sm"
                                   >
                                     <Eye className="h-4 w-4" />
-                                    View
+                                    {t("document.view")}
                                   </button>
                                   <button
                                     onClick={() => handleDownloadFile(file)}
                                     className="inline-flex items-center gap-1.5 px-3 py-2 text-success-600 hover:bg-success-50 rounded-lg transition-colors text-sm"
                                   >
                                     <Download className="h-4 w-4" />
-                                    Download
+                                    {t("document.download")}
                                   </button>
                                 </div>
                               </div>
@@ -479,10 +480,10 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
                   <FolderOpen className="w-8 h-8 text-gray-400" />
                 </div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  No attachments yet
+                  {t("document.empty")}
                 </h3>
                 <p className="text-gray-500">
-                  Go to the edit page to add documents for this tour
+                  {t("document.emptyHint")}
                 </p>
               </div>
             )}
@@ -492,16 +493,17 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
           <div className="modal-footer border-t border-gray-200 px-4 sm:px-6 py-4 flex justify-between items-center gap-4 shrink-0">
             <div className="text-sm text-gray-500">
               {files.length > 0
-                ? `${documentCount} ${
-                    documentCount === 1 ? "document" : "documents"
-                  }, ${imageCount} ${imageCount === 1 ? "image" : "images"}`
-                : "No documents"}
+                ? t("document.summary", {
+                    documents: documentCount,
+                    images: imageCount,
+                  })
+                : t("document.noDocuments")}
             </div>
             <button
               onClick={onClose}
               className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors shrink-0"
             >
-              Close
+              {t("common.close")}
             </button>
           </div>
         </div>
@@ -525,7 +527,7 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
 
             <button
               onClick={closeLightbox}
-              aria-label="Close image"
+              aria-label={t("document.closeImage")}
               className="absolute top-4 right-4 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-900 rounded-full w-10 h-10 flex items-center justify-center transition-all shadow-lg"
             >
               <X className="w-6 h-6" />
@@ -535,14 +537,14 @@ const DocumentModal = ({ isOpen, onClose, tour }) => {
               <>
                 <button
                   onClick={() => stepLightbox(-1)}
-                  aria-label="Previous image"
+                  aria-label={t("document.previousImage")}
                   className="absolute left-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-900 rounded-full w-10 h-10 flex items-center justify-center transition-all shadow-lg"
                 >
                   <ChevronLeft className="w-6 h-6" />
                 </button>
                 <button
                   onClick={() => stepLightbox(1)}
-                  aria-label="Next image"
+                  aria-label={t("document.nextImage")}
                   className="absolute right-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-900 rounded-full w-10 h-10 flex items-center justify-center transition-all shadow-lg"
                 >
                   <ChevronRight className="w-6 h-6" />

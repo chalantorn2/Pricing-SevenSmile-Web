@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { X } from "lucide-react";
 import { THAI_PROVINCES } from "../../utils/provinces";
+import { useI18n } from "../../i18n";
 
 // Province picker backed by a fixed list (THAI_PROVINCES) to prevent typos.
 // - multiple=false: exactly one province (Destination)
@@ -11,8 +12,10 @@ const ProvincePicker = ({
   onChange,
   multiple = false,
   quickPicks = [],
-  placeholder = "Type a province",
+  placeholder,
 }) => {
+  const { t } = useI18n();
+  const resolvedPlaceholder = placeholder || t("tour.placeholder.province");
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -123,7 +126,7 @@ const ProvincePicker = ({
                 remove(selected[selected.length - 1]);
               }
             }}
-            placeholder={selected.length === 0 ? placeholder : "Add another…"}
+            placeholder={selected.length === 0 ? resolvedPlaceholder : t("common.addAnother")}
             className="flex-1 min-w-[100px] text-sm border-0 bg-transparent p-1 focus:ring-0 focus:outline-none"
           />
         )}

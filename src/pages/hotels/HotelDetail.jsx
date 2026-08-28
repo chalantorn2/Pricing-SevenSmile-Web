@@ -24,12 +24,14 @@ import {
 } from "lucide-react";
 import { hotelsService } from "../../services/api-service";
 import { pushRecentItem } from "../../utils/recentItems";
+import { useI18n } from "../../i18n";
 import NoticeCalendar from "../../components/hotels/NoticeCalendar";
 
 // Detail page mirrors the indosmilesouthservices.com layout (hero, gallery by
 // category, overview, amenities, room types, lightbox) adapted to this admin
 // app's theme (slate/blue/amber, Prompt font) and routes.
 export default function HotelDetail() {
+  const { t } = useI18n();
   const { slug } = useParams();
   const [hotel, setHotel] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -277,7 +279,7 @@ export default function HotelDetail() {
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500" />
-          <p className="mt-4 text-gray-500">Loading hotel…</p>
+          <p className="mt-4 text-gray-500">{t("hotels.loading")}</p>
         </div>
       </div>
     );
@@ -290,20 +292,20 @@ export default function HotelDetail() {
           to="/hotel"
           className="inline-flex items-center gap-1 text-brand-600 hover:underline text-sm"
         >
-          <ArrowLeft size={14} /> Back to hotels
+          <ArrowLeft size={14} /> {t("hotels.back")}
         </Link>
         <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-12 text-center space-y-4">
           <h2 className="text-2xl font-semibold text-gray-900">
-            Hotel not found
+            {t("hotels.notFound")}
           </h2>
           <p className="text-gray-500">
-            We couldn&apos;t load this hotel. It may have been removed.
+            {t("hotels.notFoundHint")}
           </p>
           <button
             onClick={fetchHotel}
             className="px-5 py-2.5 bg-brand-600 text-white rounded-xl font-medium hover:bg-brand-700"
           >
-            Try again
+            {t("common.retry")}
           </button>
         </div>
       </div>
@@ -316,7 +318,7 @@ export default function HotelDetail() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         <nav className="flex items-center gap-2 text-sm text-gray-500">
           <Link to="/hotel" className="hover:text-brand-700">
-            Hotels
+            {t("hotels.title")}
           </Link>
           <ChevronRight size={14} className="text-gray-400" />
           <span className="text-gray-900 font-medium truncate max-w-[220px]">
@@ -337,13 +339,13 @@ export default function HotelDetail() {
           <button
             onClick={handleShare}
             className="absolute top-6 right-6 bg-black/30 backdrop-blur-md text-white/80 hover:text-white hover:bg-black/50 p-3 rounded-full transition"
-            title="Share"
+            title={t("common.share")}
           >
             {copied ? <Check size={18} /> : <Link2 size={18} />}
           </button>
           {copied && (
             <span className="absolute top-6 right-20 bg-black/60 text-white text-xs px-3 py-2 rounded-full">
-              Link copied!
+              {t("common.linkCopied")}
             </span>
           )}
 
@@ -368,7 +370,7 @@ export default function HotelDetail() {
             ) : null}
             {!hotel.is_active && (
               <span className="bg-gray-700 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                Inactive
+                {t("common.inactive")}
               </span>
             )}
           </div>
@@ -417,7 +419,7 @@ export default function HotelDetail() {
             {rateMatrix && (
               <div className="order-first bg-white rounded-2xl p-6 md:p-8 shadow-sm ring-1 ring-black/5">
                 <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-                  <h2 className="text-2xl font-semibold text-gray-900">Net Rates</h2>
+                  <h2 className="text-2xl font-semibold text-gray-900">{t("common.netRates")}</h2>
                   <div className="flex items-center gap-3">
                     {/* Table / Calendar toggle */}
                     <div className="inline-flex rounded-lg border border-gray-200 p-0.5 bg-gray-50">
@@ -429,7 +431,7 @@ export default function HotelDetail() {
                             : "text-gray-500 hover:text-gray-700"
                         }`}
                       >
-                        <Table2 size={14} /> Rates
+                        <Table2 size={14} /> {t("restaurants.rates")}
                       </button>
                       <button
                         onClick={() => setRateView("calendar")}
@@ -439,7 +441,7 @@ export default function HotelDetail() {
                             : "text-gray-500 hover:text-gray-700"
                         }`}
                       >
-                        <CalendarDays size={14} /> Calendar
+                        <CalendarDays size={14} /> {t("common.calendar")}
                       </button>
                     </div>
                   </div>
@@ -448,12 +450,12 @@ export default function HotelDetail() {
                   <>
                     <NoticeCalendar notices={hotel.notices || []} />
                     <p className="mt-2.5 text-xs text-gray-400">
-                      Red = Stop Sale · Green = Promotion.{" "}
+                      {t("hotels.calendarLegend")} {" "}
                       <Link
                         to={`/hotel/notices/${slug}`}
                         className="text-brand-600 hover:underline font-medium"
                       >
-                        Manage
+                        {t("common.manage")}
                       </Link>
                     </p>
                   </>
@@ -463,7 +465,7 @@ export default function HotelDetail() {
                     <thead>
                       <tr className="bg-gray-50 text-gray-500">
                         <th className="sticky left-0 z-10 bg-gray-50 px-2.5 py-2 text-left font-medium whitespace-nowrap">
-                          Room type
+                          {t("hotels.roomType")}
                         </th>
                         {rateMatrix.periods.map((p) => (
                           <th
@@ -523,7 +525,7 @@ export default function HotelDetail() {
                 )}
                 {rateView === "table" && (
                   <p className="mt-2.5 text-xs text-gray-400">
-                    * All prices include breakfast (per room / night).
+                    {t("hotels.breakfastIncludedHint")}
                   </p>
                 )}
               </div>
@@ -534,13 +536,13 @@ export default function HotelDetail() {
               <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm ring-1 ring-black/5">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-2xl font-semibold text-gray-900">
-                    Stop Sale &amp; Promotions
+                    {t("hotels.notices")}
                   </h2>
                   <Link
                     to={`/hotel/notices/${slug}`}
                     className="text-sm font-medium text-brand-600 hover:underline"
                   >
-                    Manage
+                    {t("common.manage")}
                   </Link>
                 </div>
                 <div className="space-y-2.5">
@@ -550,14 +552,14 @@ export default function HotelDetail() {
                       className="flex items-start gap-3 rounded-xl bg-danger-50 border border-danger-200 px-4 py-3"
                     >
                       <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold bg-danger-100 text-danger-600 shrink-0">
-                        <Ban size={13} /> Stop Sale
+                        <Ban size={13} /> {t("hotels.stopSale")}
                       </span>
                       <div className="min-w-0 text-sm">
                         <div className="font-medium text-gray-900">
                           {n.date_start} → {n.date_end}
                           <span className="text-gray-400 font-normal">
                             {" · "}
-                            {n.room_type || "All rooms"}
+                            {n.room_type || t("hotels.allRooms")}
                           </span>
                         </div>
                         {(n.title || n.detail) && (
@@ -574,14 +576,14 @@ export default function HotelDetail() {
                       className="flex items-start gap-3 rounded-xl bg-success-50 border border-success-200 px-4 py-3"
                     >
                       <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold bg-success-100 text-success-600 shrink-0">
-                        <Tag size={13} /> Promo
+                        <Tag size={13} /> {t("hotels.promotion")}
                       </span>
                       <div className="min-w-0 text-sm flex-1">
                         <div className="font-medium text-gray-900">
                           {n.date_start} → {n.date_end}
                           <span className="text-gray-400 font-normal">
                             {" · "}
-                            {n.room_type || "All rooms"}
+                            {n.room_type || t("hotels.allRooms")}
                           </span>
                         </div>
                         {(n.title || n.detail) && (
@@ -605,7 +607,7 @@ export default function HotelDetail() {
             {galleryImages.length > 0 && (
               <div>
                 <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-                  Gallery
+                  {t("common.gallery")}
                 </h2>
                 {galleryCategories.length > 1 && (
                   <div className="flex flex-wrap gap-2 mb-5">
@@ -617,7 +619,7 @@ export default function HotelDetail() {
                           : "bg-white border border-gray-200 text-gray-500 hover:border-gray-300"
                       }`}
                     >
-                      All ({galleryImages.length})
+                      {t("common.all")} ({galleryImages.length})
                     </button>
                     {galleryCategories.map((cat) => (
                       <button
@@ -652,7 +654,7 @@ export default function HotelDetail() {
                       {idx === 5 && filteredGalleryImages.length > 6 && (
                         <div className="absolute inset-0 bg-gray-900/60 flex items-center justify-center">
                           <span className="text-white text-2xl font-semibold">
-                            +{filteredGalleryImages.length - 6} photos
+                            +{t("common.photoCount", { count: filteredGalleryImages.length - 6 })}
                           </span>
                         </div>
                       )}
@@ -666,7 +668,7 @@ export default function HotelDetail() {
             {hotel.description && (
               <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm ring-1 ring-black/5">
                 <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-                  Property Overview
+                  {t("hotels.overview")}
                 </h2>
                 {hotel.short_description && (
                   <p className="text-gray-700 font-medium mb-4">
@@ -680,13 +682,13 @@ export default function HotelDetail() {
                   <div className="mt-6 flex flex-wrap gap-6 text-gray-500">
                     {hotel.check_in_time && (
                       <span className="flex items-center gap-2">
-                        <Clock size={16} /> Check-in:{" "}
+                        <Clock size={16} /> {t("hotels.checkInTime")}:{" "}
                         <strong>{hotel.check_in_time}</strong>
                       </span>
                     )}
                     {hotel.check_out_time && (
                       <span className="flex items-center gap-2">
-                        <Clock size={16} /> Check-out:{" "}
+                        <Clock size={16} /> {t("hotels.checkOutTime")}:{" "}
                         <strong>{hotel.check_out_time}</strong>
                       </span>
                     )}
@@ -699,7 +701,7 @@ export default function HotelDetail() {
             {amenities.length > 0 && (
               <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm ring-1 ring-black/5">
                 <h2 className="text-2xl font-semibold text-gray-900 mb-6">
-                  Popular Amenities
+                  {t("hotels.popularAmenities")}
                 </h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
                   {amenities.map((a, idx) => (
@@ -718,7 +720,7 @@ export default function HotelDetail() {
             {roomTypes.length > 0 && (
               <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm ring-1 ring-black/5">
                 <h2 className="text-2xl font-semibold text-gray-900 mb-6">
-                  Room Types
+                  {t("hotels.roomTypes")}
                 </h2>
                 <div className="space-y-6">
                   {roomTypes.map((room, idx) => (
@@ -749,13 +751,13 @@ export default function HotelDetail() {
                           {roomPriceFrom[room.name] != null && (
                             <div className="text-right shrink-0 leading-tight">
                               <span className="block text-[11px] text-gray-400">
-                                from
+                                {t("restaurants.from")}
                               </span>
                               <span className="text-base font-semibold text-brand-600 whitespace-nowrap">
                                 ฿{roomPriceFrom[room.name].toLocaleString()}
                               </span>
                               <span className="block text-[11px] text-gray-400">
-                                / night incl. breakfast
+                                {t("hotels.perNightBreakfast")}
                               </span>
                             </div>
                           )}
@@ -768,12 +770,12 @@ export default function HotelDetail() {
                         <div className="flex flex-wrap gap-3 text-sm text-gray-500">
                           {room.bed_type && (
                             <span className="flex items-center gap-1.5">
-                              <BedDouble size={16} /> {room.bed_type} Bed
+                              <BedDouble size={16} /> {room.bed_type} {t("hotels.bed")}
                             </span>
                           )}
                           {room.max_guests && (
                             <span className="flex items-center gap-1.5">
-                              <Users size={16} /> Max {room.max_guests} guests
+                              <Users size={16} /> {t("hotels.maxGuests", { count: room.max_guests })}
                             </span>
                           )}
                           {room.room_size && (
@@ -805,12 +807,12 @@ export default function HotelDetail() {
             {(hotel.rate_validity || hotel.child_policy || hotel.rate_terms) && (
               <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm ring-1 ring-black/5 space-y-5">
                 <h2 className="text-2xl font-semibold text-gray-900">
-                  Rate Conditions
+                  {t("common.rateConditions")}
                 </h2>
                 {hotel.rate_validity && (
                   <div>
                     <h3 className="text-sm font-semibold text-gray-700 mb-1.5">
-                      Validity &amp; Market
+                      {t("common.validityMarket")}
                     </h3>
                     <p className="text-gray-500 text-sm leading-relaxed whitespace-pre-line">
                       {hotel.rate_validity}
@@ -820,7 +822,7 @@ export default function HotelDetail() {
                 {hotel.child_policy && (
                   <div>
                     <h3 className="text-sm font-semibold text-gray-700 mb-1.5">
-                      Children &amp; Extra Bed
+                      {t("hotels.childrenExtraBed")}
                     </h3>
                     <p className="text-gray-500 text-sm leading-relaxed whitespace-pre-line">
                       {hotel.child_policy}
@@ -830,7 +832,7 @@ export default function HotelDetail() {
                 {hotel.rate_terms && (
                   <div>
                     <h3 className="text-sm font-semibold text-gray-700 mb-1.5">
-                      Terms &amp; Conditions
+                      {t("common.termsConditions")}
                     </h3>
                     <p className="text-gray-500 text-sm leading-relaxed whitespace-pre-line">
                       {hotel.rate_terms}
@@ -846,10 +848,10 @@ export default function HotelDetail() {
             <div className="sticky top-6 bg-white rounded-2xl p-6 shadow-sm ring-1 ring-black/5 space-y-5">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                  Hotel info
+                  {t("hotels.info")}
                 </h3>
                 <p className="text-sm text-gray-500">
-                  Master record — indosmilesouthservices.com pulls from here
+                  {t("hotels.masterRecordHint")}
                 </p>
               </div>
 
@@ -895,7 +897,7 @@ export default function HotelDetail() {
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 mt-1.5 text-brand-600 hover:underline font-medium text-xs"
                       >
-                        View on Google Maps <ChevronRight size={12} />
+                        {t("common.viewMap")} <ChevronRight size={12} />
                       </a>
                     </div>
                   </div>
@@ -906,21 +908,21 @@ export default function HotelDetail() {
                 to={`/hotel/rates/${slug}`}
                 className="flex items-center justify-center gap-2 w-full bg-brand-600 text-white px-4 py-2.5 rounded-xl font-medium hover:bg-brand-700"
               >
-                <Pencil size={16} /> Edit net rates
+                <Pencil size={16} /> {t("hotels.editRates")}
               </Link>
 
               <Link
                 to={`/hotel/notices/${slug}`}
                 className="flex items-center justify-center gap-2 w-full border border-warning-200 text-warning-700 bg-warning-50 px-4 py-2.5 rounded-xl font-medium hover:bg-warning-100"
               >
-                <CalendarDays size={16} /> Stop Sale &amp; Promotions
+                <CalendarDays size={16} /> {t("hotels.notices")}
               </Link>
 
               <Link
                 to="/hotel"
                 className="flex items-center justify-center gap-2 w-full border border-gray-200 text-gray-500 px-4 py-2.5 rounded-xl font-medium hover:bg-gray-50"
               >
-                <ArrowLeft size={16} /> Back to hotels
+                <ArrowLeft size={16} /> {t("hotels.back")}
               </Link>
             </div>
           </div>

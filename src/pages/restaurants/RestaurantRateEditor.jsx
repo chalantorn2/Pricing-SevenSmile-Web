@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, Trash2, Save, Copy } from "lucide-react";
 import { restaurantsService } from "../../services/api-service";
 import Toast from "../../components/core/Toast";
+import { useI18n } from "../../i18n";
 
 // Manual rate editor for a restaurant. Loads existing rows from
 // restaurant-rates.php, lets staff add/edit/delete rate rows + free-text
@@ -32,6 +33,7 @@ const cellClass =
   "w-full px-2.5 py-1.5 rounded-lg border border-gray-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none";
 
 export default function RestaurantRateEditor() {
+  const { t } = useI18n();
   const { slug } = useParams();
   const navigate = useNavigate();
 
@@ -149,7 +151,7 @@ export default function RestaurantRateEditor() {
       }));
 
     if (!cleaned.length) {
-      notify("Add at least one row with a menu and price.", "warning");
+      notify(t("restaurants.validation.rateRow"), "warning");
       return;
     }
 
@@ -164,7 +166,7 @@ export default function RestaurantRateEditor() {
       setTimeout(() => navigate(`/restaurant/view/${slug}`), 800);
     } catch (err) {
       console.error("Error saving rates:", err);
-      notify("Save failed: " + err.message, "error");
+      notify(t("common.saveFailed", { message: err.message }), "error");
     } finally {
       setSaving(false);
     }
@@ -175,7 +177,7 @@ export default function RestaurantRateEditor() {
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500" />
-          <p className="mt-4 text-gray-500">Loading rates…</p>
+          <p className="mt-4 text-gray-500">{t("rates.loading")}</p>
         </div>
       </div>
     );
@@ -188,17 +190,17 @@ export default function RestaurantRateEditor() {
           to="/restaurant"
           className="inline-flex items-center gap-1 text-brand-600 hover:underline text-sm"
         >
-          <ArrowLeft size={14} /> Back to restaurants
+          <ArrowLeft size={14} /> {t("restaurants.back")}
         </Link>
         <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-12 text-center space-y-4">
           <h2 className="text-2xl font-semibold text-gray-900">
-            Restaurant not found
+            {t("restaurants.notFound")}
           </h2>
           <button
             onClick={load}
             className="px-5 py-2.5 bg-brand-600 text-white rounded-xl font-medium hover:bg-brand-700"
           >
-            Try again
+            {t("common.retry")}
           </button>
         </div>
       </div>
@@ -216,9 +218,9 @@ export default function RestaurantRateEditor() {
             to={`/restaurant/view/${slug}`}
             className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-brand-700 mb-2"
           >
-            <ArrowLeft size={16} /> Back to {restaurant.name}
+            <ArrowLeft size={16} /> {t("common.backTo", { name: restaurant.name })}
           </Link>
-          <h1 className="text-2xl font-semibold text-gray-900">Edit Net Rates</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">{t("restaurants.editRates")}</h1>
           <p className="text-sm text-gray-500">{restaurant.name}</p>
         </div>
       </div>
@@ -236,7 +238,7 @@ export default function RestaurantRateEditor() {
             onClick={() => addRow()}
             className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-brand-50 text-brand-700 rounded-lg hover:bg-brand-100"
           >
-            <Plus size={16} /> Add row
+            <Plus size={16} /> {t("rates.addRow")}
           </button>
         </div>
 
@@ -250,14 +252,14 @@ export default function RestaurantRateEditor() {
           <table className="w-full text-sm border-separate border-spacing-0">
             <thead>
               <tr className="text-left text-gray-500">
-                <th className="px-2 py-2 font-medium min-w-[180px]">Menu</th>
-                <th className="px-2 py-2 font-medium min-w-[190px]">Period label</th>
-                <th className="px-2 py-2 font-medium">Start</th>
-                <th className="px-2 py-2 font-medium">End</th>
-                <th className="px-2 py-2 font-medium text-right">Price</th>
-                <th className="px-2 py-2 font-medium">Unit</th>
-                <th className="px-2 py-2 font-medium text-right">Min pax</th>
-                <th className="px-2 py-2 font-medium min-w-[160px]">Note</th>
+                <th className="px-2 py-2 font-medium min-w-[180px]">{t("restaurants.menu")}</th>
+                <th className="px-2 py-2 font-medium min-w-[190px]">{t("common.periodLabel")}</th>
+                <th className="px-2 py-2 font-medium">{t("common.start")}</th>
+                <th className="px-2 py-2 font-medium">{t("common.end")}</th>
+                <th className="px-2 py-2 font-medium text-right">{t("common.price")}</th>
+                <th className="px-2 py-2 font-medium">{t("restaurants.unit")}</th>
+                <th className="px-2 py-2 font-medium text-right">{t("restaurants.minPax")}</th>
+                <th className="px-2 py-2 font-medium min-w-[160px]">{t("common.note")}</th>
                 <th className="px-2 py-2" />
               </tr>
             </thead>
@@ -269,7 +271,7 @@ export default function RestaurantRateEditor() {
                       value={r.menu_name}
                       onChange={(e) => updateRow(r._key, "menu_name", e.target.value)}
                       list="restaurant-menu-names"
-                      placeholder="Seafood Set A"
+                      placeholder={t("restaurants.rateMenuPlaceholder")}
                       className={cellClass}
                     />
                   </td>
@@ -344,28 +346,28 @@ export default function RestaurantRateEditor() {
                     <input
                       value={r.note}
                       onChange={(e) => updateRow(r._key, "note", e.target.value)}
-                      placeholder="incl. soft drinks"
+                      placeholder={t("restaurants.rateNotePlaceholder")}
                       className={cellClass}
                     />
                   </td>
                   <td className="px-1 py-1.5 whitespace-nowrap">
                     <button
                       onClick={() => addRow(r._key)}
-                      title="Add row below (same menu)"
+                      title={t("rates.addBelow")}
                       className="p-1.5 text-gray-400 hover:text-brand-600"
                     >
                       <Plus size={16} />
                     </button>
                     <button
                       onClick={() => duplicateRow(r._key)}
-                      title="Duplicate row"
+                      title={t("rates.duplicate")}
                       className="p-1.5 text-gray-400 hover:text-brand-600"
                     >
                       <Copy size={15} />
                     </button>
                     <button
                       onClick={() => removeRow(r._key)}
-                      title="Delete row"
+                      title={t("rates.deleteRow")}
                       className="p-1.5 text-gray-400 hover:text-danger-600"
                     >
                       <Trash2 size={16} />
@@ -380,17 +382,17 @@ export default function RestaurantRateEditor() {
 
       {/* Conditions */}
       <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-4 md:p-6 mb-6 space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">Rate conditions</h2>
+        <h2 className="text-lg font-semibold text-gray-900">{t("common.rateConditions")}</h2>
         {[
           [
             "rate_validity",
-            "Validity & Market",
-            "Validity / sales period / market / booking code",
+            t("common.validityMarket"),
+            t("rates.validityPlaceholder"),
           ],
           [
             "rate_terms",
-            "Terms & Conditions",
-            "Cancellation, inclusions, surcharges, service charge…",
+            t("common.termsConditions"),
+            t("rates.termsPlaceholder"),
           ],
         ].map(([field, label, ph]) => (
           <div key={field}>
@@ -417,7 +419,7 @@ export default function RestaurantRateEditor() {
             to={`/restaurant/view/${slug}`}
             className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-500 font-medium hover:bg-gray-50"
           >
-            Cancel
+            {t("common.cancel")}
           </Link>
           <button
             onClick={handleSave}
@@ -425,7 +427,7 @@ export default function RestaurantRateEditor() {
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-600 text-white font-medium hover:bg-brand-700 disabled:opacity-60"
           >
             <Save size={18} />
-            {saving ? "Saving…" : "Save rates"}
+            {saving ? t("common.saving") : t("rates.save")}
           </button>
         </div>
       </div>

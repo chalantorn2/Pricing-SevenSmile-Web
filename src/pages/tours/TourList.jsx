@@ -82,8 +82,8 @@ const isExpired = (endDate) => {
   return new Date(endDate) < new Date();
 };
 
-const formatDate = (dateString) =>
-  new Date(dateString).toLocaleDateString("en-US", {
+const formatDate = (dateString, locale) =>
+  new Date(dateString).toLocaleDateString(locale, {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -101,22 +101,22 @@ const formatPrice = (price) => {
   return new Intl.NumberFormat("en-US").format(n);
 };
 
-const getNotesWithExpiry = (tour) => {
+const getNotesWithExpiry = (tour, t) => {
   let notes = tour.notes || "";
   notes =
     (tour.park_fee_included
-      ? "This Net price includes the park fee"
-      : "This Net price does not include the park fee") +
+      ? t("tour.parkFeeIncludedNote")
+      : t("tour.parkFeeExcludedNote")) +
     (notes ? ` | ${notes}` : "");
 
   if (isExpired(tour.end_date)) {
-    notes += " | Expired, please renew";
+    notes += ` | ${t("tour.expiredRenew")}`;
   }
   return notes;
 };
 
 const TourList = () => {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
 
   // ========= State =========
   const [tours, setTours] = useState([]);
@@ -190,7 +190,7 @@ const TourList = () => {
       setTours(data);
     } catch (error) {
       console.error("Error fetching tours:", error);
-      setLoadError(error?.message || "An error occurred while loading data");
+      setLoadError(error?.message || t("tour.loadError"));
     } finally {
       setLoading(false);
     }
@@ -316,20 +316,21 @@ const TourList = () => {
   };
 
   const handleExportExcel = () => {
+    const locale = lang === "th" ? "th-TH" : "en-US";
     const exportData = filteredTours.map((tour, index) => ({
-      "No.": index + 1,
-      "Tour name": tour.tour_name,
-      Supplier: tour.supplier_name,
-      "Departure from": tour.departure_from,
-      Destination: tour.destination,
-      Pier: tour.pier,
-      "Adult price": tour.adult_price,
-      "Child price": tour.child_price,
-      Notes: getNotesWithExpiry(tour),
-      "Start date": new Date(tour.start_date).toLocaleDateString("en-US"),
-      "End date": new Date(tour.end_date).toLocaleDateString("en-US"),
-      "Updated at": formatDate(tour.updated_at),
-      "Updated by": tour.updated_by,
+      [t("common.number")]: index + 1,
+      [t("tours.col.name")]: tour.tour_name,
+      [t("tours.filterSupplier")]: tour.supplier_name,
+      [t("tours.col.departure")]: tour.departure_from,
+      [t("tours.col.destination")]: tour.destination,
+      [t("tour.field.pier")]: tour.pier,
+      [t("tours.col.adultPrice")]: tour.adult_price,
+      [t("tours.col.childPrice")]: tour.child_price,
+      [t("common.note")]: getNotesWithExpiry(tour, t),
+      [t("tour.field.startDate")]: new Date(tour.start_date).toLocaleDateString(locale),
+      [t("tour.field.endDate")]: new Date(tour.end_date).toLocaleDateString(locale),
+      [t("suppliers.updated")]: formatDate(tour.updated_at, locale),
+      [t("tour.field.updatedBy")]: tour.updated_by,
     }));
 
     const ws = XLSX.utils.json_to_sheet(exportData);
@@ -355,9 +356,9 @@ const TourList = () => {
     const url = `${window.location.origin}/tour/${tour.id}`;
     try {
       await navigator.clipboard.writeText(url);
-      setToast("Link copied");
+      setToast(t("tours.linkCopied"));
     } catch {
-      setToast("Unable to copy the link");
+      setToast(t("tours.linkCopyError"));
     }
     setTimeout(() => setToast(null), 1500);
   };
@@ -395,7 +396,7 @@ const TourList = () => {
           t.id === tour.id ? { ...t, is_frequent: tour.is_frequent } : t
         )
       );
-      setToast({ message: "Could not update the pin", type: "error" });
+      setToast({ message: t("tours.pinError"), type: "error" });
     } finally {
       setPendingFrequent((prev) => prev.filter((id) => id !== tour.id));
     }
@@ -410,8 +411,8 @@ const TourList = () => {
         onClick={() => handleToggleFrequent(tour)}
         disabled={pendingFrequent.includes(tour.id)}
         aria-pressed={pinned}
-        title={pinned ? "Remove from frequently used" : "Mark as frequently used"}
-        aria-label={`${pinned ? "Unpin" : "Pin"} ${tour.tour_name}`}
+        title={pinned ? t("tours.unpin") : t("tours.pin")}
+        aria-label={`${pinned ? t("tours.unpin") : t("tours.pin")} ${tour.tour_name}`}
         className={`inline-flex shrink-0 items-center justify-center w-6 h-6 rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-50 ${
           pinned
             ? "text-warning-500 hover:text-warning-600"
@@ -434,32 +435,32 @@ const TourList = () => {
       <button
         onClick={() => openTourDetailsModal(tour)}
         className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 active:scale-[.98]"
-        title="View details"
-        aria-label={`View details of ${tour.tour_name}`}
+        title={t("tours.viewDetails")}
+        aria-label={`${t("tours.viewDetails")} ${tour.tour_name}`}
       >
         <FileText className="w-4 h-4" />
       </button>
       <button
         onClick={() => openDocumentModal(tour)}
         className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 active:scale-[.98]"
-        title="View documents"
-        aria-label={`View documents of ${tour.tour_name}`}
+        title={t("tours.viewDocuments")}
+        aria-label={`${t("tours.viewDocuments")} ${tour.tour_name}`}
       >
         <Paperclip className="w-4 h-4" />
       </button>
       <Link
         to={`/edit/${tour.id}`}
         className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 active:scale-[.98]"
-        title="Edit"
-        aria-label={`Edit ${tour.tour_name}`}
+        title={t("common.edit")}
+        aria-label={`${t("common.edit")} ${tour.tour_name}`}
       >
         <Pencil className="w-4 h-4" />
       </Link>
       <button
         onClick={() => handleCopyTourLink(tour)}
         className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 active:scale-[.98]"
-        title="Copy link to this tour"
-        aria-label={`Copy link to ${tour.tour_name}`}
+        title={t("tours.copyLink")}
+        aria-label={`${t("tours.copyLink")} ${tour.tour_name}`}
       >
         <Link2 className="w-4 h-4" />
       </button>
@@ -470,9 +471,9 @@ const TourList = () => {
     if (hasActiveFilters || activeProvince) {
       return (
         <div className="text-center py-12 px-6">
-          <p className="text-gray-500 font-medium">No tours match your filters</p>
+          <p className="text-gray-500 font-medium">{t("tours.noMatches")}</p>
           <p className="text-sm text-gray-500 mt-1">
-            Try a different keyword or clear the filters.
+            {t("tours.noMatchesHint")}
           </p>
           {/* Frequently used */}
           <button
@@ -488,7 +489,7 @@ const TourList = () => {
             <Star
               className={`w-4 h-4 ${frequentOnly ? "fill-current" : ""}`}
             />
-            Frequently used
+            {t("tours.frequent")}
           </button>
 
           {hasActiveFilters && (
@@ -497,7 +498,7 @@ const TourList = () => {
               className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm border border-gray-300 text-gray-700 hover:bg-gray-50"
             >
               <RotateCcw className="w-4 h-4" />
-              Clear filters
+              {t("common.clearFilters")}
             </button>
           )}
         </div>
@@ -506,16 +507,16 @@ const TourList = () => {
 
     return (
       <div className="text-center py-12 px-6">
-        <p className="text-gray-500 font-medium">No tour prices yet</p>
+        <p className="text-gray-500 font-medium">{t("tours.empty")}</p>
         <p className="text-sm text-gray-500 mt-1">
-          Add your first tour price to get started.
+          {t("tours.emptyHint")}
         </p>
         <Link
           to="/add"
           className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white bg-brand-600 hover:bg-brand-700 text-sm"
         >
           <Plus className="w-4 h-4" />
-          Add new price
+          {t("tours.addNew")}
         </Link>
       </div>
     );
@@ -637,7 +638,7 @@ const TourList = () => {
                 <button
                   onClick={() => setSearchInput("")}
                   className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-500"
-                  aria-label="Clear search"
+                  aria-label={t("common.closeSearch")}
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -777,7 +778,7 @@ const TourList = () => {
                         scope="col"
                         className="sticky top-0 z-10 w-0 bg-gray-50 border-b border-gray-200 pl-2 pr-4 py-3"
                       >
-                        <span className="sr-only">Actions</span>
+                        <span className="sr-only">{t("common.actions")}</span>
                       </th>
                     </tr>
                   </thead>
@@ -809,7 +810,7 @@ const TourList = () => {
                               {expired && (
                                 <span className="inline-flex items-center gap-1 shrink-0 rounded-full bg-danger-100 px-2 py-0.5 text-[11px] font-semibold text-danger-700 ring-1 ring-inset ring-danger-200">
                                   <AlertTriangle className="w-3 h-3" />
-                                  Expired
+                                  {t("common.expired")}
                                 </span>
                               )}
                             </div>
@@ -886,21 +887,21 @@ const TourList = () => {
                         {expired && (
                           <span className="inline-flex items-center gap-1 shrink-0 rounded-full bg-danger-100 px-2 py-0.5 text-[11px] font-semibold text-danger-700 ring-1 ring-inset ring-danger-200">
                             <AlertTriangle className="w-3 h-3" />
-                            Expired
+                            {t("common.expired")}
                           </span>
                         )}
                       </div>
 
                       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 text-sm">
                         <span className="text-gray-500">
-                          Adult{" "}
+                          {t("tour.adult")}{" "}
                           <span className="font-semibold text-gray-900 tabular-nums">
                             {formatPrice(tour.adult_price)}
                           </span>{" "}
                           <span className="text-xs text-gray-400">THB</span>
                         </span>
                         <span className="text-gray-500">
-                          Child{" "}
+                          {t("tour.child")}{" "}
                           <span className="font-semibold text-gray-900 tabular-nums">
                             {formatPrice(tour.child_price)}
                           </span>{" "}
@@ -909,7 +910,7 @@ const TourList = () => {
                       </div>
 
                       <div className="text-xs text-gray-500">
-                        <span className="text-gray-400">From </span>
+                        <span className="text-gray-400">{t("tour.from")} </span>
                         {tour.departure_from || "-"}
                         {tour.destination && (
                           <>
@@ -929,16 +930,16 @@ const TourList = () => {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-6 py-4 border-t border-gray-100">
                 <div className="flex items-center gap-3 text-sm text-gray-500">
                   <span>
-                    Showing{" "}
+                    {t("common.showing")} {" "}
                     <span className="font-medium">{startIndex + 1}</span>–
                     <span className="font-medium">
                       {Math.min(startIndex + pageSize, totalItems)}
                     </span>{" "}
-                    of <span className="font-medium">{totalItems}</span>
+                    {t("common.of")} <span className="font-medium">{totalItems}</span>
                   </span>
                   <span className="hidden sm:inline text-gray-400">|</span>
                   <label className="flex items-center gap-2">
-                    <span>Per page</span>
+                    <span>{t("common.perPage")}</span>
                     <select
                       value={pageSize}
                       onChange={(e) => setPageSize(Number(e.target.value))}
@@ -953,13 +954,13 @@ const TourList = () => {
                   </label>
                 </div>
 
-                <nav className="flex items-center gap-1" aria-label="Pagination">
+                <nav className="flex items-center gap-1" aria-label={t("common.pagination")}>
                   <button
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={safePage === 1}
                     className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    Prev
+                    {t("common.previous")}
                   </button>
                   {getPageItems(safePage, totalPages).map((item, i) =>
                     item === "gap" ? (
@@ -991,7 +992,7 @@ const TourList = () => {
                     disabled={safePage === totalPages}
                     className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    Next
+                    {t("common.next")}
                   </button>
                 </nav>
               </div>

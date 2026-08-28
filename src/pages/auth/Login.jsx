@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useI18n } from "../../i18n";
 import { useNavigate } from "react-router-dom";
-import { Palmtree, Globe } from "lucide-react";
+import { Globe } from "lucide-react";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -59,9 +59,11 @@ const Login = () => {
 
           {/* Logo/Header */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-brand-600 text-white mb-3">
-              <Palmtree className="w-6 h-6" />
-            </div>
+            <img
+              src="/logo2.png"
+              alt="Contract Rate"
+              className="inline-block w-12 h-12 object-contain mb-3"
+            />
             <h1 className="text-3xl font-bold text-brand-600 mb-1">
               Contract Rate
             </h1>
@@ -124,7 +126,7 @@ const Login = () => {
           {/* Footer */}
           <div className="mt-8 flex items-center justify-center gap-1.5 text-sm text-gray-500">
             <Globe className="w-3.5 h-3.5 text-gray-400" />
-            <p>Contract Rate System</p>
+            <p>{t("login.subtitle")}</p>
           </div>
         </div>
       </div>

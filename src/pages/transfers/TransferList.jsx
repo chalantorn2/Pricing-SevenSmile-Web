@@ -7,7 +7,6 @@ import {
   RouteFormModal,
   ROUTE_CATEGORIES,
   VehicleFormModal,
-  categoryLabel,
 } from "../../components/transfers";
 import { ConfirmDialog, Toast } from "../../components/core";
 import { useI18n } from "../../i18n";
@@ -191,7 +190,12 @@ const TransferList = () => {
     }
     if (!term) return routes;
     return routes.filter((r) =>
-      [r.label, r.origin_name, r.destination_name, categoryLabel(r.category)]
+      [
+        r.label,
+        r.origin_name,
+        r.destination_name,
+        t(`transfers.category.${r.category || "transfer"}`),
+      ]
         .filter(Boolean)
         .some((field) => field.toLowerCase().includes(term))
     );
@@ -308,7 +312,7 @@ const TransferList = () => {
               className="lg:w-72 px-4 py-2 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"
             >
               {data.suppliers.length === 0 && (
-                <option value="">No suppliers yet</option>
+                <option value="">{t("transfers.noSuppliers")}</option>
               )}
               {data.suppliers.map((s) => (
                 <option key={s.id} value={s.id}>
@@ -348,11 +352,11 @@ const TransferList = () => {
             <p className="text-gray-500">
               {data.routes.length === 0
                 ? province
-                  ? `No transfer routes touch ${province} yet.`
-                  : "No routes yet. Add locations and vehicles first, then create a route."
+                  ? t("transfers.noRoutesProvince", { province })
+                  : t("transfers.noRoutes")
                 : onlyPriced && !term && supplier
-                ? `${supplier.name} has no transfer rates yet. Untick the filter above to see the routes and price them.`
-                : "No routes match your search."}
+                ? t("transfers.noSupplierRates", { name: supplier.name })
+                : t("transfers.noRouteMatches")}
             </p>
           </div>
         ) : (
@@ -361,11 +365,10 @@ const TransferList = () => {
               <div key={group.category} className={`${card} overflow-hidden`}>
                 <div className="flex items-baseline justify-between gap-3 px-4 py-3 border-b border-gray-100">
                   <h2 className="text-sm font-semibold text-gray-900">
-                    {categoryLabel(group.category)}
+                    {t(`transfers.category.${group.category || "transfer"}`)}
                   </h2>
                   <span className="text-xs text-gray-400">
-                    {group.routes.length} route
-                    {group.routes.length === 1 ? "" : "s"}
+                    {t("transfers.routeCount", { count: group.routes.length })}
                   </span>
                 </div>
 
@@ -374,14 +377,14 @@ const TransferList = () => {
                     <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
                       <tr>
                         <th className={`${th} w-12`}>#</th>
-                        <th className={th}>Route</th>
+                        <th className={th}>{t("transfers.route")}</th>
                         {priceColumns.map((v) => (
                           <th key={v.id} className="px-4 py-2 text-right font-medium w-28">
                             {v.name}
                           </th>
                         ))}
                         <th className="px-4 py-2 text-right font-medium w-40">
-                          Actions
+                          {t("common.actions")}
                         </th>
                       </tr>
                     </thead>
@@ -454,11 +457,11 @@ const TransferList = () => {
             <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
               <tr>
                 <th className={`${th} w-12`}>#</th>
-                <th className={th}>Location</th>
-                <th className={`${th} w-40`}>Province</th>
-                <th className={`${th} w-24`}>Sort</th>
-                <th className={`${th} w-28`}>Status</th>
-                <th className="px-4 py-2 text-right font-medium w-40">Actions</th>
+                <th className={th}>{t("transfers.location")}</th>
+                <th className={`${th} w-40`}>{t("common.province")}</th>
+                <th className={`${th} w-24`}>{t("common.sort")}</th>
+                <th className={`${th} w-28`}>{t("common.status")}</th>
+                <th className="px-4 py-2 text-right font-medium w-40">{t("common.actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -499,12 +502,12 @@ const TransferList = () => {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
               <tr>
-                <th className={`${th} w-24`}>Photo</th>
-                <th className={th}>Vehicle</th>
-                <th className={`${th} w-32`}>Passengers</th>
-                <th className={`${th} w-28`}>Luggage</th>
-                <th className={`${th} w-28`}>Status</th>
-                <th className="px-4 py-2 text-right font-medium w-40">Actions</th>
+                <th className={`${th} w-24`}>{t("common.photo")}</th>
+                <th className={th}>{t("transfers.vehicle")}</th>
+                <th className={`${th} w-32`}>{t("transfers.passengers")}</th>
+                <th className={`${th} w-28`}>{t("transfers.luggage")}</th>
+                <th className={`${th} w-28`}>{t("common.status")}</th>
+                <th className="px-4 py-2 text-right font-medium w-40">{t("common.actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">

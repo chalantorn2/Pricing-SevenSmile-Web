@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, X, Phone, MessageCircle, ChevronRight, Plus } from "lucide-react";
 import { suppliersService } from "../../services/api-service";
+import { useI18n } from "../../i18n";
 
 const SupplierAutocomplete = ({
   onSelect,
   onCreateNew,
   value = null,
-  placeholder = "Search or select a Supplier...",
+  placeholder,
   disabled = false,
   required = false,
   // Tour vendors and transfer vendors are separate companies. Every screen using
@@ -14,6 +15,8 @@ const SupplierAutocomplete = ({
   // up the other list.
   type = "tour",
 }) => {
+  const { t } = useI18n();
+  const resolvedPlaceholder = placeholder || t("tour.placeholder.searchSupplier");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -174,7 +177,7 @@ const SupplierAutocomplete = ({
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onFocus={() => query.length >= 2 && setIsOpen(true)}
-          placeholder={placeholder}
+          placeholder={resolvedPlaceholder}
           disabled={disabled}
           required={required}
           className={`w-full pl-9 pr-10 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors ${
@@ -254,7 +257,7 @@ const SupplierAutocomplete = ({
           {loading && (
             <div className="px-4 py-3 text-center text-gray-500">
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-brand-500 mx-auto mb-2"></div>
-              <p className="text-sm">Searching...</p>
+              <p className="text-sm">{t("suppliers.searching")}</p>
             </div>
           )}
 

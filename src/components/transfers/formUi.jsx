@@ -1,6 +1,7 @@
 // Shared chrome for the three transfer form modals. They are small enough that a
 // full-page form would be overkill, but identical enough that repeating the shell
 // in each file would not be. Lookup tables live in ./constants.
+import { useI18n } from "../../i18n";
 
 export const inputClass =
   "w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500";
@@ -30,10 +31,12 @@ export const ModalShell = ({
   onClose,
   saving,
   error,
-  saveLabel = "Save",
+  saveLabel,
   width = "max-w-lg",
   children,
-}) => (
+}) => {
+  const { t } = useI18n();
+  return (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
     <div
       className={`bg-white w-full ${width} max-h-[92vh] rounded-xl shadow-lg flex flex-col overflow-hidden`}
@@ -45,7 +48,7 @@ export const ModalShell = ({
         </div>
         <button
           onClick={onClose}
-          aria-label="Close"
+          aria-label={t("common.close")}
           className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-400 hover:bg-danger-50 hover:text-danger-600 transition text-2xl leading-none"
         >
           &times;
@@ -68,7 +71,7 @@ export const ModalShell = ({
             onClick={onClose}
             className="px-5 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             type="submit"
@@ -76,10 +79,11 @@ export const ModalShell = ({
             disabled={saving}
             className="px-6 py-2 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {saving ? "Saving…" : saveLabel}
+            {saving ? t("common.saving") : saveLabel || t("common.save")}
           </button>
         </div>
       </div>
     </div>
   </div>
-);
+  );
+};

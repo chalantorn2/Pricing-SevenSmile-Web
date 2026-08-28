@@ -3,8 +3,10 @@ import { useParams, Link } from "react-router-dom";
 import { Lock, SearchX } from "lucide-react";
 import { toursService } from "../../services/api-service";
 import TourDetails from "../../components/tours/TourDetails";
+import { useI18n } from "../../i18n";
 
 const SharedTour = () => {
+  const { t } = useI18n();
   const { id } = useParams();
   const [tour, setTour] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -23,11 +25,11 @@ const SharedTour = () => {
       if (foundTour) {
         setTour(foundTour);
       } else {
-        setError("The requested tour was not found");
+        setError(t("tour.notFound"));
       }
     } catch (error) {
       console.error("Error fetching tour:", error);
-      setError("An error occurred while loading data");
+      setError(t("tour.loadError"));
     } finally {
       setLoading(false);
     }
@@ -38,7 +40,7 @@ const SharedTour = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500 mx-auto mb-4"></div>
-          <p className="text-gray-500">Loading tour data...</p>
+          <p className="text-gray-500">{t("tour.loading")}</p>
         </div>
       </div>
     );
@@ -51,13 +53,13 @@ const SharedTour = () => {
           <div className="text-6xl mb-4 text-gray-300 flex justify-center">
             <SearchX className="w-14 h-14" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">No data found</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">{t("tour.noData")}</h1>
           <p className="text-gray-500 mb-6">{error}</p>
           <Link
             to="/"
             className="inline-block px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
           >
-            Back to the app
+            {t("tour.backToApp")}
           </Link>
         </div>
       </div>
@@ -75,7 +77,7 @@ const SharedTour = () => {
                 className="truncate text-xl font-semibold text-gray-900"
                 title={tour.tour_name}
               >
-                {tour.tour_name || "Tour Details"}
+                {tour.tour_name || t("tour.details")}
               </h1>
               <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
                 {!!tour.supplier_name && (
@@ -122,7 +124,7 @@ const SharedTour = () => {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="text-sm text-gray-500">
                 <p>Contract Rate</p>
-                <p>Tour Price Management System</p>
+                <p>{t("tour.systemName")}</p>
               </div>
               <Link
                 to="/"

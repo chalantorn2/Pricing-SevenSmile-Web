@@ -11,6 +11,7 @@ import {
   SUPPLIER_FILE_CATEGORIES,
   getCategoryHints,
 } from "../../utils/file-categories";
+import { useI18n } from "../../i18n";
 
 // Map category id -> lucide icon (keeps file-categories.js data untouched)
 const CATEGORY_ICONS = {
@@ -25,6 +26,7 @@ const SupplierFileUpload = ({
   disabled = false,
   maxFileSize = 10, // MB
 }) => {
+  const { t } = useI18n();
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("contact_rate");
@@ -40,6 +42,7 @@ const SupplierFileUpload = ({
   // Get current category info
   const categoryInfo = SUPPLIER_FILE_CATEGORIES[selectedCategory];
   const categoryHints = getCategoryHints(selectedCategory, true);
+  const categoryLabel = t(`fileCategory.${selectedCategory}`);
 
   const validateFile = (file) => {
     // Check file type
@@ -48,12 +51,15 @@ const SupplierFileUpload = ({
     );
 
     if (!isValidType) {
-      return `The "${categoryInfo.label}" category only supports ${categoryHints.allowedTypesText}`;
+      return t("upload.invalidType", {
+        category: categoryLabel,
+        types: categoryHints.allowedTypesText,
+      });
     }
 
     // Check file size
     if (file.size > maxFileSizeBytes) {
-      return `File size is too large (max ${maxFileSize}MB)`;
+      return t("upload.fileTooLarge", { size: maxFileSize });
     }
 
     return null;
@@ -87,7 +93,7 @@ const SupplierFileUpload = ({
         fileInputRef.current.value = "";
       }
 
-      alert(`File "${file.name}" uploaded successfully in category "${categoryInfo.label}"`);
+      alert(t("upload.fileSuccess", { file: file.name, category: categoryLabel }));
     } catch (error) {
       console.error("Upload error:", error);
       alert(error.message);
@@ -135,12 +141,10 @@ const SupplierFileUpload = ({
     const files = Array.from(event.target.files);
 
     if (files.length > 10) {
-      const confirmed = confirm(
-        `You are about to upload ${files.length} files\n` +
-          `The system will upload 5 files at a time to prevent issues\n` +
-          `Estimated time: ${Math.ceil(files.length / 5) * 2} seconds\n\n` +
-          `Do you want to continue?`
-      );
+      const confirmed = confirm(t("upload.batchConfirm", {
+        count: files.length,
+        seconds: Math.ceil(files.length / 5) * 2,
+      }));
 
       if (!confirmed) return;
     }
@@ -149,7 +153,7 @@ const SupplierFileUpload = ({
       // Single file - ask for label
       const file = files[0];
       const label = prompt(
-        `Label for file "${file.name}" (category: ${categoryInfo.label}):\n(e.g. "Contract Rate Jan 2025", "Price List Update")`,
+        t("upload.labelPrompt", { file: file.name, category: categoryLabel }),
         ""
       );
 
@@ -164,9 +168,9 @@ const SupplierFileUpload = ({
       try {
         setUploading(true);
         await uploadFilesSequentially(files);
-        alert(`Finished uploading ${files.length} files`);
+        alert(t("upload.batchSuccess", { count: files.length }));
       } catch (error) {
-        alert(`An error occurred: ${error.message}`);
+        alert(t("upload.error", { message: error.message }));
       } finally {
         setUploading(false);
         // Reset file input
@@ -184,12 +188,10 @@ const SupplierFileUpload = ({
     const files = Array.from(event.dataTransfer.files);
 
     if (files.length > 10) {
-      const confirmed = confirm(
-        `You are about to upload ${files.length} files\n` +
-          `The system will upload 5 files at a time to prevent issues\n` +
-          `Estimated time: ${Math.ceil(files.length / 5) * 2} seconds\n\n` +
-          `Do you want to continue?`
-      );
+      const confirmed = confirm(t("upload.batchConfirm", {
+        count: files.length,
+        seconds: Math.ceil(files.length / 5) * 2,
+      }));
 
       if (!confirmed) return;
     }
@@ -197,7 +199,7 @@ const SupplierFileUpload = ({
     if (files.length === 1) {
       const file = files[0];
       const label = prompt(
-        `Label for file "${file.name}" (category: ${categoryInfo.label}):\n(e.g. "Contract Rate Jan 2025")`,
+        t("upload.labelPrompt", { file: file.name, category: categoryLabel }),
         ""
       );
 
@@ -210,9 +212,9 @@ const SupplierFileUpload = ({
       try {
         setUploading(true);
         await uploadFilesSequentially(files);
-        alert(`Finished uploading ${files.length} files`);
+        alert(t("upload.batchSuccess", { count: files.length }));
       } catch (error) {
-        alert(`An error occurred: ${error.message}`);
+        alert(t("upload.error", { message: error.message }));
       } finally {
         setUploading(false);
       }
@@ -249,7 +251,7 @@ const SupplierFileUpload = ({
         <div className="flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-warning-600 shrink-0" />
           <p className="text-warning-800 text-sm">
-            Please select a Supplier before uploading files
+            {t("upload.selectSupplier")}
           </p>
         </div>
       </div>
@@ -261,7 +263,7 @@ const SupplierFileUpload = ({
       {/* Category Selection — buttons so all options are visible */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          File category <span className="text-danger-600">*</span>
+          {t("upload.fileCategory")} <span className="text-danger-600">*</span>
         </label>
         <div className="grid grid-cols-3 gap-2">
           {Object.values(SUPPLIER_FILE_CATEGORIES).map((category) => {
@@ -280,13 +282,13 @@ const SupplierFileUpload = ({
                 }`}
               >
                 <Icon className="w-4 h-4 shrink-0" />
-                <span className="truncate">{category.label}</span>
+                <span className="truncate">{t(`fileCategory.${category.id}`)}</span>
               </button>
             );
           })}
         </div>
         <p className="mt-1.5 text-xs text-gray-500">
-          {categoryInfo.description} · Supports {categoryHints.allowedTypesText}
+          {t(`fileCategory.${selectedCategory}.description`)} · {t("upload.supports")} {categoryHints.allowedTypesText}
         </p>
       </div>
 
@@ -321,7 +323,7 @@ const SupplierFileUpload = ({
           <div className="flex items-center justify-center gap-3">
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-brand-500"></div>
             <p className="text-sm text-gray-500">
-              Uploading to "{categoryInfo.label}"...
+              {t("upload.uploadingTo", { category: categoryLabel })}
             </p>
           </div>
         ) : (
@@ -329,12 +331,11 @@ const SupplierFileUpload = ({
             <UploadCloud className="w-7 h-7 text-gray-400 shrink-0" />
             <div>
               <p className="text-sm font-medium text-gray-900">
-                Drop files here or{" "}
-                <span className="text-brand-600">click to upload</span>
+                {t("upload.dropHere")} {" "}
+                <span className="text-brand-600">{t("tour.upload.click")}</span>
               </p>
               <p className="text-xs text-gray-500 mt-0.5">
-                {categoryHints.allowedTypesText} · max {maxFileSize}MB · multiple
-                files OK
+                {categoryHints.allowedTypesText} · {t("upload.maxSize", { size: maxFileSize })} · {t("upload.multipleOk")}
               </p>
             </div>
           </div>

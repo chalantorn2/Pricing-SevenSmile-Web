@@ -28,38 +28,38 @@ const PAGE_SIZE = 25;
 // Tour vendors and transfer companies are different businesses kept in one table,
 // so the page shows one list at a time rather than mixing them.
 const TYPES = {
-  tour: { label: "Tour", blurb: "the tours linked to each one" },
-  transfer: { label: "Transfer", blurb: "the transfer routes they price" },
+  tour: { label: "suppliers.typeTour" },
+  transfer: { label: "suppliers.typeTransfer" },
 };
 const DEFAULT_TYPE = "tour";
 
 // A single-select quick filter keeps the toolbar to one row of chips. The
 // tour-derived ones are hidden on the transfer list, where they mean nothing.
 const FILTERS = {
-  all: { label: "All", match: () => true },
+  all: { label: "suppliers.filterAll", match: () => true },
   no_tours: {
-    label: "No tours",
+    label: "suppliers.filterNoTours",
     match: (s) => s.tour_count === 0,
     tourOnly: true,
   },
   no_contact: {
-    label: "No contact",
+    label: "suppliers.filterNoContact",
     match: (s) => !s.phone && !s.line && !s.whatsapp,
   },
   expiring_soon: {
-    label: "Tours expiring 30d",
+    label: "suppliers.filterExpiring",
     match: (s) => s.expiring_tours > 0,
     tourOnly: true,
   },
   recent: {
-    label: "Updated 7d",
+    label: "suppliers.filterRecent",
     match: (s) =>
       new Date(s.latest_activity) > new Date(Date.now() - 7 * 86400000),
   },
 };
 
-const formatDate = (dateString) =>
-  new Date(dateString).toLocaleDateString("en-US", {
+const formatDate = (dateString, locale) =>
+  new Date(dateString).toLocaleDateString(locale, {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -75,7 +75,7 @@ const getPhones = (supplier) =>
   ].filter((phone) => phone?.trim());
 
 const SupplierList = () => {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -145,7 +145,7 @@ const SupplierList = () => {
     } catch (error) {
       console.error("Error fetching data:", error);
       setError(
-        error.message || "An error occurred while loading Suppliers data",
+        error.message || t("suppliers.loadError"),
       );
     } finally {
       setLoading(false);
@@ -293,36 +293,37 @@ const SupplierList = () => {
   // Exports whatever the chips and the search box currently narrow the list to
   const handleExportExcel = () => {
     if (filteredSuppliers.length === 0) return;
+    const locale = lang === "th" ? "th-TH" : "en-US";
 
     const exportData = filteredSuppliers.map((supplier, index) => ({
-      "No.": index + 1,
-      "Supplier name": supplier.name,
-      "Primary phone": supplier.phone || "-",
-      "Phone 2": supplier.phone_2 || "-",
-      "Phone 3": supplier.phone_3 || "-",
-      "Phone 4": supplier.phone_4 || "-",
-      "Phone 5": supplier.phone_5 || "-",
-      "Line ID": supplier.line || "-",
+      [t("common.number")]: index + 1,
+      [t("suppliers.name")]: supplier.name,
+      [t("suppliers.primaryPhone")]: supplier.phone || "-",
+      [t("suppliers.phoneNumber", { number: 2 })]: supplier.phone_2 || "-",
+      [t("suppliers.phoneNumber", { number: 3 })]: supplier.phone_3 || "-",
+      [t("suppliers.phoneNumber", { number: 4 })]: supplier.phone_4 || "-",
+      [t("suppliers.phoneNumber", { number: 5 })]: supplier.phone_5 || "-",
+      [t("suppliers.lineId")]: supplier.line || "-",
       Facebook: supplier.facebook || "-",
       WhatsApp: supplier.whatsapp || "-",
-      Address: supplier.address || "-",
-      ...(isTourList ? { "Tour count": supplier.tour_count } : {}),
-      "Created at": formatDate(supplier.created_at),
-      "Last updated": formatDate(supplier.latest_activity),
+      [t("suppliers.address")]: supplier.address || "-",
+      ...(isTourList ? { [t("nav.tours")]: supplier.tour_count } : {}),
+      [t("suppliers.created")]: formatDate(supplier.created_at, locale),
+      [t("suppliers.lastUpdated")]: formatDate(supplier.latest_activity, locale),
     }));
 
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, `${TYPES[activeType].label} Suppliers`);
+    XLSX.utils.book_append_sheet(wb, ws, `${t(TYPES[activeType].label)} ${t("suppliers.title")}`);
     XLSX.writeFile(
       wb,
-      `${TYPES[activeType].label}_Suppliers_${new Date().toLocaleDateString(
-        "en-US",
+      `${activeType}_Suppliers_${new Date().toLocaleDateString(
+        locale,
       )}.xlsx`,
     );
 
     setToast({
-      message: `Exported ${filteredSuppliers.length} suppliers to Excel`,
+      message: t("suppliers.exportSuccess", { count: filteredSuppliers.length }),
       type: "success",
     });
   };
@@ -330,7 +331,7 @@ const SupplierList = () => {
   const handleSupplierCreated = (supplier) => {
     setShowAddModal(false);
     setToast({
-      message: `Added "${supplier?.name || "supplier"}"`,
+      message: t("suppliers.addSuccess", { name: supplier?.name || t("suppliers.title") }),
       type: "success",
     });
     fetchData();
@@ -469,42 +470,42 @@ const SupplierList = () => {
     return (
       <div className="text-center py-12 px-6">
         <p className="font-medium text-gray-500">
-          No {TYPES[activeType].label.toLowerCase()} suppliers yet
+          {t("suppliers.emptyType", { type: t(TYPES[activeType].label) })}
         </p>
         <p className="text-sm text-gray-500 mt-1">
-          Add your first one to get started.
+          {t("suppliers.emptyHint")}
         </p>
         <button
           onClick={() => setShowAddModal(true)}
           className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white bg-brand-600 hover:bg-brand-700 text-sm"
         >
           <Plus className="w-4 h-4" />
-          Add Supplier
+          {t("suppliers.add")}
         </button>
       </div>
     );
   };
 
   const sortableColumns = [
-    { key: "name", label: "Supplier" },
-    { key: "contact", label: "Contact", sortable: false },
+    { key: "name", label: t("suppliers.title") },
+    { key: "contact", label: t("suppliers.contact"), sortable: false },
     // Transfer suppliers never carry tours, so the column would be a row of zeroes.
-    ...(isTourList ? [{ key: "tour_count", label: "Tours" }] : []),
-    { key: "latest_activity", label: "Last updated" },
+    ...(isTourList ? [{ key: "tour_count", label: t("nav.tours") }] : []),
+    { key: "latest_activity", label: t("suppliers.lastUpdated") },
   ];
 
   if (error) {
     return (
       <div className="bg-white rounded-xl shadow-sm ring-1 ring-danger-200 p-6 text-center">
         <AlertTriangle className="w-8 h-8 text-danger-600 mx-auto mb-2" />
-        <p className="font-medium text-gray-900">Could not load suppliers</p>
+        <p className="font-medium text-gray-900">{t("suppliers.loadError")}</p>
         <p className="text-sm text-gray-500 mt-1">{error}</p>
         <button
           onClick={fetchData}
           className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white bg-brand-600 hover:bg-brand-700 text-sm"
         >
           <RotateCcw className="w-4 h-4" />
-          Retry
+          {t("common.retry")}
         </button>
       </div>
     );
@@ -536,7 +537,7 @@ const SupplierList = () => {
                       : "text-gray-500 hover:text-gray-700"
                   }`}
                 >
-                  {type.label}
+                  {t(type.label)}
                 </button>
               );
             })}
@@ -545,17 +546,17 @@ const SupplierList = () => {
             onClick={handleExportExcel}
             disabled={totalItems === 0}
             className="btn-success"
-            title={`Export the ${totalItems} suppliers currently listed`}
+            title={t("suppliers.exportTitle", { count: totalItems })}
           >
             <FileSpreadsheet className="w-4 h-4" />
-            <span>Export Excel ({totalItems})</span>
+            <span>{t("suppliers.export")} ({totalItems})</span>
           </button>
           <button
             onClick={() => setShowAddModal(true)}
             className="btn-primary"
           >
             <Plus className="w-4 h-4" />
-            <span>Add Supplier</span>
+            <span>{t("suppliers.add")}</span>
           </button>
         </div>
       </div>
@@ -566,16 +567,14 @@ const SupplierList = () => {
           <div className="flex items-center gap-2 text-sm text-warning-800">
             <AlertTriangle className="w-4 h-4 shrink-0" />
             <span>
-              <span className="font-semibold">{incompleteCount}</span> supplier
-              {incompleteCount > 1 ? "s have" : " has"} no phone, Line or
-              WhatsApp on file.
+              {t("suppliers.incompleteWarning", { count: incompleteCount })}
             </span>
           </div>
           <button
             onClick={() => setFilter("no_contact")}
             className="self-start sm:self-auto text-sm font-medium text-warning-800 underline underline-offset-2 hover:text-warning-900"
           >
-            Review them
+            {t("suppliers.reviewThem")}
           </button>
         </div>
       )}
@@ -584,7 +583,7 @@ const SupplierList = () => {
       <div className="bg-white p-4 rounded-xl shadow-sm ring-1 ring-black/5 space-y-4">
         <div className="relative">
           <label htmlFor="supplier-search" className="sr-only">
-            Search suppliers
+            {t("common.search")}
           </label>
           <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
@@ -598,7 +597,7 @@ const SupplierList = () => {
           {searchInput && (
             <button
               onClick={() => setSearchInput("")}
-              aria-label="Clear search"
+              aria-label={t("common.closeSearch")}
               className="absolute right-1 top-1/2 flex min-h-10 min-w-10 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-500"
             >
               <X className="w-4 h-4" />
@@ -621,7 +620,7 @@ const SupplierList = () => {
                       : "bg-white text-gray-700 ring-gray-200 hover:bg-gray-50"
                   }`}
                 >
-                  <span>{filter.label}</span>
+                  <span>{t(filter.label)}</span>
                   <span
                     className={`tabular-nums text-xs ${
                       active ? "text-white/80" : "text-gray-400"
@@ -635,7 +634,7 @@ const SupplierList = () => {
           </div>
 
           <div className="text-sm text-gray-500 shrink-0">
-            Showing <span className="font-medium">{totalItems}</span> of{" "}
+            {t("common.showing")} <span className="font-medium">{totalItems}</span> {t("common.of")}{" "}
             <span className="font-medium">{suppliers.length}</span>
           </div>
         </div>
@@ -658,7 +657,7 @@ const SupplierList = () => {
                       scope="col"
                       className="pl-6 pr-3 py-3 text-left uppercase tracking-wider text-[11px] font-semibold w-14"
                     >
-                      No.
+                      {t("common.number")}
                     </th>
                     {sortableColumns.map((column) => {
                       const sortable = column.sortable !== false;
@@ -689,7 +688,7 @@ const SupplierList = () => {
                       );
                     })}
                     <th scope="col" className="px-6 py-3 w-10">
-                      <span className="sr-only">Open</span>
+                      <span className="sr-only">{t("common.open")}</span>
                     </th>
                   </tr>
                 </thead>
@@ -731,7 +730,7 @@ const SupplierList = () => {
                       )}
 
                       <td className="px-6 py-3 whitespace-nowrap text-gray-500">
-                        {formatDate(supplier.latest_activity)}
+                        {formatDate(supplier.latest_activity, lang === "th" ? "th-TH" : "en-US")}
                       </td>
 
                       <td className="px-6 py-3 text-right">
@@ -774,7 +773,7 @@ const SupplierList = () => {
                   {renderContact(supplier)}
 
                   <div className="text-xs text-gray-400">
-                    Updated {formatDate(supplier.latest_activity)}
+                    {t("suppliers.updated")} {new Date(supplier.latest_activity).toLocaleDateString(lang === "th" ? "th-TH" : "en-US")}
                   </div>
                 </div>
               ))}
@@ -784,11 +783,11 @@ const SupplierList = () => {
             {totalPages > 1 && (
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-6 py-4 border-t border-gray-100">
                 <span className="text-sm text-gray-500">
-                  Showing <span className="font-medium">{startIndex + 1}</span>–
+                  {t("common.showing")} <span className="font-medium">{startIndex + 1}</span>–
                   <span className="font-medium">
                     {Math.min(startIndex + PAGE_SIZE, totalItems)}
                   </span>{" "}
-                  of <span className="font-medium">{totalItems}</span>
+                  {t("common.of")} <span className="font-medium">{totalItems}</span>
                 </span>
 
                 <div className="flex items-center gap-1">
@@ -797,10 +796,10 @@ const SupplierList = () => {
                     disabled={safePage === 1}
                     className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    Prev
+                    {t("common.previous")}
                   </button>
                   <span className="px-3 py-1.5 text-sm text-gray-500">
-                    Page <span className="font-medium">{safePage}</span> /{" "}
+                    {t("common.page")} <span className="font-medium">{safePage}</span> /{" "}
                     <span className="font-medium">{totalPages}</span>
                   </span>
                   <button
@@ -810,7 +809,7 @@ const SupplierList = () => {
                     disabled={safePage === totalPages}
                     className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    Next
+                    {t("common.next")}
                   </button>
                 </div>
               </div>

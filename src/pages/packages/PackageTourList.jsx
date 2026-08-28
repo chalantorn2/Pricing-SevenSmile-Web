@@ -31,7 +31,7 @@ const PackageTourList = () => {
       setPackages(data);
     } catch (error) {
       console.error("Error fetching packages:", error);
-      alert("An error occurred while loading data");
+      alert(t("packages.loadError"));
     } finally {
       setLoading(false);
     }
@@ -120,19 +120,19 @@ const PackageTourList = () => {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500 mx-auto mb-3"></div>
-          <p className="text-gray-500">Loading data...</p>
+          <p className="text-gray-500">{t("packages.loading")}</p>
         </div>
       </div>
     );
   }
 
   const columns = [
-    { key: "id", label: "No.", sortable: false },
-    { key: "name", label: "Package Name", sortable: true },
-    { key: "duration", label: "Duration", sortable: false },
-    { key: "total_cost", label: "Total Cost", sortable: true },
-    { key: "created_at", label: "Created At", sortable: true },
-    { key: "actions", label: "Actions", sortable: false },
+    { key: "id", label: t("common.number"), sortable: false },
+    { key: "name", label: t("packages.name"), sortable: true },
+    { key: "duration", label: t("packages.durationLabel"), sortable: false },
+    { key: "total_cost", label: t("packages.totalCost"), sortable: true },
+    { key: "created_at", label: t("common.createdAt"), sortable: true },
+    { key: "actions", label: t("common.actions"), sortable: false },
   ];
 
   return (
@@ -150,7 +150,7 @@ const PackageTourList = () => {
           className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white bg-brand-600 hover:bg-brand-700 active:scale-[.98] shadow-sm"
         >
           <Plus className="w-4 h-4" />
-          <span>Create New Package</span>
+          <span>{t("packages.create")}</span>
         </Link>
       </div>
 
@@ -159,13 +159,13 @@ const PackageTourList = () => {
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1">
             <label htmlFor="package-search" className="sr-only">
-              Search tour packages
+              {t("packages.search")}
             </label>
             <div className="relative">
               <input
                 id="package-search"
                 type="text"
-                placeholder="Search: package name, description..."
+                placeholder={t("packages.searchPlaceholder")}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"
@@ -188,8 +188,10 @@ const PackageTourList = () => {
           </div>
 
           <div className="text-sm text-gray-500 flex items-center">
-            Showing <span className="mx-1 font-medium">{filteredPackages.length}</span> of{" "}
-            <span className="mx-1 font-medium">{packages.length}</span> items
+            {t("packages.showing", {
+              filtered: filteredPackages.length,
+              total: packages.length,
+            })}
           </div>
         </div>
       </div>
@@ -244,7 +246,7 @@ const PackageTourList = () => {
                   </td>
 
                   <td className="px-6 py-3 whitespace-nowrap text-gray-900">
-                    {pkg.days} days {pkg.nights} nights
+                    {t("packages.duration", { days: pkg.days, nights: pkg.nights })}
                   </td>
 
                   <td className="px-6 py-3 whitespace-nowrap">
@@ -264,26 +266,26 @@ const PackageTourList = () => {
                       <Link
                         to={`/packages/edit/${pkg.id}`}
                         className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-200 hover:bg-brand-100 active:scale-[.98] text-xs"
-                        title="Edit"
+                        title={t("common.edit")}
                       >
                         <Pencil className="w-3.5 h-3.5" />
-                        <span>Edit</span>
+                        <span>{t("common.edit")}</span>
                       </Link>
                       <Link
                         to={`/packages/view/${pkg.id}`}
                         className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-success-50 text-success-700 ring-1 ring-inset ring-success-200 hover:bg-success-100 active:scale-[.98] text-xs"
-                        title="Customer View"
+                        title={t("packages.customerView")}
                       >
                         <Eye className="w-3.5 h-3.5" />
-                        <span>Customer View</span>
+                        <span>{t("packages.customerView")}</span>
                       </Link>
                       <button
                         onClick={() => setDeleteTarget(pkg)}
                         className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-danger-50 text-danger-700 ring-1 ring-inset ring-danger-200 hover:bg-danger-100 active:scale-[.98] text-xs"
-                        title="Delete"
+                        title={t("common.delete")}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
-                        <span>Delete</span>
+                        <span>{t("common.delete")}</span>
                       </button>
                     </div>
                   </td>
@@ -295,7 +297,7 @@ const PackageTourList = () => {
 
         {filteredPackages.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-500">No matching data found</p>
+            <p className="text-gray-500">{t("packages.noResults")}</p>
           </div>
         )}
       </div>

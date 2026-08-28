@@ -11,6 +11,7 @@ import { FileDownloads } from "../../components/common";
 import { SupplierModal } from "../../components/suppliers";
 import { Toast } from "../../components/core";
 import { pushRecentItem } from "../../utils/recentItems";
+import { useI18n } from "../../i18n";
 import {
   ArrowLeft,
   Plus,
@@ -33,9 +34,9 @@ import {
   ListChecks,
 } from "lucide-react";
 
-const formatDate = (dateString) => {
-  if (!dateString || dateString === "0000-00-00") return "Not set";
-  return new Date(dateString).toLocaleDateString("en-US", {
+const formatDate = (dateString, lang, t) => {
+  if (!dateString || dateString === "0000-00-00") return t("common.notSet");
+  return new Date(dateString).toLocaleDateString(lang === "th" ? "th-TH" : "en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -57,6 +58,7 @@ const isExpired = (endDate) => {
 };
 
 const SupplierDetail = () => {
+  const { t, lang } = useI18n();
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -116,7 +118,7 @@ const SupplierDetail = () => {
     } catch (error) {
       console.error("Error fetching supplier:", error);
       // The API answers a missing id with a 404 carrying "Supplier not found"
-      const message = error?.message || "An error occurred while loading data";
+      const message = error?.message || t("suppliers.loadDetailError");
       setLoadError(/not found/i.test(message) ? "notfound" : message);
     } finally {
       setLoading(false);
@@ -132,7 +134,7 @@ const SupplierDetail = () => {
       );
     } catch (error) {
       console.error("Error fetching tours:", error);
-      setToast({ message: "Could not load tours", type: "error" });
+      setToast({ message: t("suppliers.loadToursError"), type: "error" });
     } finally {
       setToursLoading(false);
     }
@@ -154,7 +156,7 @@ const SupplierDetail = () => {
   const handleSupplierUpdate = (updatedSupplier) => {
     setSupplier(updatedSupplier);
     setShowEditModal(false);
-    setToast({ message: "Supplier updated", type: "success" });
+    setToast({ message: t("suppliers.updateSuccess"), type: "success" });
     fetchSupplierFiles();
   };
 
@@ -168,7 +170,7 @@ const SupplierDetail = () => {
       await navigator.clipboard.writeText(value);
       setCopiedValue(value);
     } catch {
-      setToast({ message: "Could not copy to clipboard", type: "error" });
+      setToast({ message: t("suppliers.copyError"), type: "error" });
     }
   };
 
@@ -200,13 +202,13 @@ const SupplierDetail = () => {
   const phones = useMemo(() => {
     if (!supplier) return [];
     return [
-      { number: supplier.phone, label: "Primary" },
-      { number: supplier.phone_2, label: "Phone 2" },
-      { number: supplier.phone_3, label: "Phone 3" },
-      { number: supplier.phone_4, label: "Phone 4" },
-      { number: supplier.phone_5, label: "Phone 5" },
+      { number: supplier.phone, label: t("common.primary"), primary: true },
+      { number: supplier.phone_2, label: t("suppliers.phoneNumber", { number: 2 }) },
+      { number: supplier.phone_3, label: t("suppliers.phoneNumber", { number: 3 }) },
+      { number: supplier.phone_4, label: t("suppliers.phoneNumber", { number: 4 }) },
+      { number: supplier.phone_5, label: t("suppliers.phoneNumber", { number: 5 }) },
     ].filter((item) => item.number?.trim());
-  }, [supplier]);
+  }, [supplier, t]);
 
   const channels = useMemo(() => {
     if (!supplier) return [];
@@ -249,24 +251,24 @@ const SupplierDetail = () => {
     <div className="inline-flex items-center gap-1">
       <button
         onClick={() => openTourDetailsModal(tour)}
-        title="View details"
-        aria-label={`View details of ${tour.tour_name}`}
+        title={t("tours.viewDetails")}
+        aria-label={t("suppliers.viewTourDetails", { name: tour.tour_name })}
         className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-200 hover:bg-brand-100 active:scale-[.98]"
       >
         <FileText className="w-4 h-4" />
       </button>
       <button
         onClick={() => openDocumentModal(tour)}
-        title="View documents"
-        aria-label={`View documents of ${tour.tour_name}`}
+        title={t("tours.viewDocuments")}
+        aria-label={t("suppliers.viewTourDocuments", { name: tour.tour_name })}
         className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-200 hover:bg-gray-100 active:scale-[.98]"
       >
         <Paperclip className="w-4 h-4" />
       </button>
       <Link
         to={`/edit/${tour.id}`}
-        title="Edit"
-        aria-label={`Edit ${tour.tour_name}`}
+        title={t("common.edit")}
+        aria-label={`${t("common.edit")} ${tour.tour_name}`}
         className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-warning-50 text-warning-700 ring-1 ring-inset ring-warning-200 hover:bg-warning-100 active:scale-[.98]"
       >
         <Pencil className="w-4 h-4" />
@@ -323,11 +325,11 @@ const SupplierDetail = () => {
           <AlertTriangle className="w-10 h-10 mx-auto text-danger-600 mb-3" />
         )}
         <p className="font-medium text-gray-900">
-          {notFound ? "Supplier not found" : "Could not load this supplier"}
+          {notFound ? t("suppliers.notFound") : t("suppliers.loadDetailError")}
         </p>
         <p className="text-sm text-gray-500 mt-1">
           {notFound
-            ? "It may have been deleted, or the link is out of date."
+            ? t("suppliers.notFoundHint")
             : loadError}
         </p>
         <div className="mt-5 flex items-center justify-center gap-3">
@@ -336,7 +338,7 @@ const SupplierDetail = () => {
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm border border-gray-300 text-gray-700 hover:bg-gray-50"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Suppliers
+            {t("common.backTo", { name: t("suppliers.title") })}
           </Link>
           {!notFound && (
             <button
@@ -344,7 +346,7 @@ const SupplierDetail = () => {
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-white bg-brand-600 hover:bg-brand-700"
             >
               <RotateCcw className="w-4 h-4" />
-              Retry
+              {t("common.retry")}
             </button>
           )}
         </div>
@@ -395,7 +397,7 @@ const SupplierDetail = () => {
                 {filesLoading ? "…" : `${supplierFiles.length} files`}
               </span>
               <span className="text-gray-400">
-                Updated {formatDate(supplier.updated_at)}
+                {t("suppliers.updated")} {formatDate(supplier.updated_at, lang, t)}
               </span>
             </div>
           </div>
@@ -458,7 +460,7 @@ const SupplierDetail = () => {
             </h2>
 
             {phones.length === 0 ? (
-              <p className="text-sm text-gray-400">No phone numbers on file</p>
+              <p className="text-sm text-gray-400">{t("suppliers.noPhone")}</p>
             ) : (
               <ul className="divide-y divide-gray-100">
                 {phones.map((phone) => (
@@ -474,23 +476,23 @@ const SupplierDetail = () => {
                       >
                         {phone.number}
                       </a>
-                      {phone.label === "Primary" && (
+                      {phone.primary && (
                         <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-semibold text-brand-700 ring-1 ring-inset ring-brand-200">
-                          Primary
+                          {t("common.primary")}
                         </span>
                       )}
                     </div>
 
                     <button
                       onClick={() => copyToClipboard(phone.number)}
-                      title="Copy number"
+                      title={t("common.copyNumber")}
                       aria-label={`Copy ${phone.number}`}
                       className="inline-flex items-center gap-1 text-xs text-gray-400 opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-gray-700 transition"
                     >
                       {copiedValue === phone.number ? (
                         <>
                           <Check className="w-4 h-4 text-success-600" />
-                          <span className="text-success-700">Copied</span>
+                          <span className="text-success-700">{t("suppliers.copied")}</span>
                         </>
                       ) : (
                         <Copy className="w-4 h-4" />
@@ -546,7 +548,7 @@ const SupplierDetail = () => {
               </h2>
               <dl className="space-y-2.5 text-sm">
                 <div className="flex gap-3">
-                  <dt className="w-20 shrink-0 text-gray-500">Address</dt>
+                  <dt className="w-20 shrink-0 text-gray-500">{t("suppliers.address")}</dt>
                   <dd className="min-w-0 flex-1 text-gray-900">
                     {supplier.address ? (
                       <span className="flex items-start gap-1.5">
@@ -554,20 +556,20 @@ const SupplierDetail = () => {
                         {supplier.address}
                       </span>
                     ) : (
-                      <span className="text-gray-400">Not specified</span>
+                      <span className="text-gray-400">{t("tour.notSpecified")}</span>
                     )}
                   </dd>
                 </div>
                 <div className="flex gap-3">
-                  <dt className="w-20 shrink-0 text-gray-500">Created</dt>
+                  <dt className="w-20 shrink-0 text-gray-500">{t("suppliers.created")}</dt>
                   <dd className="text-gray-900">
-                    {formatDate(supplier.created_at)}
+                    {formatDate(supplier.created_at, lang, t)}
                   </dd>
                 </div>
                 <div className="flex gap-3">
-                  <dt className="w-20 shrink-0 text-gray-500">Updated</dt>
+                  <dt className="w-20 shrink-0 text-gray-500">{t("suppliers.updated")}</dt>
                   <dd className="text-gray-900">
-                    {formatDate(supplier.updated_at)}
+                    {formatDate(supplier.updated_at, lang, t)}
                   </dd>
                 </div>
               </dl>
@@ -592,7 +594,7 @@ const SupplierDetail = () => {
           <FileDownloads
             files={supplierFiles}
             getFileUrl={supplierFilesService.getSupplierFileUrl}
-            title="Supplier documents"
+            title={t("suppliers.documents")}
             isSupplier={true}
             showCategory={true}
           />
@@ -627,7 +629,7 @@ const SupplierDetail = () => {
             renderSectionSkeleton(3)
           ) : supplierTours.length === 0 ? (
             <div className="text-center py-12 px-6">
-              <p className="font-medium text-gray-500">No tours yet</p>
+              <p className="font-medium text-gray-500">{t("suppliers.noTours")}</p>
               <p className="text-sm text-gray-500 mt-1">
                 Add the first tour price for this supplier.
               </p>
@@ -647,11 +649,11 @@ const SupplierDetail = () => {
                   <thead className="bg-gray-50 text-gray-500">
                     <tr className="border-b border-gray-200">
                       {[
-                        "Tour name",
-                        "Departure from",
-                        "Adult price",
-                        "Child price",
-                        "End date",
+                        t("tour.field.name"),
+                        t("tour.field.departureFrom"),
+                        t("tour.adultPrice"),
+                        t("tour.childPrice"),
+                        t("tour.field.endDate"),
                       ].map((label, i) => (
                         <th
                           key={label}
@@ -693,7 +695,7 @@ const SupplierDetail = () => {
                               {expired && (
                                 <span className="inline-flex items-center gap-1 shrink-0 rounded-full bg-danger-100 px-2 py-0.5 text-[11px] font-semibold text-danger-700 ring-1 ring-inset ring-danger-200">
                                   <AlertTriangle className="w-3 h-3" />
-                                  Expired
+                                  {t("common.expired")}
                                 </span>
                               )}
                             </div>
@@ -725,7 +727,7 @@ const SupplierDetail = () => {
                               expired ? "text-danger-700" : "text-gray-500"
                             }`}
                           >
-                            {formatDate(tour.end_date)}
+                            {formatDate(tour.end_date, lang, t)}
                           </td>
 
                           <td className="px-6 py-3 whitespace-nowrap text-right">
@@ -762,17 +764,17 @@ const SupplierDetail = () => {
                         {expired && (
                           <span className="inline-flex items-center gap-1 shrink-0 rounded-full bg-danger-100 px-2 py-0.5 text-[11px] font-semibold text-danger-700 ring-1 ring-inset ring-danger-200">
                             <AlertTriangle className="w-3 h-3" />
-                            Expired
+                            {t("common.expired")}
                           </span>
                         )}
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2 text-sm">
                         <span className="rounded-md bg-success-50 px-2 py-1 ring-1 ring-success-200 font-semibold text-success-700 tabular-nums">
-                          Adult THB {formatPrice(tour.adult_price)}
+                          {t("tour.adult")} THB {formatPrice(tour.adult_price)}
                         </span>
                         <span className="rounded-md bg-brand-50 px-2 py-1 ring-1 ring-brand-200 font-semibold text-brand-700 tabular-nums">
-                          Child THB {formatPrice(tour.child_price)}
+                          {t("tour.child")} THB {formatPrice(tour.child_price)}
                         </span>
                       </div>
 

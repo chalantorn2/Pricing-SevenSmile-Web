@@ -3,8 +3,10 @@ import { Link } from "react-router-dom";
 import { Pencil, Share2, X, AlertTriangle, Maximize2 } from "lucide-react";
 import { Toast } from "../core";
 import TourDetails from "./TourDetails";
+import { useI18n } from "../../i18n";
 
 const TourDetailsModal = ({ isOpen, onClose, tour }) => {
+  const { t } = useI18n();
   const [showToast, setShowToast] = useState(false);
   const dialogRef = useRef(null);
   const closeBtnRef = useRef(null);
@@ -76,7 +78,7 @@ const TourDetailsModal = ({ isOpen, onClose, tour }) => {
                 className="truncate text-xl font-semibold text-gray-900"
                 title={tour.tour_name}
               >
-                {tour.tour_name || "Tour Details"}
+                {tour.tour_name || t("tour.details")}
               </h2>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 {!!tour.pier && (
@@ -97,7 +99,7 @@ const TourDetailsModal = ({ isOpen, onClose, tour }) => {
                 {isExpired && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-danger-50 px-3 py-1 text-xs font-medium text-danger-700 ring-1 ring-inset ring-danger-200">
                     <AlertTriangle className="h-3 w-3" />
-                    Expired
+                    {t("common.expired")}
                   </span>
                 )}
               </div>
@@ -108,7 +110,7 @@ const TourDetailsModal = ({ isOpen, onClose, tour }) => {
                 to={`/tour/${tour.id}`}
                 onClick={onClose}
                 className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 active:scale-[.98]"
-                title="Open the full detail page"
+                title={t("common.openFullDetails")}
               >
                 <Maximize2 className="h-4 w-4" />
                 Full page
@@ -116,7 +118,7 @@ const TourDetailsModal = ({ isOpen, onClose, tour }) => {
               <button
                 onClick={handleShare}
                 className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 active:scale-[.98]"
-                title="Open share page"
+                title={t("tour.action.openShare")}
               >
                 <Share2 className="h-4 w-4" />
                 Share
@@ -133,10 +135,10 @@ const TourDetailsModal = ({ isOpen, onClose, tour }) => {
                 ref={closeBtnRef}
                 onClick={onClose}
                 className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
-                title="Close"
+                title={t("common.close")}
               >
                 <X className="h-5 w-5" />
-                <span className="sr-only">Close</span>
+                <span className="sr-only">{t("common.close")}</span>
               </button>
             </div>
           </div>
@@ -157,13 +159,13 @@ const TourDetailsModal = ({ isOpen, onClose, tour }) => {
               onClick={onClose}
               className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 active:scale-[.98]"
             >
-              Close
+              {t("common.close")}
             </button>
           </div>
         </div>
       </div>
 
-      {showToast && <Toast message="Share page opened" />}
+      {showToast && <Toast message={t("tour.shareOpened")} />}
     </>
   );
 };

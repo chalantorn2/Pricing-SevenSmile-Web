@@ -13,8 +13,10 @@ import { TourDetails } from "../../components/tours";
 import { DocumentModal } from "../../components/common";
 import { Toast } from "../../components/core";
 import { pushRecentItem } from "../../utils/recentItems";
+import { useI18n } from "../../i18n";
 
 const TourDetail = () => {
+  const { t } = useI18n();
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -49,11 +51,11 @@ const TourDetail = () => {
           meta: found.destination || "",
         });
       } else {
-        setError("The requested tour was not found");
+        setError(t("tour.notFound"));
       }
     } catch (err) {
       console.error("Error fetching tour:", err);
-      setError("An error occurred while loading data");
+      setError(t("tour.loadError"));
     } finally {
       setLoading(false);
     }
@@ -67,9 +69,9 @@ const TourDetail = () => {
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
-      showToast("Link copied");
+      showToast(t("tours.linkCopied"));
     } catch {
-      showToast("Unable to copy the link");
+      showToast(t("tours.linkCopyError"));
     }
   };
 
@@ -89,14 +91,14 @@ const TourDetail = () => {
   if (error || !tour) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-900 font-medium">Tour not found</p>
+        <p className="text-gray-900 font-medium">{t("tour.notFound")}</p>
         <p className="text-sm text-gray-500 mt-1">{error}</p>
         <Link
           to="/"
           className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white bg-brand-600 hover:bg-brand-700 text-sm"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to tour list
+          {t("tour.backToList")}
         </Link>
       </div>
     );
@@ -124,7 +126,7 @@ const TourDetail = () => {
             className="mt-2 text-2xl font-semibold text-gray-900"
             title={tour.tour_name}
           >
-            {tour.tour_name || "Tour Details"}
+            {tour.tour_name || t("tour.details")}
           </h1>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {!!tour.supplier_name && (
@@ -148,7 +150,7 @@ const TourDetail = () => {
             {isExpired && (
               <span className="inline-flex items-center gap-1 rounded-full bg-danger-50 px-3 py-1 text-xs font-medium text-danger-700 ring-1 ring-inset ring-danger-200">
                 <AlertTriangle className="h-3 w-3" />
-                Expired
+                {t("common.expired")}
               </span>
             )}
           </div>
@@ -158,7 +160,7 @@ const TourDetail = () => {
           <button
             onClick={handleCopyLink}
             className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 active:scale-[.98]"
-            title="Copy the link to this page"
+            title={t("tour.copyPageLink")}
           >
             <Link2 className="h-4 w-4" />
             Copy link
@@ -166,7 +168,7 @@ const TourDetail = () => {
           <button
             onClick={() => setShowDocumentModal(true)}
             className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 active:scale-[.98]"
-            title="View documents"
+            title={t("tours.viewDocuments")}
           >
             <Paperclip className="h-4 w-4" />
             Documents
@@ -174,7 +176,7 @@ const TourDetail = () => {
           <button
             onClick={handleShare}
             className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 active:scale-[.98]"
-            title="Open share page"
+            title={t("tour.action.openShare")}
           >
             <Share2 className="h-4 w-4" />
             Share

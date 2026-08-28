@@ -24,8 +24,10 @@ import {
   authService,
 } from "../../services/api-service";
 import { getTourTypeLabel } from "../../utils/tour-types";
+import { useI18n } from "../../i18n";
 
 const AddTour = () => {
+  const { t, lang } = useI18n();
   const navigate = useNavigate();
 
   // Step management
@@ -48,18 +50,18 @@ const AddTour = () => {
   const steps = [
     {
       id: 1,
-      name: "Select Supplier",
+      name: t("tour.add.stepSupplier"),
       Icon: Building2,
-      description: "Select or create a Supplier",
+      description: t("tour.add.stepSupplierDesc"),
     },
     {
       id: 2,
-      name: "Upload files",
+      name: t("tour.add.stepFiles"),
       Icon: Paperclip,
-      description: "Upload Contract Rate Files",
+      description: t("tour.add.stepFilesDesc"),
     },
-    { id: 3, name: "Add tours", Icon: Palmtree, description: "Add tour items" },
-    { id: 4, name: "Summary", Icon: ClipboardList, description: "Review and save" },
+    { id: 3, name: t("tour.add.stepTours"), Icon: Palmtree, description: t("tour.add.stepToursDesc") },
+    { id: 4, name: t("tour.add.stepSummary"), Icon: ClipboardList, description: t("tour.add.stepSummaryDesc") },
   ];
 
   // Step 1: Supplier Selection
@@ -148,15 +150,15 @@ const AddTour = () => {
 
       if (uploadResult.failed > 0) {
         alert(
-          `Created ${createdTours.length} tours, but ${uploadResult.failed} file(s) failed to upload. You can add them again from the edit page.`
+          t("tour.createPartial", { count: createdTours.length, failed: uploadResult.failed })
         );
       } else {
-        alert(`Successfully created ${createdTours.length} tours!`);
+        alert(t("tour.createSuccess", { count: createdTours.length }));
       }
       navigate("/tours");
     } catch (error) {
       console.error("Error creating tours:", error);
-      alert("An error occurred while creating tours: " + error.message);
+      alert(t("tour.upload.error", { message: error.message }));
     } finally {
       setLoading(false);
     }
@@ -256,10 +258,10 @@ const AddTour = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            Add New Tour Prices
+            {t("tour.addTitle")}
           </h1>
           <p className="text-gray-500 mt-1">
-            Select Supplier, upload files, then add multiple tours
+            {t("tour.addSubtitle")}
           </p>
         </div>
         <button
@@ -267,7 +269,7 @@ const AddTour = () => {
           className="flex items-center gap-1.5 px-4 py-2 text-gray-500 hover:text-gray-900 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back
+          {t("common.back")}
         </button>
       </div>
 
@@ -334,7 +336,7 @@ const AddTour = () => {
               <div className="flex items-center gap-2 pb-4 border-b">
                 <Building2 className="w-5 h-5 text-brand-600" />
                 <h2 className="text-lg font-semibold text-gray-900">
-                  Select or create a Supplier
+                  {t("tour.add.selectSupplier")}
                 </h2>
               </div>
 
@@ -343,7 +345,7 @@ const AddTour = () => {
                   onSelect={handleSupplierSelect}
                   onCreateNew={handleCreateNewSupplier}
                   value={selectedSupplier}
-                  placeholder="Search for a Supplier or create a new one..."
+                  placeholder={t("tour.placeholder.searchSupplier")}
                 />
 
                 {selectedSupplier && (
@@ -371,7 +373,7 @@ const AddTour = () => {
                       onClick={() => setSelectedSupplier(null)}
                       className="text-sm text-gray-500 hover:text-gray-700 shrink-0"
                     >
-                      Change
+                      {t("common.change")}
                     </button>
                   </div>
                 )}
@@ -383,7 +385,7 @@ const AddTour = () => {
                     onClick={nextStep}
                     className="flex items-center gap-1.5 px-5 py-2.5 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium"
                   >
-                    Next: Upload files
+                    {t("tour.add.nextFiles")}
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
@@ -397,7 +399,7 @@ const AddTour = () => {
               <div className="flex items-center gap-2 pb-4 border-b">
                 <Paperclip className="w-5 h-5 text-brand-600" />
                 <h2 className="text-lg font-semibold text-gray-900">
-                  Upload Contract Rate Files
+                  {t("tour.add.uploadRates")}
                 </h2>
               </div>
 
@@ -410,7 +412,7 @@ const AddTour = () => {
                 <div className="space-y-4">
                   <h3 className="flex items-center gap-1.5 font-semibold text-gray-900">
                     <FolderOpen className="w-4 h-4 text-gray-500" />
-                    Uploaded files ({uploadedFiles.length})
+                    {t("tour.add.uploadedFiles", { count: uploadedFiles.length })}
                   </h3>
                   <div className="space-y-2">
                     {uploadedFiles.map((file) => (
@@ -431,7 +433,7 @@ const AddTour = () => {
                             <p className="text-xs text-gray-500">
                               {file.file_size_formatted} •{" "}
                               {new Date(file.uploaded_at).toLocaleDateString(
-                                "en-US"
+                                lang === "th" ? "th-TH" : "en-US"
                               )}
                             </p>
                           </div>
@@ -446,13 +448,13 @@ const AddTour = () => {
                       className="flex items-center gap-1.5 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                     >
                       <ArrowLeft className="w-4 h-4" />
-                      Back
+                      {t("common.back")}
                     </button>
                     <button
                       onClick={nextStep}
                       className="flex items-center gap-1.5 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
                     >
-                      Next: Add tours
+                      {t("tour.add.nextTours")}
                       <ArrowRight className="w-4 h-4" />
                     </button>
                   </div>
@@ -465,11 +467,11 @@ const AddTour = () => {
                     onClick={nextStep}
                     className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-colors"
                   >
-                    Skip: Add tours first
+                    {t("tour.add.skipFiles")}
                     <ArrowRight className="w-4 h-4" />
                   </button>
                   <p className="text-xs text-gray-500 mt-2">
-                    (You can upload files later)
+                    {t("tour.add.uploadLater")}
                   </p>
                 </div>
               )}
@@ -482,9 +484,9 @@ const AddTour = () => {
               <div className="flex items-center gap-2 pb-4 border-b">
                 <Palmtree className="w-5 h-5 text-brand-600" />
                 <h2 className="text-lg font-semibold text-gray-900">
-                  Add tour items
+                  {t("tour.add.items")}
                   <span className="ml-2 text-sm font-normal text-gray-500">
-                    for {selectedSupplier?.name}
+                    {t("common.for")} {selectedSupplier?.name}
                   </span>
                 </h2>
               </div>
@@ -493,7 +495,7 @@ const AddTour = () => {
               {loadingSupplierTours ? (
                 <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-50 border rounded-lg px-4 py-3">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-300" />
-                  Loading existing tours...
+                  {t("tour.add.loadingExisting")}
                 </div>
               ) : (
                 supplierTours.length > 0 && (
@@ -501,11 +503,13 @@ const AddTour = () => {
                     <div className="flex items-center gap-2 px-4 py-2.5 bg-brand-50 border-b border-brand-200">
                       <Palmtree className="w-4 h-4 text-brand-600" />
                       <h3 className="text-sm font-semibold text-gray-900">
-                        Existing tours for {selectedSupplier?.name} (
-                        {supplierTours.length})
+                        {t("tour.add.existingFor", {
+                          name: selectedSupplier?.name || "",
+                          count: supplierTours.length,
+                        })}
                       </h3>
                       <span className="ml-auto text-xs text-gray-500">
-                        Reference only — does not affect the new tours below
+                        {t("tour.add.referenceHint")}
                       </span>
                     </div>
                     <div className="max-h-56 overflow-y-auto divide-y divide-brand-200">
@@ -543,7 +547,7 @@ const AddTour = () => {
                     currentTourId={null} // For new tours, we'll handle this differently
                     onGalleryShared={() => {
                       alert(
-                        "To use Gallery image sharing, please save the tour first, then use this feature on the edit page"
+                        t("tour.gallery.saveFirst")
                       );
                     }}
                   />
@@ -554,7 +558,7 @@ const AddTour = () => {
                 onSubmit={handleToursReview}
                 loading={loading}
                 supplierId={selectedSupplier?.id}
-                submitLabel="Review & continue"
+                  submitLabel={t("tour.add.reviewContinue")}
               />
 
               <div className="flex space-x-3 pt-4 border-t">
@@ -563,7 +567,7 @@ const AddTour = () => {
                   className="flex items-center gap-1.5 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  Back
+                  {t("common.back")}
                 </button>
               </div>
             </div>
@@ -575,7 +579,7 @@ const AddTour = () => {
               <div className="flex items-center gap-2 pb-4 border-b">
                 <ClipboardList className="w-5 h-5 text-brand-600" />
                 <h2 className="text-lg font-semibold text-gray-900">
-                  Review and save
+                  {t("tour.add.review")}
                 </h2>
               </div>
 
@@ -583,7 +587,7 @@ const AddTour = () => {
               <div className="flex items-center gap-3 bg-gray-50 border rounded-lg px-4 py-3">
                 <Building2 className="w-5 h-5 text-brand-600 shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-xs text-gray-500">Supplier</p>
+                  <p className="text-xs text-gray-500">{t("tour.field.supplier")}</p>
                   <p className="font-medium text-gray-900 truncate">
                     {selectedSupplier?.name}
                   </p>
@@ -594,10 +598,9 @@ const AddTour = () => {
               <div className="flex items-center gap-3 bg-gray-50 border rounded-lg px-4 py-3">
                 <Paperclip className="w-5 h-5 text-brand-600 shrink-0" />
                 <div>
-                  <p className="text-xs text-gray-500">Contract rate files</p>
+                  <p className="text-xs text-gray-500">{t("tour.field.rateFiles")}</p>
                   <p className="font-medium text-gray-900">
-                    {uploadedFiles.length} file
-                    {uploadedFiles.length !== 1 ? "s" : ""}
+                    {t("document.fileCount", { count: uploadedFiles.length })}
                   </p>
                 </div>
               </div>
@@ -607,13 +610,13 @@ const AddTour = () => {
                 <div className="flex items-center gap-2 mb-3">
                   <Palmtree className="w-4 h-4 text-brand-600" />
                   <h3 className="text-sm font-semibold text-gray-900">
-                    Tours to create ({pendingTours.tours.length})
+                    {t("tour.add.createCount", { count: pendingTours.tours.length })}
                   </h3>
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                   {pendingTours.tours.map((tour, index) => {
                     const parkFee = tour.park_fee_included
-                      ? "Included in price"
+                      ? t("tour.includedInPrice")
                       : tour.park_fee_adult || tour.park_fee_child
                       ? `฿${Number(
                           tour.park_fee_adult || 0
@@ -643,7 +646,7 @@ const AddTour = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-sm pl-8">
                           <div className="flex items-center gap-2 text-gray-700">
                             <span className="text-gray-400 w-28 shrink-0">
-                              Price
+                              {t("common.price")}
                             </span>
                             <span className="font-medium tabular-nums">
                               ฿{Number(tour.adult_price || 0).toLocaleString()} /
@@ -652,13 +655,13 @@ const AddTour = () => {
                           </div>
                           <div className="flex items-center gap-2 text-gray-700">
                             <span className="text-gray-400 w-28 shrink-0">
-                              Park fee
+                              {t("tour.parkFee")}
                             </span>
                             <span className="truncate">{parkFee}</span>
                           </div>
                           <div className="flex items-center gap-2 text-gray-700">
                             <span className="text-gray-400 w-28 shrink-0">
-                              Departure from
+                              {t("tour.field.departureFrom")}
                             </span>
                             <span className="truncate">
                               {tour.departure_from || "—"}
@@ -666,7 +669,7 @@ const AddTour = () => {
                           </div>
                           <div className="flex items-center gap-2 text-gray-700">
                             <span className="text-gray-400 w-28 shrink-0">
-                              Destination
+                              {t("tour.field.destination")}
                             </span>
                             <span className="truncate">
                               {tour.destination || "—"}
@@ -687,7 +690,7 @@ const AddTour = () => {
                   className="flex items-center gap-1.5 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  Back
+                  {t("common.back")}
                 </button>
                 <button
                   onClick={handleConfirmSave}
@@ -697,13 +700,13 @@ const AddTour = () => {
                   {loading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                      <span>Saving...</span>
+                      <span>{t("tour.saving")}</span>
                     </>
                   ) : (
                     <>
                       <Check className="w-4 h-4" />
                       <span>
-                        Save all tours ({pendingTours.tours.length})
+                        {t("tour.add.saveAll", { count: pendingTours.tours.length })}
                       </span>
                     </>
                   )}

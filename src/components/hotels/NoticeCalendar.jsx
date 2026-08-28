@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useI18n } from "../../i18n";
 
 // Month calendar that visualises hotel Stop Sale / Promotion notices.
 // Red dot = stop sale, green dot = promotion. Reused by HotelDetail (read-only)
@@ -13,13 +14,10 @@ const ymd = (d) => {
   return `${y}-${m}-${day}`;
 };
 
-const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
-const DOW = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+const DOW_DATES = Array.from({ length: 7 }, (_, index) => new Date(2026, 7, 23 + index));
 
 export default function NoticeCalendar({ notices = [], onDayClick }) {
+  const { lang, t } = useI18n();
   const [cursor, setCursor] = useState(() => {
     const n = new Date();
     return new Date(n.getFullYear(), n.getMonth(), 1);
@@ -61,35 +59,40 @@ export default function NoticeCalendar({ notices = [], onDayClick }) {
           <button
             onClick={() => setCursor(new Date(cursor.getFullYear(), monthIdx - 1, 1))}
             className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"
-            title="Previous month"
+            title={t("calendar.previousMonth")}
           >
             <ChevronLeft size={18} />
           </button>
           <h3 className="text-base font-semibold text-gray-900 w-44 text-center">
-            {MONTHS[monthIdx]} {cursor.getFullYear()}
+            {new Intl.DateTimeFormat(lang === "th" ? "th-TH" : "en-US", {
+              month: "long",
+              year: "numeric",
+            }).format(cursor)}
           </h3>
           <button
             onClick={() => setCursor(new Date(cursor.getFullYear(), monthIdx + 1, 1))}
             className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"
-            title="Next month"
+            title={t("calendar.nextMonth")}
           >
             <ChevronRight size={18} />
           </button>
         </div>
         <div className="flex items-center gap-4 text-xs text-gray-500">
           <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-sm bg-danger-600" /> Stop Sale
+            <span className="w-3 h-3 rounded-sm bg-danger-600" /> {t("hotels.stopSale")}
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-sm bg-success-600" /> Promotion
+            <span className="w-3 h-3 rounded-sm bg-success-600" /> {t("hotels.promotion")}
           </span>
         </div>
       </div>
 
       <div className="grid grid-cols-7 gap-1">
-        {DOW.map((d) => (
-          <div key={d} className="text-center text-xs font-medium text-gray-400 py-1">
-            {d}
+        {DOW_DATES.map((date) => (
+          <div key={date.getTime()} className="text-center text-xs font-medium text-gray-400 py-1">
+            {new Intl.DateTimeFormat(lang === "th" ? "th-TH" : "en-US", {
+              weekday: "short",
+            }).format(date)}
           </div>
         ))}
         {weeks.flat().map((d) => {
@@ -103,11 +106,11 @@ export default function NoticeCalendar({ notices = [], onDayClick }) {
             dayNotices
               .map(
                 (n) =>
-                  `${n.type === "stop_sale" ? "Stop Sale" : "Promo"}${
+                  `${n.type === "stop_sale" ? t("hotels.stopSale") : t("hotels.notice.promoShort")}${
                     n.room_type ? " · " + n.room_type : ""
                   }${n.title ? " · " + n.title : ""}`
               )
-              .join("\n") || (onDayClick ? "Set as start date" : "");
+              .join("\n") || (onDayClick ? t("hotels.notice.setStartDate") : "");
           // Full background fill by notice type (easier to read than dots).
           let bgClass = inMonth ? "bg-white" : "bg-gray-50/60";
           let textClass = inMonth ? "text-gray-700" : "text-gray-400";

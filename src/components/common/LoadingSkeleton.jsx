@@ -7,6 +7,7 @@ import {
   Palmtree,
   RotateCw,
 } from "lucide-react";
+import { useI18n } from "../../i18n";
 
 export const TableSkeleton = ({ rows = 5, columns = 7 }) => (
   <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
@@ -118,22 +119,25 @@ export const DetailSkeleton = () => (
 );
 
 export const ErrorState = ({
-  title = "An error occurred",
-  message = "Unable to load data. Please try again.",
+  title,
+  message,
   onRetry,
   icon,
 }) => {
+  const { t } = useI18n();
   const Icon = icon || AlertTriangle;
+  const resolvedTitle = title || t("common.errorTitle");
+  const resolvedMessage = message || t("common.loadErrorMessage");
   return (
     <div className="text-center py-12">
       <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-warning-50 text-warning-600">
         <Icon className="w-7 h-7" />
       </div>
-      <h3 className="text-lg font-medium text-gray-900 mb-2">{title}</h3>
-      <p className="text-gray-500 mb-4 max-w-md mx-auto">{message}</p>
+      <h3 className="text-lg font-medium text-gray-900 mb-2">{resolvedTitle}</h3>
+      <p className="text-gray-500 mb-4 max-w-md mx-auto">{resolvedMessage}</p>
       {onRetry && (
         <button onClick={onRetry} className="btn-primary">
-          <RotateCw className="w-4 h-4" /> Try again
+          <RotateCw className="w-4 h-4" /> {t("common.tryAgain")}
         </button>
       )}
     </div>
@@ -141,20 +145,23 @@ export const ErrorState = ({
 };
 
 export const EmptyState = ({
-  title = "No data",
-  message = "No data in the system yet",
+  title,
+  message,
   actionText,
   onAction,
   icon,
 }) => {
+  const { t } = useI18n();
   const Icon = icon || Inbox;
+  const resolvedTitle = title || t("common.noData");
+  const resolvedMessage = message || t("common.noDataHint");
   return (
     <div className="text-center py-12">
       <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-gray-400">
         <Icon className="w-7 h-7" />
       </div>
-      <h3 className="text-lg font-medium text-gray-900 mb-2">{title}</h3>
-      <p className="text-gray-500 mb-4 max-w-md mx-auto">{message}</p>
+      <h3 className="text-lg font-medium text-gray-900 mb-2">{resolvedTitle}</h3>
+      <p className="text-gray-500 mb-4 max-w-md mx-auto">{resolvedMessage}</p>
       {actionText && onAction && (
         <button
           onClick={onAction}
@@ -177,6 +184,7 @@ export const MobileOptimizedTable = ({
   onSelectItem,
   onSelectAll,
 }) => {
+  const { t } = useI18n();
   if (loading) {
     return <TableSkeleton />;
   }
@@ -266,7 +274,7 @@ export const MobileOptimizedTable = ({
                   {item.tour_count !== undefined && (
                     <p className="text-sm text-gray-500 flex items-center">
                       <Palmtree className="mr-1.5 w-3.5 h-3.5" />
-                      {item.tour_count} tours
+                      {t("home.unit.tours")} {item.tour_count}
                     </p>
                   )}
                 </div>
@@ -304,8 +312,8 @@ export const MobileOptimizedTable = ({
 
       {data.length === 0 && (
         <EmptyState
-          title="No data found"
-          message="Try changing your search or refreshing the page"
+          title={t("common.noData")}
+          message={t("common.noDataHint")}
           icon={Search}
         />
       )}

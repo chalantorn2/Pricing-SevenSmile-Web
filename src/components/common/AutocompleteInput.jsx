@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { authHeaders } from "../../services/api-service";
+import { useI18n } from "../../i18n";
 
 const AutocompleteInput = ({
   type, // 'departure_from' or 'pier'
@@ -11,6 +12,7 @@ const AutocompleteInput = ({
   required = false,
   ...props
 }) => {
+  const { t } = useI18n();
   const [query, setQuery] = useState(value);
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -223,7 +225,7 @@ const AutocompleteInput = ({
                 </span>
                 {suggestion.usage_count > 1 && (
                   <span className="text-xs text-gray-500 ml-2">
-                    Used {suggestion.usage_count} times
+                    {t("common.usedTimes", { count: suggestion.usage_count })}
                   </span>
                 )}
               </div>
@@ -235,7 +237,7 @@ const AutocompleteInput = ({
       {/* Helper Text */}
       {!disabled && (
         <div className="mt-1 text-xs text-gray-500">
-          Type at least 2 characters to see suggestions
+          {t("common.autocompleteHint")}
         </div>
       )}
     </div>

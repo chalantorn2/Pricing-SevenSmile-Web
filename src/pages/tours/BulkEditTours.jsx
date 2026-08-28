@@ -18,6 +18,7 @@ import { Toast } from "../../components/core";
 import { COMMON_PROVINCES } from "../../utils/provinces";
 import { TOUR_TYPES } from "../../utils/tour-types";
 import { toursService, suppliersService } from "../../services/api-service";
+import { useI18n } from "../../i18n";
 
 // Shared grid template so the header and every row stay aligned
 const ROW_GRID =
@@ -86,6 +87,7 @@ const isExpired = (row) => {
 };
 
 const BulkEditTours = () => {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { supplierId } = useParams();
 
@@ -142,7 +144,7 @@ const BulkEditTours = () => {
       setErrors({});
     } catch (error) {
       console.error("Error loading bulk edit data:", error);
-      const message = error?.message || "An error occurred while loading data";
+      const message = error?.message || t("tour.loadError");
       setLoadError(/not found/i.test(message) ? "notfound" : message);
     } finally {
       setLoading(false);
@@ -248,14 +250,14 @@ const BulkEditTours = () => {
       const rowErrors = {};
 
       if (!row.tour_name.trim()) {
-        rowErrors.tour_name = "Please enter a tour name";
+        rowErrors.tour_name = t("tour.validation.nameRequired");
       }
       if (!row.tour_type) {
-        rowErrors.tour_type = "Please select a tour type";
+        rowErrors.tour_type = t("tour.validation.typeRequired");
       }
       if (!row.no_end_date && row.start_date && row.end_date) {
         if (new Date(row.end_date) <= new Date(row.start_date)) {
-          rowErrors.end_date = "End date must be later than start date";
+          rowErrors.end_date = t("tour.validation.endAfterStart");
         }
       }
 
@@ -281,7 +283,7 @@ const BulkEditTours = () => {
 
     if (!validateRows(dirtyRows)) {
       setToast({
-        message: "Please fix the highlighted fields",
+        message: t("tour.bulk.fixFields"),
         type: "error",
       });
       return;
@@ -330,7 +332,7 @@ const BulkEditTours = () => {
       });
     } else {
       setToast({
-        message: `Could not save: ${failed.join(", ")}`,
+        message: t("tour.bulk.saveFailed", { items: failed.join(", ") }),
         type: "error",
       });
     }
@@ -380,7 +382,7 @@ const BulkEditTours = () => {
       });
     } else {
       setToast({
-        message: `Could not delete: ${failed.join(", ")}`,
+        message: t("tour.bulk.deleteFailed", { items: failed.join(", ") }),
         type: "error",
       });
     }
@@ -389,7 +391,7 @@ const BulkEditTours = () => {
   const handleBack = () => {
     if (
       dirtyRows.length > 0 &&
-      !window.confirm("You have unsaved changes. Leave without saving?")
+      !window.confirm(t("tour.unsavedConfirm"))
     ) {
       return;
     }
@@ -424,7 +426,7 @@ const BulkEditTours = () => {
       <div className="p-6 space-y-4">
         <p className="text-gray-700">
           {loadError === "notfound"
-            ? "Supplier not found."
+            ? t("suppliers.notFound")
             : loadError}
         </p>
         <button
@@ -432,7 +434,7 @@ const BulkEditTours = () => {
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm border border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to suppliers
+          {t("common.backTo", { name: t("suppliers.title") })}
         </button>
       </div>
     );
@@ -451,7 +453,7 @@ const BulkEditTours = () => {
             className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 mb-1"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to supplier
+            {t("common.backTo", { name: t("suppliers.title") })}
           </button>
           <h1 className="text-xl font-semibold text-gray-900 truncate">
             Edit tour prices
@@ -492,7 +494,7 @@ const BulkEditTours = () => {
                 <Save className="w-4 h-4" />
                 {dirtyRows.length > 0
                   ? `Save changes (${dirtyRows.length})`
-                  : "No changes"}
+                  : t("tour.bulk.noChanges")}
               </>
             )}
           </button>
@@ -503,15 +505,12 @@ const BulkEditTours = () => {
       {expiredCount > 0 && (
         <div className="flex flex-wrap items-center gap-2 rounded-xl bg-danger-50 px-4 py-3 ring-1 ring-danger-200 text-sm text-danger-800">
           <AlertTriangle className="w-4 h-4 shrink-0" />
-          <span>
-            <span className="font-semibold">{expiredCount}</span> tour price
-            {expiredCount > 1 ? "s have" : " has"} expired.
-          </span>
+          <span>{t("tour.bulk.expiredCount", { count: expiredCount })}</span>
           <button
             onClick={selectExpired}
             className="underline underline-offset-2 hover:no-underline font-medium"
           >
-            Select expired
+            {t("tour.bulk.selectExpired")}
           </button>
         </div>
       )}
@@ -519,13 +518,13 @@ const BulkEditTours = () => {
       {rows.length === 0 ? (
         <div className="rounded-lg border border-gray-200 bg-white px-4 py-10 text-center">
           <p className="font-medium text-gray-500">
-            This supplier has no tours yet
+            {t("tour.bulk.noTours")}
           </p>
           <Link
             to={`/add?supplier=${supplierId}`}
             className="inline-block mt-3 text-sm text-brand-600 hover:underline"
           >
-            Add a tour
+            {t("tour.bulk.addTour")}
           </Link>
         </div>
       ) : (
@@ -539,16 +538,16 @@ const BulkEditTours = () => {
                 type="checkbox"
                 checked={allSelected}
                 onChange={toggleSelectAll}
-                aria-label="Select all tours"
+                aria-label={t("tour.bulk.selectAll")}
                 className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
               />
             </span>
             <span className="text-center">#</span>
-            <span>Tour name</span>
-            <span>Type</span>
-            <span>Adult ฿</span>
-            <span>Child ฿</span>
-            <span className="text-center">Edit</span>
+            <span>{t("tour.field.name")}</span>
+            <span>{t("tour.field.type")}</span>
+            <span>{t("tour.adult")} ฿</span>
+            <span>{t("tour.child")} ฿</span>
+            <span className="text-center">{t("tour.field.edit")}</span>
           </div>
 
           {/* Rows */}
@@ -581,7 +580,7 @@ const BulkEditTours = () => {
                     {dirty && (
                       <span
                         className="absolute -right-0.5 top-0 w-1.5 h-1.5 bg-brand-600 rounded-full"
-                        title="Unsaved changes"
+                        title={t("tour.bulk.unsaved")}
                       />
                     )}
                   </span>
@@ -593,7 +592,7 @@ const BulkEditTours = () => {
                       onChange={(e) =>
                         updateRow(row.id, "tour_name", e.target.value)
                       }
-                      placeholder="Tour name *"
+                      placeholder={t("tour.placeholder.name")}
                       className={`${cellInput} ${
                         hasFieldError(row.id, "tour_name")
                           ? "border-danger-500 ring-1 ring-danger-500"
@@ -602,7 +601,7 @@ const BulkEditTours = () => {
                     />
                     {expired && (
                       <span className="inline-block mt-1 text-[11px] font-medium text-danger-700 bg-danger-50 border border-danger-200 rounded px-1.5 py-0.5">
-                        Expired {row.end_date}
+                        {t("common.expired")} {row.end_date}
                       </span>
                     )}
                   </div>
@@ -618,10 +617,10 @@ const BulkEditTours = () => {
                         : ""
                     }`}
                   >
-                    <option value="">Select type *</option>
-                    {TOUR_TYPES.map((t) => (
-                      <option key={t.value} value={t.value}>
-                        {t.label}
+                    <option value="">{t("tour.selectType")} *</option>
+                    {TOUR_TYPES.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {t(`tour.option.${option.value}`)}
                       </option>
                     ))}
                   </select>
@@ -653,7 +652,7 @@ const BulkEditTours = () => {
                       type="button"
                       onClick={() => toggleExpand(row.id)}
                       className="relative p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
-                      title="More details"
+                      title={t("tour.action.moreDetails")}
                     >
                       <ChevronDown
                         className={`w-4 h-4 transition-transform ${
@@ -666,7 +665,7 @@ const BulkEditTours = () => {
                     </button>
                     <Link
                       to={`/edit/${row.id}`}
-                      title="Full edit (files, gallery)"
+                      title={t("tour.bulk.fullEdit")}
                       className="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
                     >
                       <Pencil className="w-4 h-4" />
@@ -680,16 +679,16 @@ const BulkEditTours = () => {
                     {/* Route & pickup */}
                     <section>
                       <h5 className={`${sectionHead} text-brand-600`}>
-                        <MapPin className="w-3.5 h-3.5" /> Route &amp; pickup
+                        <MapPin className="w-3.5 h-3.5" /> {t("tour.routePickup")}
                       </h5>
                       <div
                         className={`${sectionCard} border-l-brand-500 md:grid-cols-2`}
                       >
                         <div>
                           <label className={labelClass}>
-                            Departure from{" "}
+                            {t("tour.field.departureFrom")}{" "}
                             <span className="font-normal text-gray-400">
-                              — can be more than one
+                              — {t("tour.multipleAllowed")}
                             </span>
                           </label>
                           <ProvincePicker
@@ -710,15 +709,15 @@ const BulkEditTours = () => {
                                 arr.join(", "),
                               )
                             }
-                            placeholder="Type a province"
+                            placeholder={t("tour.placeholder.province")}
                           />
                         </div>
 
                         <div>
                           <label className={labelClass}>
-                            Destination{" "}
+                            {t("tour.field.destination")}{" "}
                             <span className="font-normal text-gray-400">
-                              — one province
+                              — {t("tour.oneProvince")}
                             </span>
                           </label>
                           <ProvincePicker
@@ -727,24 +726,24 @@ const BulkEditTours = () => {
                             onChange={(val) =>
                               updateRow(row.id, "destination", val || "")
                             }
-                            placeholder="Type a province"
+                            placeholder={t("tour.placeholder.province")}
                           />
                         </div>
 
                         <div>
-                          <label className={labelClass}>Pier</label>
+                          <label className={labelClass}>{t("tour.field.pier")}</label>
                           <AutocompleteInput
                             type="pier"
                             value={row.pier}
                             onChange={(value) =>
                               updateRow(row.id, "pier", value)
                             }
-                            placeholder="Pier name"
+                            placeholder={t("tour.placeholder.pier")}
                           />
                         </div>
 
                         <div>
-                          <label className={labelClass}>Google Maps URL</label>
+                          <label className={labelClass}>{t("tour.field.mapUrl")}</label>
                           <input
                             type="url"
                             value={row.map_url}
@@ -767,7 +766,7 @@ const BulkEditTours = () => {
                         className={`${sectionCard} border-l-brand-500 md:grid-cols-2`}
                       >
                         <div>
-                          <label className={labelClass}>Start date</label>
+                          <label className={labelClass}>{t("tour.field.startDate")}</label>
                           <input
                             type="date"
                             value={row.start_date}
@@ -922,7 +921,7 @@ const BulkEditTours = () => {
                           }
                           rows={2}
                           className={inputClass}
-                          placeholder="Additional notes for this tour..."
+                          placeholder={t("tour.placeholder.notes")}
                         />
                       </div>
                     </section>

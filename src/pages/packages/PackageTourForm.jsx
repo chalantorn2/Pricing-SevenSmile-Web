@@ -1,17 +1,19 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { packageToursService, toursService } from "../../services/api-service";
+import { useI18n } from "../../i18n";
 
 const TIME_SLOTS = [
-  { key: "breakfast", label: "Breakfast" },
-  { key: "morning_tour", label: "Day Tour" },
-  { key: "lunch", label: "Lunch" },
-  { key: "evening_tour", label: "Evening Tour" },
-  { key: "dinner", label: "Dinner" },
-  { key: "hotel", label: "Hotel" },
+  { key: "breakfast", labelKey: "packages.slot.breakfast" },
+  { key: "morning_tour", labelKey: "packages.slot.dayTour" },
+  { key: "lunch", labelKey: "packages.slot.lunch" },
+  { key: "evening_tour", labelKey: "packages.slot.eveningTour" },
+  { key: "dinner", labelKey: "packages.slot.dinner" },
+  { key: "hotel", labelKey: "packages.slot.hotel" },
 ];
 
 const PackageTourForm = () => {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditMode = Boolean(id);
@@ -66,13 +68,13 @@ const PackageTourForm = () => {
       setItems(itemsMap);
     } catch (error) {
       console.error("Error fetching package:", error);
-      alert("An error occurred while loading data");
+      alert(t("packages.loadError"));
     } finally {
       setLoading(false);
     }
   };
 
-  const initializeItems = (numDays, numNights) => {
+  const initializeItems = (numDays) => {
     const newItems = {};
     for (let day = 1; day <= numDays; day++) {
       TIME_SLOTS.forEach((slot) => {
@@ -115,13 +117,6 @@ const PackageTourForm = () => {
     return items[key]?.[field] || "";
   };
 
-  const getSelectedTourName = (day, timeSlot) => {
-    const tourId = getItemValue(day, timeSlot, "tour_id");
-    if (!tourId) return "";
-    const tour = allTours.find((t) => t.id === parseInt(tourId));
-    return tour ? tour.tour_name : "";
-  };
-
   const calculateTotalCost = () => {
     let total = 0;
     Object.values(items).forEach((item) => {
@@ -135,7 +130,7 @@ const PackageTourForm = () => {
     e.preventDefault();
 
     if (!name.trim()) {
-      alert("Please enter a package name");
+      alert(t("packages.validation.name"));
       return;
     }
 
@@ -173,16 +168,16 @@ const PackageTourForm = () => {
 
       if (isEditMode) {
         await packageToursService.updatePackage(id, packageData);
-        alert("Changes saved successfully");
+        alert(t("packages.saveSuccess"));
       } else {
         await packageToursService.createPackage(packageData);
-        alert("Package created successfully");
+        alert(t("packages.createSuccess"));
       }
 
       navigate("/packages");
     } catch (error) {
       console.error("Error saving package:", error);
-      alert("An error occurred while saving data");
+      alert(t("packages.saveError"));
     } finally {
       setSaving(false);
     }
@@ -193,7 +188,7 @@ const PackageTourForm = () => {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500 mx-auto mb-3"></div>
-          <p className="text-gray-500">Loading data...</p>
+          <p className="text-gray-500">{t("packages.loading")}</p>
         </div>
       </div>
     );
@@ -205,10 +200,10 @@ const PackageTourForm = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">
-            {isEditMode ? "Edit Tour Package" : "Create New Tour Package"}
+            {isEditMode ? t("packages.edit") : t("packages.create")}
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            Set the daily details for this tour package
+            {t("packages.formSubtitle")}
           </p>
         </div>
         <button
@@ -216,26 +211,26 @@ const PackageTourForm = () => {
           onClick={() => navigate("/packages")}
           className="px-4 py-2 text-gray-500 hover:text-gray-900"
         >
-          ← Back
+          ← {t("common.back")}
         </button>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Info */}
         <div className="bg-white p-6 rounded-xl shadow-sm ring-1 ring-black/5 space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900">Basic Information</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t("packages.basicInfo")}</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Package Name *
+                {t("packages.name")} *
               </label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-                placeholder="e.g. Phuket Tour 3 Days 2 Nights"
+                placeholder={t("packages.namePlaceholder")}
                 required
               />
             </div>
@@ -243,7 +238,7 @@ const PackageTourForm = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Days *
+                  {t("packages.days")} *
                 </label>
                 <input
                   type="number"
@@ -258,7 +253,7 @@ const PackageTourForm = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nights *
+                  {t("packages.nights")} *
                 </label>
                 <input
                   type="number"
@@ -275,20 +270,20 @@ const PackageTourForm = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Description
+              {t("common.description")}
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-              placeholder="Additional package details"
+              placeholder={t("packages.descriptionPlaceholder")}
             />
           </div>
 
           <div className="flex items-center gap-4 pt-2">
             <div className="text-sm text-gray-500">
-              Total Cost:
+              {t("packages.totalCost")}:
             </div>
             <div className="text-lg font-bold text-success-700">
               THB {calculateTotalCost().toLocaleString("en-US", { minimumFractionDigits: 2 })}
@@ -298,21 +293,21 @@ const PackageTourForm = () => {
 
         {/* Package Table */}
         <div className="bg-white p-6 rounded-xl shadow-sm ring-1 ring-black/5 space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900">Activity Schedule (Admin Mode)</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t("packages.schedule")}</h2>
 
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm border-collapse">
               <thead>
                 <tr className="bg-gray-50">
                   <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-gray-700 sticky left-0 bg-gray-50 z-10">
-                    Item / Day
+                    {t("packages.itemPerDay")}
                   </th>
                   {Array.from({ length: days }, (_, i) => i + 1).map((day) => (
                     <th
                       key={day}
                       className="border border-gray-300 px-4 py-3 text-center font-semibold text-gray-700 min-w-[300px]"
                     >
-                      Day {day}
+                      {t("packages.dayNumber", { day })}
                     </th>
                   ))}
                 </tr>
@@ -321,7 +316,7 @@ const PackageTourForm = () => {
                 {TIME_SLOTS.map((slot) => (
                   <tr key={slot.key} className="hover:bg-gray-50">
                     <td className="border border-gray-300 px-4 py-3 font-medium text-gray-700 bg-gray-50 sticky left-0 z-10">
-                      {slot.label}
+                      {t(slot.labelKey)}
                     </td>
                     {Array.from({ length: days }, (_, i) => i + 1).map((day) => (
                       <td key={`${day}-${slot.key}`} className="border border-gray-300 px-3 py-3">
@@ -329,7 +324,7 @@ const PackageTourForm = () => {
                           {/* Select Tour or Custom */}
                           <div>
                             <label className="block text-xs text-gray-500 mb-1">
-                              Select Tour
+                              {t("packages.selectTour")}
                             </label>
                             <select
                               value={getItemValue(day, slot.key, "tour_id")}
@@ -338,7 +333,7 @@ const PackageTourForm = () => {
                               }
                               className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-brand-500"
                             >
-                              <option value="">-- Select from database --</option>
+                              <option value="">{t("packages.selectFromDatabase")}</option>
                               {allTours.map((tour) => (
                                 <option key={tour.id} value={tour.id}>
                                   {tour.tour_name}
@@ -351,7 +346,7 @@ const PackageTourForm = () => {
                           {!getItemValue(day, slot.key, "tour_id") && (
                             <div>
                               <label className="block text-xs text-gray-500 mb-1">
-                                Or enter manually
+                                {t("packages.enterManually")}
                               </label>
                               <input
                                 type="text"
@@ -360,7 +355,7 @@ const PackageTourForm = () => {
                                   updateItem(day, slot.key, "custom_name", e.target.value)
                                 }
                                 className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-brand-500"
-                                placeholder="Place / activity name"
+                                placeholder={t("packages.activityPlaceholder")}
                               />
                             </div>
                           )}
@@ -368,7 +363,7 @@ const PackageTourForm = () => {
                           {/* Price */}
                           <div>
                             <label className="block text-xs text-gray-500 mb-1">
-                              Price / Cost (HHB)
+                              {t("packages.priceCost")}
                             </label>
                             <input
                               type="number"
@@ -385,7 +380,7 @@ const PackageTourForm = () => {
                           {/* Unit */}
                           <div>
                             <label className="block text-xs text-gray-500 mb-1">
-                              Unit
+                              {t("packages.unit")}
                             </label>
                             <input
                               type="text"
@@ -394,14 +389,14 @@ const PackageTourForm = () => {
                                 updateItem(day, slot.key, "unit", e.target.value)
                               }
                               className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-brand-500"
-                              placeholder="e.g. person, day, group"
+                              placeholder={t("packages.unitPlaceholder")}
                             />
                           </div>
 
                           {/* Notes */}
                           <div>
                             <label className="block text-xs text-gray-500 mb-1">
-                              Notes
+                              {t("common.note")}
                             </label>
                             <textarea
                               value={getItemValue(day, slot.key, "notes")}
@@ -410,7 +405,7 @@ const PackageTourForm = () => {
                               }
                               rows={2}
                               className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-brand-500"
-                              placeholder="Additional details"
+                              placeholder={t("packages.notesPlaceholder")}
                             />
                           </div>
                         </div>
@@ -431,14 +426,18 @@ const PackageTourForm = () => {
             className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 active:scale-[.98]"
             disabled={saving}
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             type="submit"
             className="px-6 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 active:scale-[.98] disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={saving}
           >
-            {saving ? "Saving..." : isEditMode ? "Save Changes" : "Create Package"}
+            {saving
+              ? t("common.saving")
+              : isEditMode
+                ? t("packages.saveChanges")
+                : t("packages.createAction")}
           </button>
         </div>
       </form>

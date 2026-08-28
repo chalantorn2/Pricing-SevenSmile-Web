@@ -3,6 +3,7 @@ import {
   getTourCategoryInfo,
   getSupplierCategoryInfo,
 } from "../../utils/file-categories";
+import { useI18n } from "../../i18n";
 
 const FileDownloads = ({
   files,
@@ -11,6 +12,7 @@ const FileDownloads = ({
   isSupplier = false,
   showCategory = true,
 }) => {
+  const { t, lang } = useI18n();
   if (!files || files.length === 0) return null;
 
   const handleFileView = (file) => {
@@ -38,7 +40,7 @@ const FileDownloads = ({
     <div className="file-downloads-section space-y-4">
       <h3 className="text-sm font-semibold text-gray-900 flex items-center">
         <Folder className="mr-2 w-4 h-4 text-gray-400" />
-        {title} ({files.length} files)
+        {title || t("document.attachments")} ({t("document.fileCount", { count: files.length })})
       </h3>
 
       {Object.entries(groupedFiles).map(([categoryId, categoryFiles]) => {
@@ -51,7 +53,7 @@ const FileDownloads = ({
               <h4
                 className={`text-xs font-medium px-2 py-1 rounded-full inline-flex items-center gap-1 ${categoryInfo.color}`}
               >
-                <CategoryIcon className="h-3.5 w-3.5" /> {categoryInfo.label} (
+                <CategoryIcon className="h-3.5 w-3.5" /> {t(`file.category.${categoryInfo.id}`)} (
                 {categoryFiles.length})
               </h4>
             )}
@@ -79,7 +81,7 @@ const FileDownloads = ({
                         <span>•</span>
                         <span>
                           {new Date(file.uploaded_at).toLocaleDateString(
-                            "en-US"
+                            lang === "th" ? "th-TH" : "en-US"
                           )}
                         </span>
                         {file.file_type && (
@@ -96,7 +98,7 @@ const FileDownloads = ({
                     onClick={() => handleFileView(file)}
                     className="flex-shrink-0 px-3 py-1 bg-brand-100 text-brand-700 rounded hover:bg-brand-100 transition-colors text-sm"
                   >
-                    {file.file_type === "pdf" ? "Open" : "View"}
+                    {file.file_type === "pdf" ? t("common.open") : t("document.view")}
                   </button>
                 </div>
               ))}

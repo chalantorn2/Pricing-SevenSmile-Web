@@ -1,4 +1,5 @@
 import { AlertCircle, CheckCircle2, Info, X } from "lucide-react";
+import { useI18n } from "../../i18n";
 
 const ICONS = {
   success: CheckCircle2,
@@ -8,6 +9,7 @@ const ICONS = {
 };
 
 const Toast = ({ message, type = "success", onClose }) => {
+  const { t } = useI18n();
   const styles = {
     success: "bg-success-600 text-white",
     error: "bg-danger-600 text-white",
@@ -29,7 +31,7 @@ const Toast = ({ message, type = "success", onClose }) => {
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t("common.close")}
             className="rounded-md p-1 text-white/80 hover:bg-white/15 hover:text-white"
           >
             <X className="h-4 w-4" />

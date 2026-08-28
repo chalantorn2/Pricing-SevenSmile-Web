@@ -1,4 +1,7 @@
+import { useI18n } from "../../i18n";
+
 const MapLink = ({ mapUrl, tourName, className = "" }) => {
+  const { t } = useI18n();
   if (!mapUrl) return null;
 
   const handleMapClick = () => {
@@ -9,7 +12,7 @@ const MapLink = ({ mapUrl, tourName, className = "" }) => {
     <button
       onClick={handleMapClick}
       className={`inline-flex items-center gap-2 px-3 py-2 bg-success-100 text-success-700 rounded-lg hover:bg-success-100 transition-colors text-sm ${className}`}
-      title={`View ${tourName || "this tour"} on Google Maps`}
+      title={t("common.viewMapTitle", { name: tourName || t("tour.thisTour") })}
     >
       <svg
         className="w-4 h-4"
@@ -30,7 +33,7 @@ const MapLink = ({ mapUrl, tourName, className = "" }) => {
           d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
         />
       </svg>
-      <span>View Map</span>
+      <span>{t("common.viewMap")}</span>
       <svg
         className="w-3 h-3"
         fill="none"

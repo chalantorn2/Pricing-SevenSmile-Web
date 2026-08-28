@@ -1,11 +1,9 @@
 import { useState, useRef } from "react";
 import { Paperclip, UploadCloud } from "lucide-react";
 import { authService, filesService } from "../../services/api-service";
-import {
-  TOUR_FILE_CATEGORIES,
-  getCategoryHints,
-} from "../../utils/file-categories";
+import { TOUR_FILE_CATEGORIES } from "../../utils/file-categories";
 import ShareGalleryManager from "./ShareGalleryManager";
+import { useI18n } from "../../i18n";
 
 const TourFileUpload = ({
   tourId,
@@ -13,6 +11,7 @@ const TourFileUpload = ({
   onGalleryShared,
   disabled = false,
 }) => {
+  const { t } = useI18n();
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("general");
@@ -31,21 +30,25 @@ const TourFileUpload = ({
 
   // Get current category info
   const categoryInfo = TOUR_FILE_CATEGORIES[selectedCategory];
-  const categoryHints = getCategoryHints(selectedCategory, false);
+  const allowedTypesLabel = categoryInfo.allowedTypes.includes("image") && categoryInfo.allowedTypes.includes("pdf")
+    ? t("file.types.both")
+    : categoryInfo.allowedTypes.includes("pdf")
+    ? t("file.types.pdf")
+    : t("file.types.image");
 
   const validateFile = (file) => {
     if (!allowedTypes[file.type]) {
-      return "Only PDF and image files are supported (JPG, PNG, GIF, WebP)";
+      return t("tour.upload.invalidType");
     }
 
     if (file.size > maxFileSize) {
-      return "File size is too large (max 10MB)";
+      return t("tour.upload.tooLarge");
     }
 
     // Validate against category restrictions
     const fileType = file.type.includes("image") ? "image" : "pdf";
     if (!categoryInfo.allowedTypes.includes(fileType)) {
-      return `The "${categoryInfo.label}" category only supports ${categoryHints.allowedTypesText}`;
+      return t("tour.upload.categoryOnly", { types: allowedTypesLabel });
     }
 
     return null;
@@ -81,7 +84,7 @@ const TourFileUpload = ({
       // alert(`File "${file.name}" uploaded successfully in category "${categoryInfo.label}"`);
     } catch (error) {
       console.error("Upload error:", error);
-      alert(error.message);
+      alert(t("tour.upload.error", { message: error.message }));
     } finally {
       setUploading(false);
     }
@@ -126,12 +129,10 @@ const TourFileUpload = ({
     const files = Array.from(event.target.files);
 
     if (files.length > 10) {
-      const confirmed = confirm(
-        `You are about to upload ${files.length} files\n` +
-          `The system will upload 5 files at a time to prevent issues\n` +
-          `Estimated time: ${Math.ceil(files.length / 5) * 2} seconds\n\n` +
-          `Do you want to continue?`
-      );
+      const confirmed = confirm(t("tour.upload.batchConfirm", {
+        count: files.length,
+        seconds: Math.ceil(files.length / 5) * 2,
+      }));
 
       if (!confirmed) return;
     }
@@ -144,9 +145,9 @@ const TourFileUpload = ({
       try {
         setUploading(true);
         await uploadFilesSequentially(files);
-        alert(`Finished uploading ${files.length} files`);
+        alert(t("tour.upload.success", { count: files.length }));
       } catch (error) {
-        alert(`An error occurred: ${error.message}`);
+        alert(t("tour.upload.error", { message: error.message }));
       } finally {
         setUploading(false);
         // Reset file input
@@ -164,12 +165,10 @@ const TourFileUpload = ({
     const files = Array.from(event.dataTransfer.files);
 
     if (files.length > 10) {
-      const confirmed = confirm(
-        `You are about to upload ${files.length} files\n` +
-          `The system will upload 5 files at a time to prevent issues\n` +
-          `Estimated time: ${Math.ceil(files.length / 5) * 2} seconds\n\n` +
-          `Do you want to continue?`
-      );
+      const confirmed = confirm(t("tour.upload.batchConfirm", {
+        count: files.length,
+        seconds: Math.ceil(files.length / 5) * 2,
+      }));
 
       if (!confirmed) return;
     }
@@ -180,9 +179,9 @@ const TourFileUpload = ({
       try {
         setUploading(true);
         await uploadFilesSequentially(files);
-        alert(`Finished uploading ${files.length} files`);
+        alert(t("tour.upload.success", { count: files.length }));
       } catch (error) {
-        alert(`An error occurred: ${error.message}`);
+        alert(t("tour.upload.error", { message: error.message }));
       } finally {
         setUploading(false);
       }
@@ -248,7 +247,7 @@ const TourFileUpload = ({
           })}
         </div>
         <p className="mt-1.5 text-xs text-gray-500">
-          {categoryInfo.description} · Supports {categoryHints.allowedTypesText}
+          {t(`file.category.${selectedCategory}Desc`)} · {allowedTypesLabel}
         </p>
       </div>
 
@@ -291,7 +290,7 @@ const TourFileUpload = ({
           <div className="flex items-center justify-center gap-3">
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-brand-500"></div>
             <p className="text-sm text-gray-500">
-              Uploading to "{categoryInfo.label}"...
+              {t("tour.upload.uploading", { category: t(`file.category.${selectedCategory}`) })}
             </p>
           </div>
         ) : (
@@ -299,11 +298,11 @@ const TourFileUpload = ({
             <UploadCloud className="w-7 h-7 text-gray-400 shrink-0" />
             <div>
               <p className="text-sm font-medium text-gray-900">
-                Drop files here or{" "}
-                <span className="text-brand-600">click to upload</span>
+                {t("tour.upload.drop")} {" "}
+                <span className="text-brand-600">{t("tour.upload.click")}</span>
               </p>
               <p className="text-xs text-gray-500 mt-0.5">
-                {categoryHints.allowedTypesText} · max 10MB · multiple files OK
+                {t("tour.upload.limits", { types: allowedTypesLabel })}
               </p>
             </div>
           </div>

@@ -1,3 +1,5 @@
+import { formatDate } from "./formatters";
+
 export const isExpired = (endDate) => {
   // If there is no end_date or it is null, treat as not expired
   if (!endDate || endDate === "0000-00-00") {
@@ -53,7 +55,7 @@ export const copyToClipboard = async (text) => {
   try {
     await navigator.clipboard.writeText(text);
     return true;
-  } catch (err) {
+  } catch {
     const textArea = document.createElement("textarea");
     textArea.value = text;
     document.body.appendChild(textArea);

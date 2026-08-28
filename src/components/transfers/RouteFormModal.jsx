@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { transfersService } from "../../services/api-service";
 import { ROUTE_CATEGORIES } from "./constants";
 import { Field, ModalShell, inputClass } from "./formUi";
+import { useI18n } from "../../i18n";
 
 /**
  * Create/edit one row of the rate matrix: a pair of locations, the section of the
@@ -24,6 +25,7 @@ const RouteFormModal = ({
   onClose,
   onSaved,
 }) => {
+  const { t } = useI18n();
   const isEdit = Boolean(route?.id);
 
   // Inactive locations stay selectable while they are still on a saved route, so
@@ -78,11 +80,11 @@ const RouteFormModal = ({
     const origin = Number(form.origin_id);
     const destination = Number(form.destination_id);
     if (!origin || !destination) {
-      setError("Pick both an origin and a destination");
+      setError(t("transfers.pickEndpoints"));
       return;
     }
     if (origin === destination) {
-      setError("Origin and destination must be different");
+      setError(t("transfers.sameEndpoints"));
       return;
     }
 
@@ -94,7 +96,7 @@ const RouteFormModal = ({
       .filter((p) => Number.isFinite(p.price) && p.price > 0);
 
     if (!supplier?.id) {
-      setError("Pick a supplier before saving prices");
+      setError(t("transfers.pickSupplier"));
       return;
     }
 
@@ -127,24 +129,24 @@ const RouteFormModal = ({
 
   return (
     <ModalShell
-      title={isEdit ? "Edit Route" : "Add Route"}
+      title={isEdit ? t("transfers.route.edit") : t("transfers.route.add")}
       subtitle={
         supplier
-          ? `One origin, one destination, and ${supplier.name}'s price per vehicle`
-          : "One origin, one destination, and a price per vehicle"
+          ? t("transfers.route.subtitleSupplier", { name: supplier.name })
+          : t("transfers.route.subtitle")
       }
       formId="transferRouteForm"
       onSubmit={submit}
       onClose={onClose}
       saving={saving}
       error={error}
-      saveLabel="Save Route"
+      saveLabel={t("common.save")}
       width="max-w-2xl"
     >
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Origin" required>
+        <Field label={t("transfers.origin")} required>
           <select className={inputClass} value={form.origin_id} onChange={set("origin_id")}>
-            <option value="">Select a location…</option>
+            <option value="">{t("transfers.selectLocation")}</option>
             {selectableLocations.map((l) => (
               <option key={l.id} value={l.id}>
                 {l.name} — {l.province}
@@ -152,13 +154,13 @@ const RouteFormModal = ({
             ))}
           </select>
         </Field>
-        <Field label="Destination" required>
+        <Field label={t("transfers.destination")} required>
           <select
             className={inputClass}
             value={form.destination_id}
             onChange={set("destination_id")}
           >
-            <option value="">Select a location…</option>
+            <option value="">{t("transfers.selectLocation")}</option>
             {selectableLocations.map((l) => (
               <option key={l.id} value={l.id}>
                 {l.name} — {l.province}
@@ -168,17 +170,17 @@ const RouteFormModal = ({
         </Field>
       </div>
 
-      <Field label="Category" hint="the section of the rate sheet this came from">
+      <Field label={t("common.category")}>
         <select className={inputClass} value={form.category} onChange={set("category")}>
           {ROUTE_CATEGORIES.map((c) => (
             <option key={c.value} value={c.value}>
-              {c.label}
+              {t(`transfers.category.${c.value}`)}
             </option>
           ))}
         </select>
       </Field>
 
-      <Field label="Label" hint="how the supplier words it — leave blank to use the route">
+      <Field label={t("common.label")}>
         <input
           className={inputClass}
           value={form.label}
@@ -188,12 +190,12 @@ const RouteFormModal = ({
       </Field>
 
       <Field
-        label={supplier ? `Prices — ${supplier.name}` : "Prices"}
-        hint="blank means this supplier does not offer the vehicle on this route; other suppliers' rates are not touched"
+        label={supplier ? `${t("transfers.prices")} — ${supplier.name}` : t("transfers.prices")}
+        hint={t("transfers.priceBlankHint")}
       >
         {priceableVehicles.length === 0 ? (
           <p className="p-4 text-center text-sm text-gray-400 border border-gray-200 rounded-lg">
-            No vehicles yet. Add one on the Vehicles tab first.
+            {t("transfers.noVehicles")}
           </p>
         ) : (
           <div className="border border-gray-200 rounded-lg divide-y divide-gray-100">
@@ -202,7 +204,10 @@ const RouteFormModal = ({
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium text-gray-900">{v.name}</div>
                   <div className="text-xs text-gray-400">
-                    up to {v.max_passengers} pax · {v.max_luggage} bags
+                    {t("transfers.capacitySummary", {
+                      passengers: v.max_passengers,
+                      bags: v.max_luggage,
+                    })}
                   </div>
                 </div>
                 <input
@@ -224,16 +229,16 @@ const RouteFormModal = ({
         )}
       </Field>
 
-      <Field label="Note">
+      <Field label={t("common.note")}>
         <input
           className={inputClass}
           value={form.note}
           onChange={set("note")}
-          placeholder="e.g. price on request, night surcharge applies"
+          placeholder={t("transfers.routeNotePlaceholder")}
         />
       </Field>
 
-      <Field label="Sort order" hint="lower shows first within its category">
+      <Field label={t("common.sort")}>
         <input
           type="number"
           className={inputClass}
@@ -250,8 +255,8 @@ const RouteFormModal = ({
           className="w-4 h-4 accent-brand-600"
         />
         <div>
-          <span className="text-sm font-medium text-gray-700">Active</span>
-          <p className="text-xs text-gray-400">Currently sold</p>
+          <span className="text-sm font-medium text-gray-700">{t("common.active")}</span>
+          <p className="text-xs text-gray-400">{t("transfers.route.activeHint")}</p>
         </div>
       </label>
     </ModalShell>

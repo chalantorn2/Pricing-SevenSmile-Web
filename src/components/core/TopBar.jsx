@@ -88,9 +88,11 @@ const TopBar = ({ nav = false }) => {
         {/* Single row: brand, catalog nav, account cluster */}
         <div className="flex h-16 items-center gap-2">
           <Link to="/" className="flex shrink-0 items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white">
-              <Palmtree className="w-5 h-5" />
-            </div>
+            <img
+              src="/logo2.png"
+              alt="Contract Rate"
+              className="h-9 w-9 object-contain"
+            />
             <div className="leading-tight">
               <p className="text-sm font-bold text-gray-900">Contract Rate</p>
               <p className="hidden text-[11px] text-gray-500 sm:block">

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { transfersService } from "../../services/api-service";
+import { useI18n } from "../../i18n";
 import { PROVINCES } from "./constants";
 import { Field, ModalShell, inputClass } from "./formUi";
 
@@ -11,6 +12,7 @@ const EMPTY = { name: "", province: "Phuket", sort_order: 0, is_active: true };
  * sidebar, so a location filed under the wrong one disappears from that menu.
  */
 const LocationFormModal = ({ location, onClose, onSaved }) => {
+  const { t } = useI18n();
   const isEdit = Boolean(location?.id);
   const [form, setForm] = useState(() =>
     location?.id
@@ -34,7 +36,7 @@ const LocationFormModal = ({ location, onClose, onSaved }) => {
   const submit = async (e) => {
     e.preventDefault();
     if (!form.name.trim()) {
-      setError("Location name is required");
+      setError(t("transfers.locationNameRequired"));
       return;
     }
     setSaving(true);
@@ -61,27 +63,27 @@ const LocationFormModal = ({ location, onClose, onSaved }) => {
 
   return (
     <ModalShell
-      title={isEdit ? "Edit Location" : "Add Location"}
-      subtitle="A pickup or dropoff point used by transfer routes"
+      title={isEdit ? t("transfers.location.edit") : t("transfers.location.add")}
+      subtitle={t("transfers.location.subtitle")}
       formId="transferLocationForm"
       onSubmit={submit}
       onClose={onClose}
       saving={saving}
       error={error}
-      saveLabel="Save Location"
+      saveLabel={t("common.save")}
       width="max-w-md"
     >
-      <Field label="Name" required>
+      <Field label={t("common.name")} required>
         <input
           className={inputClass}
           value={form.name}
           onChange={set("name")}
-          placeholder="e.g. Phuket Airport (HKT)"
+          placeholder={t("transfers.locationPlaceholder")}
           autoFocus
         />
       </Field>
 
-      <Field label="Province" hint="decides which sidebar menu the route appears in">
+      <Field label={t("common.province")}>
         <select className={inputClass} value={form.province} onChange={set("province")}>
           {PROVINCES.map((p) => (
             <option key={p} value={p}>
@@ -91,7 +93,7 @@ const LocationFormModal = ({ location, onClose, onSaved }) => {
         </select>
       </Field>
 
-      <Field label="Sort order" hint="lower shows first">
+      <Field label={t("common.sort")}>
         <input
           type="number"
           className={inputClass}
@@ -108,8 +110,8 @@ const LocationFormModal = ({ location, onClose, onSaved }) => {
           className="w-4 h-4 accent-brand-600"
         />
         <div>
-          <span className="text-sm font-medium text-gray-700">Active</span>
-          <p className="text-xs text-gray-400">Offered when building a route</p>
+          <span className="text-sm font-medium text-gray-700">{t("common.active")}</span>
+          <p className="text-xs text-gray-400">{t("transfers.location.activeHint")}</p>
         </div>
       </label>
     </ModalShell>

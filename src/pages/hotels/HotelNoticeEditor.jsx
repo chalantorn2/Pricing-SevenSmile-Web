@@ -4,6 +4,7 @@ import { ArrowLeft, Plus, Trash2, Pencil, Ban, Tag } from "lucide-react";
 import { hotelsService } from "../../services/api-service";
 import Toast from "../../components/core/Toast";
 import NoticeCalendar from "../../components/hotels/NoticeCalendar";
+import { useI18n } from "../../i18n";
 
 // Manage Stop Sale / Promotion notices for one hotel. A month calendar visualises
 // the periods (red = stop sale, green = promotion) and a form below adds/edits
@@ -36,6 +37,7 @@ const emptyForm = () => ({
 });
 
 export default function HotelNoticeEditor() {
+  const { t } = useI18n();
   const { slug } = useParams();
 
   const [hotel, setHotel] = useState(null);
@@ -141,15 +143,15 @@ export default function HotelNoticeEditor() {
 
   const handleSubmit = async () => {
     if (!form.date_start || !form.date_end) {
-      notify("Pick a start and end date.", "warning");
+      notify(t("hotels.notice.pickDates"), "warning");
       return;
     }
     if (form.date_end < form.date_start) {
-      notify("End date must be on or after start date.", "warning");
+      notify(t("hotels.notice.endAfterStart"), "warning");
       return;
     }
     if (form.type === "promotion" && form.promo_price === "") {
-      notify("Enter the promo price.", "warning");
+      notify(t("hotels.notice.enterPromoPrice"), "warning");
       return;
     }
 
@@ -170,15 +172,15 @@ export default function HotelNoticeEditor() {
       setSaving(true);
       if (form.id) {
         await hotelsService.updateHotelNotice(form.id, payload);
-        notify("Notice updated.");
+        notify(t("hotels.notice.updated"));
       } else {
         await hotelsService.createHotelNotice(hotel.id, payload);
-        notify("Notice added.");
+        notify(t("hotels.notice.added"));
       }
       await loadNotices(hotel.id);
       resetForm();
     } catch (err) {
-      notify("Save failed: " + err.message, "error");
+      notify(t("common.saveFailed", { message: err.message }), "error");
     } finally {
       setSaving(false);
     }
@@ -189,9 +191,9 @@ export default function HotelNoticeEditor() {
       await hotelsService.deleteHotelNotice(id);
       await loadNotices(hotel.id);
       if (form.id === id) resetForm();
-      notify("Notice deleted.");
+      notify(t("hotels.notice.deleted"));
     } catch (err) {
-      notify("Delete failed: " + err.message, "error");
+      notify(t("hotels.notice.deleteFailed", { message: err.message }), "error");
     }
   };
 
@@ -200,7 +202,7 @@ export default function HotelNoticeEditor() {
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500" />
-          <p className="mt-4 text-gray-500">Loading notices…</p>
+          <p className="mt-4 text-gray-500">{t("notices.loading")}</p>
         </div>
       </div>
     );
@@ -213,15 +215,15 @@ export default function HotelNoticeEditor() {
           to="/hotel"
           className="inline-flex items-center gap-1 text-brand-600 hover:underline text-sm"
         >
-          <ArrowLeft size={14} /> Back to hotels
+          <ArrowLeft size={14} /> {t("hotels.back")}
         </Link>
         <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-12 text-center space-y-4">
-          <h2 className="text-2xl font-semibold text-gray-900">Hotel not found</h2>
+          <h2 className="text-2xl font-semibold text-gray-900">{t("hotels.notFound")}</h2>
           <button
             onClick={load}
             className="px-5 py-2.5 bg-brand-600 text-white rounded-xl font-medium hover:bg-brand-700"
           >
-            Try again
+            {t("common.retry")}
           </button>
         </div>
       </div>
@@ -238,10 +240,10 @@ export default function HotelNoticeEditor() {
           to={`/hotel/view/${slug}`}
           className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-brand-700 mb-2"
         >
-          <ArrowLeft size={16} /> Back to {hotel.name}
+          <ArrowLeft size={16} /> {t("common.backTo", { name: hotel.name })}
         </Link>
         <h1 className="text-2xl font-semibold text-gray-900">
-          Stop Sale &amp; Promotions
+          {t("hotels.notices")}
         </h1>
         <p className="text-sm text-gray-500">{hotel.name}</p>
       </div>
@@ -259,18 +261,18 @@ export default function HotelNoticeEditor() {
           }
         />
         <p className="mt-3 text-xs text-gray-400">
-          Tip: click a day to set it as the start date in the form below.
+          {t("notices.calendarHint")}
         </p>
       </div>
 
       {/* Existing notices list */}
       <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-4 md:p-6 mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Notices <span className="text-gray-400 font-normal">({notices.length})</span>
+          {t("notices.title")} <span className="text-gray-400 font-normal">({notices.length})</span>
         </h2>
         {notices.length === 0 ? (
           <p className="text-sm text-gray-400 py-4 text-center">
-            No stop sale or promotion yet. Add one below.
+            {t("notices.empty")}
           </p>
         ) : (
           <div className="space-y-2">
@@ -291,7 +293,7 @@ export default function HotelNoticeEditor() {
                     }`}
                   >
                     {stop ? <Ban size={13} /> : <Tag size={13} />}
-                    {stop ? "Stop Sale" : "Promo"}
+                    {stop ? t("hotels.stopSale") : t("hotels.promotion")}
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="text-sm text-gray-900 font-medium truncate">
@@ -299,7 +301,7 @@ export default function HotelNoticeEditor() {
                       {n.room_type ? (
                         <span className="text-gray-400 font-normal"> · {n.room_type}</span>
                       ) : (
-                        <span className="text-gray-400 font-normal"> · All rooms</span>
+                        <span className="text-gray-400 font-normal"> · {t("hotels.allRooms")}</span>
                       )}
                     </div>
                     {(n.title || n.promo_price != null) && (
@@ -316,14 +318,14 @@ export default function HotelNoticeEditor() {
                   <button
                     onClick={() => startEdit(n)}
                     className="p-1.5 text-gray-400 hover:text-brand-600"
-                    title="Edit"
+                    title={t("common.edit")}
                   >
                     <Pencil size={16} />
                   </button>
                   <button
                     onClick={() => handleDelete(n.id)}
                     className="p-1.5 text-gray-400 hover:text-danger-600"
-                    title="Delete"
+                    title={t("common.delete")}
                   >
                     <Trash2 size={16} />
                   </button>
@@ -337,7 +339,7 @@ export default function HotelNoticeEditor() {
       {/* Add / edit form */}
       <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-4 md:p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          {form.id ? "Edit notice" : "Add notice"}
+          {form.id ? t("notices.edit") : t("notices.add")}
         </h2>
 
         {/* type toggle */}
@@ -350,7 +352,7 @@ export default function HotelNoticeEditor() {
                 : "bg-white border-gray-200 text-gray-500 hover:border-gray-300"
             }`}
           >
-            <Ban size={15} /> Stop Sale
+            <Ban size={15} /> {t("hotels.stopSale")}
           </button>
           <button
             onClick={() => setForm((f) => ({ ...f, type: "promotion" }))}
@@ -360,7 +362,7 @@ export default function HotelNoticeEditor() {
                 : "bg-white border-gray-200 text-gray-500 hover:border-gray-300"
             }`}
           >
-            <Tag size={15} /> Promotion
+            <Tag size={15} /> {t("hotels.promotion")}
           </button>
         </div>
 
@@ -369,14 +371,14 @@ export default function HotelNoticeEditor() {
           <div className={`grid grid-cols-1 gap-4 ${rowColClass}`}>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Room type
+                {t("hotels.roomType")}
               </label>
               <select
                 value={form.room_type}
                 onChange={(e) => setForm((f) => ({ ...f, room_type: e.target.value }))}
                 className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none bg-white"
               >
-                <option value="">All rooms</option>
+                <option value="">{t("hotels.allRooms")}</option>
                 {roomOptions.map((r) => (
                   <option key={r} value={r}>
                     {r}
@@ -388,7 +390,7 @@ export default function HotelNoticeEditor() {
             {periodOptions.length > 0 && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Use existing period
+                  {t("notices.usePeriod")}
                 </label>
                 <select
                   value={selectedPeriodKey}
@@ -398,7 +400,7 @@ export default function HotelNoticeEditor() {
                   }}
                   className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none bg-white"
                 >
-                  <option value="">Custom dates…</option>
+                  <option value="">{t("notices.customDates")}</option>
                   {periodOptions.map((p) => (
                     <option key={p.key} value={p.key}>
                       {p.label}
@@ -411,7 +413,7 @@ export default function HotelNoticeEditor() {
             {form.type === "promotion" && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Promo price (฿ / room / night)
+                  {t("notices.promoPrice")}
                 </label>
                 <input
                   type="number"
@@ -427,7 +429,7 @@ export default function HotelNoticeEditor() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Start date
+                {t("notices.startDate")}
               </label>
               <input
                 type="date"
@@ -438,7 +440,7 @@ export default function HotelNoticeEditor() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                End date
+                {t("notices.endDate")}
               </label>
               <input
                 type="date"
@@ -451,7 +453,7 @@ export default function HotelNoticeEditor() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Title <span className="text-gray-400 font-normal">(optional)</span>
+              {t("notices.fieldTitle")} <span className="text-gray-400 font-normal">{t("common.optional")}</span>
             </label>
             <input
               value={form.title}
@@ -466,13 +468,13 @@ export default function HotelNoticeEditor() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Detail <span className="text-gray-400 font-normal">(optional)</span>
+              {t("notices.detail")} <span className="text-gray-400 font-normal">{t("common.optional")}</span>
             </label>
             <textarea
               rows={3}
               value={form.detail}
               onChange={(e) => setForm((f) => ({ ...f, detail: e.target.value }))}
-              placeholder="Conditions, min nights, notes…"
+              placeholder={t("notices.detailPlaceholder")}
               className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-sm leading-relaxed"
             />
           </div>
@@ -484,7 +486,7 @@ export default function HotelNoticeEditor() {
               onClick={resetForm}
               className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-500 font-medium hover:bg-gray-50"
             >
-              Cancel edit
+              {t("notices.cancelEdit")}
             </button>
           )}
           <button
@@ -493,7 +495,11 @@ export default function HotelNoticeEditor() {
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-600 text-white font-medium hover:bg-brand-700 disabled:opacity-60"
           >
             <Plus size={18} />
-            {saving ? "Saving…" : form.id ? "Update notice" : "Add notice"}
+            {saving
+              ? t("common.saving")
+              : form.id
+                ? t("notices.update")
+                : t("notices.add")}
           </button>
         </div>
       </div>

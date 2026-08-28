@@ -15,12 +15,13 @@ import {
 } from "../../services/api-service";
 import SupplierFileUpload from "./SupplierFileUpload";
 import { FileDownloads } from "../common";
+import { useI18n } from "../../i18n";
 
 // A supplier is one kind or the other — the tour vendors and the transfer
 // companies are separate businesses, and nothing appears in both lists.
 const SUPPLIER_TYPES = [
-  { value: "tour", label: "Tour", hint: "sells tours and packages" },
-  { value: "transfer", label: "Transfer", hint: "drives transfer routes" },
+  { value: "tour", labelKey: "nav.tours", hintKey: "suppliers.typeTourHint" },
+  { value: "transfer", labelKey: "nav.transfers", hintKey: "suppliers.typeTransferHint" },
 ];
 
 const SupplierModal = ({
@@ -36,6 +37,7 @@ const SupplierModal = ({
   // whatever the supplier already is.
   defaultType = "tour",
 }) => {
+  const { t } = useI18n();
   const [loading, setLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -170,21 +172,21 @@ const SupplierModal = ({
 
   // Phone field data for rendering
   const phoneFields = [
-    { key: "phone", label: "Primary phone", placeholder: "0xx-xxx-xxxx" },
+    { key: "phone", label: t("suppliers.primaryPhone"), placeholder: "0xx-xxx-xxxx" },
     {
       key: "phone_2",
-      label: "Phone 2",
+      label: t("suppliers.phoneNumber", { number: 2 }),
       placeholder: "0xx-xxx-xxxx ",
     },
-    { key: "phone_3", label: "Phone 3", placeholder: "0xx-xxx-xxxx " },
+    { key: "phone_3", label: t("suppliers.phoneNumber", { number: 3 }), placeholder: "0xx-xxx-xxxx " },
     {
       key: "phone_4",
-      label: "Phone 4",
+      label: t("suppliers.phoneNumber", { number: 4 }),
       placeholder: "0xx-xxx-xxxx ",
     },
     {
       key: "phone_5",
-      label: "Phone 5",
+      label: t("suppliers.phoneNumber", { number: 5 }),
       placeholder: "0xx-xxx-xxxx ",
     },
   ];
@@ -196,7 +198,7 @@ const SupplierModal = ({
     try {
       // Validate required fields
       if (!formData.name.trim()) {
-        throw new Error("Please enter a Supplier name");
+        throw new Error(t("common.validationRequired", { field: t("suppliers.name") }));
       }
 
       let result;
@@ -214,7 +216,9 @@ const SupplierModal = ({
       console.error("Error saving supplier:", error);
       alert(
         error.message ||
-          `An error occurred while ${isEdit ? "updating" : "creating"} the Supplier`
+          t("suppliers.saveError", {
+            action: t(isEdit ? "suppliers.actionUpdate" : "suppliers.actionCreate"),
+          })
       );
     } finally {
       setLoading(false);
@@ -233,7 +237,7 @@ const SupplierModal = ({
       handleClose();
     } catch (error) {
       console.error("Error deleting supplier:", error);
-      alert(error.message || "An error occurred while deleting the Supplier");
+      alert(error.message || t("common.deleteError"));
     } finally {
       setDeleteLoading(false);
       setShowDeleteConfirm(false);
@@ -251,14 +255,14 @@ const SupplierModal = ({
 
   // Handle file deletion
   const handleFileDelete = async (fileId) => {
-    if (!confirm("Do you want to delete this file?")) return;
+    if (!confirm(t("suppliers.deleteFileConfirm"))) return;
 
     try {
       await supplierFilesService.deleteSupplierFile(fileId);
       setFiles((prev) => prev.filter((file) => file.id !== fileId));
     } catch (error) {
       console.error("Error deleting file:", error);
-      alert("An error occurred while deleting the file");
+      alert(t("suppliers.deleteFileError"));
     }
   };
 
@@ -296,7 +300,7 @@ const SupplierModal = ({
             {/* Header */}
             <div className="modal-header border-b border-gray-200 px-6 py-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900">
-                {isEdit ? "Edit Supplier" : "Add New Supplier"}
+                {isEdit ? t("suppliers.edit") : t("suppliers.add")}
               </h2>
               <button
                 onClick={handleClose}
@@ -314,14 +318,14 @@ const SupplierModal = ({
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-1.5">
                     <User className="w-4 h-4 text-gray-500" />
-                    Basic Information
+                    {t("packages.basicInfo")}
                   </h3>
 
                   <div className="bg-gray-50 rounded-lg p-4 space-y-3">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                          Supplier name <span className="text-danger-600">*</span>
+                          {t("suppliers.name")} <span className="text-danger-600">*</span>
                         </label>
                         <input
                           type="text"
@@ -330,13 +334,13 @@ const SupplierModal = ({
                           onChange={handleChange}
                           required
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-                          placeholder="Enter Supplier name"
+                          placeholder={t("suppliers.namePlaceholder")}
                         />
                       </div>
 
                       <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                          Supplier type <span className="text-danger-600">*</span>
+                          {t("suppliers.type")} <span className="text-danger-600">*</span>
                         </label>
                         <div className="flex flex-wrap gap-2">
                           {SUPPLIER_TYPES.map((option) => {
@@ -358,9 +362,9 @@ const SupplierModal = ({
                                   onChange={handleChange}
                                   className="sr-only"
                                 />
-                                <span className="font-medium">{option.label}</span>
+                                <span className="font-medium">{t(option.labelKey)}</span>
                                 <span className="block text-xs text-gray-500 mt-0.5">
-                                  {option.hint}
+                                  {t(option.hintKey)}
                                 </span>
                               </label>
                             );
@@ -370,7 +374,7 @@ const SupplierModal = ({
 
                       <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                          Address
+                          {t("suppliers.address")}
                         </label>
                         <textarea
                           name="address"
@@ -378,7 +382,7 @@ const SupplierModal = ({
                           onChange={handleChange}
                           rows={2}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-                          placeholder="Enter address"
+                          placeholder={t("suppliers.addressPlaceholder")}
                         />
                       </div>
                     </div>
@@ -389,7 +393,7 @@ const SupplierModal = ({
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-1.5">
                     <Phone className="w-4 h-4 text-gray-500" />
-                    Contact Channels
+                    {t("suppliers.contactChannels")}
                   </h3>
 
                   <div className="bg-gray-50 rounded-lg p-4">
@@ -398,7 +402,7 @@ const SupplierModal = ({
                       <div>
                         <div className="flex items-center justify-between mb-3">
                           <label className="block text-sm font-medium text-gray-700">
-                            Phone numbers{" "}
+                            {t("suppliers.phoneNumbers")}{" "}
                             <span className="font-normal text-gray-400">
                               ({visiblePhoneFields}/5)
                             </span>
@@ -410,7 +414,7 @@ const SupplierModal = ({
                               className="flex items-center gap-1 px-2.5 py-1 bg-brand-100 text-brand-700 text-xs rounded-lg hover:bg-brand-100 transition-colors"
                             >
                               <Plus className="w-3.5 h-3.5" />
-                              Add phone
+                              {t("suppliers.addPhone")}
                             </button>
                           )}
                         </div>
@@ -442,7 +446,7 @@ const SupplierModal = ({
                                       type="button"
                                       onClick={() => removePhoneField(index)}
                                       className="p-1 text-danger-600 hover:bg-danger-100 rounded transition-colors"
-                                      title="Remove this phone"
+                                      title={t("suppliers.removePhone")}
                                     >
                                       <Trash2 className="w-4 h-4" />
                                     </button>
@@ -453,7 +457,7 @@ const SupplierModal = ({
                         </div>
 
                         <p className="mt-2 text-xs text-gray-500">
-                          Up to 5 numbers. Put the easiest one to reach first.
+                          {t("suppliers.phoneHint")}
                         </p>
                       </div>
 
@@ -461,7 +465,7 @@ const SupplierModal = ({
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-4 border-t border-gray-200">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                            Email
+                            {t("common.contactEmail")}
                           </label>
                           <input
                             type="email"
@@ -474,7 +478,7 @@ const SupplierModal = ({
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                            Line ID
+                            {t("suppliers.lineId")}
                           </label>
                           <input
                             type="text"
@@ -495,7 +499,7 @@ const SupplierModal = ({
                             value={formData.whatsapp}
                             onChange={handleChange}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-                            placeholder="WhatsApp number"
+                            placeholder={t("suppliers.whatsAppPlaceholder")}
                           />
                         </div>
                         <div>
@@ -508,12 +512,12 @@ const SupplierModal = ({
                             value={formData.facebook}
                             onChange={handleChange}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-                            placeholder="Facebook URL or Username"
+                            placeholder={t("suppliers.facebookPlaceholder")}
                           />
                         </div>
                         <div className="md:col-span-2">
                           <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                            Website
+                            {t("common.website")}
                           </label>
                           <input
                             type="url"
@@ -535,14 +539,14 @@ const SupplierModal = ({
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-1.5">
                         <FolderOpen className="w-4 h-4 text-gray-500" />
-                        Manage documents ({files.length})
+                        {t("suppliers.manageDocuments", { count: files.length })}
                       </h3>
                       <button
                         type="button"
                         onClick={() => setFilesSectionOpen(!filesSectionOpen)}
                         className="flex items-center gap-1.5 px-3 py-1 text-sm text-brand-600 hover:text-brand-800 transition-colors"
                       >
-                        <span>{filesSectionOpen ? "Hide" : "Show"}</span>
+                        <span>{filesSectionOpen ? t("common.hide") : t("common.show")}</span>
                         <ChevronDown
                           className={`w-4 h-4 transition-transform ${
                             filesSectionOpen ? "rotate-180" : ""
@@ -556,7 +560,7 @@ const SupplierModal = ({
                         {/* File Upload */}
                         <div>
                           <h4 className="text-sm font-medium text-gray-700 mb-3">
-                            Upload new files
+                            {t("suppliers.uploadFiles")}
                           </h4>
                           <SupplierFileUpload
                             supplierId={supplier.id}
@@ -568,13 +572,13 @@ const SupplierModal = ({
                         {/* File List */}
                         <div>
                           <h4 className="text-sm font-medium text-gray-700 mb-3">
-                            Existing files
+                            {t("suppliers.existingFiles")}
                           </h4>
                           {filesLoading ? (
                             <div className="text-center py-4">
                               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-brand-500 mx-auto mb-2"></div>
                               <p className="text-sm text-gray-500">
-                                Loading files...
+                                {t("document.loading")}
                               </p>
                             </div>
                           ) : (
@@ -583,7 +587,7 @@ const SupplierModal = ({
                               getFileUrl={
                                 supplierFilesService.getSupplierFileUrl
                               }
-                              title="Supplier documents"
+                              title={t("suppliers.documents")}
                               isSupplier={true}
                               showCategory={true}
                               onDelete={handleFileDelete}
@@ -610,7 +614,7 @@ const SupplierModal = ({
                     className="px-4 py-2 bg-danger-600 text-white rounded-lg hover:bg-danger-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     <Trash2 className="w-4 h-4" />
-                    <span>Delete Supplier</span>
+                    <span>{t("suppliers.delete")}</span>
                   </button>
                 )}
               </div>
@@ -623,7 +627,7 @@ const SupplierModal = ({
                   disabled={loading || deleteLoading}
                   className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors disabled:opacity-50"
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
                 <button
                   type="submit"
@@ -634,10 +638,10 @@ const SupplierModal = ({
                   {loading ? (
                     <div className="flex items-center space-x-2">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      <span>{isEdit ? "Updating" : "Creating"}...</span>
+                      <span>{isEdit ? t("common.updating") : t("common.creating")}</span>
                     </div>
                   ) : (
-                    `${isEdit ? "Update" : "Create"} Supplier`
+                    isEdit ? t("suppliers.update") : t("suppliers.create")
                   )}
                 </button>
               </div>
@@ -657,27 +661,26 @@ const SupplierModal = ({
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">
-                    Confirm Supplier deletion
+                    {t("suppliers.deleteConfirmTitle")}
                   </h3>
                   <p className="text-sm text-gray-500">
-                    This action cannot be undone
+                    {t("suppliers.deleteIrreversible")}
                   </p>
                 </div>
               </div>
 
               <div className="bg-danger-50 border border-danger-200 rounded-lg p-4 mb-4">
                 <p className="text-sm text-danger-800">
-                  You are about to delete <strong>"{supplier?.name}"</strong>
+                  {t("suppliers.deleteAbout", { name: supplier?.name || "" })}
                 </p>
                 <p className="text-sm text-danger-700 mt-1">
-                  • The Supplier data will be permanently deleted
+                  • {t("suppliers.deleteDataWarning")}
                 </p>
                 <p className="text-sm text-danger-700">
-                  • Related document files will be deleted
+                  • {t("suppliers.deleteFilesWarning")}
                 </p>
                 <p className="text-sm text-danger-700">
-                  • Tours linked to this Supplier cannot be deleted
-                  (delete the tours first)
+                  • {t("suppliers.deleteToursWarning")}
                 </p>
               </div>
 
@@ -687,7 +690,7 @@ const SupplierModal = ({
                   disabled={deleteLoading}
                   className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors disabled:opacity-50"
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
                 <button
                   onClick={handleDeleteConfirm}
@@ -697,12 +700,12 @@ const SupplierModal = ({
                   {deleteLoading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      <span>Deleting...</span>
+                      <span>{t("suppliers.deleting")}</span>
                     </>
                   ) : (
                     <>
                       <Trash2 className="w-4 h-4" />
-                      <span>Delete Supplier</span>
+                      <span>{t("suppliers.delete")}</span>
                     </>
                   )}
                 </button>

@@ -6,6 +6,7 @@ import {
   Image as ImageIcon,
   Trash2,
 } from "lucide-react";
+import { useI18n } from "../../i18n";
 
 const SharedGalleryGroup = ({
   sourceTourId,
@@ -15,6 +16,7 @@ const SharedGalleryGroup = ({
   onUnshareFile,
   onViewFile,
 }) => {
+  const { t } = useI18n();
   const [isExpanded, setIsExpanded] = useState(false);
 
   const handleUnshareAll = (e) => {
@@ -22,10 +24,10 @@ const SharedGalleryGroup = ({
     e.stopPropagation();
 
     if (
-      window.confirm(
-        `Do you want to unshare all images (${files.length} images) from "${sourceTourName}"?\n\n` +
-          `This action cannot be undone!`
-      )
+      window.confirm(t("tour.gallery.unshareAll", {
+        count: files.length,
+        name: sourceTourName,
+      }))
     ) {
       onUnshareAll(sourceTourId);
     }
@@ -35,7 +37,7 @@ const SharedGalleryGroup = ({
     e.preventDefault();
     e.stopPropagation();
 
-    if (window.confirm("Do you want to unshare this image?")) {
+    if (window.confirm(t("tour.gallery.unshareOne"))) {
       onUnshareFile(file);
     }
   };
@@ -79,7 +81,7 @@ const SharedGalleryGroup = ({
             onClick={handleToggleExpand}
             className="px-3 py-1 text-sm bg-brand-600 text-white rounded hover:bg-brand-700 transition-colors"
           >
-            {isExpanded ? "Collapse" : "View images"}
+            {isExpanded ? t("tour.gallery.collapse") : t("tour.gallery.viewImages")}
           </button>
           <button
             type="button"

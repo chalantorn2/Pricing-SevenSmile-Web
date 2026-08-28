@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { restaurantsService } from "../../services/api-service";
 import { pushRecentItem } from "../../utils/recentItems";
+import { useI18n } from "../../i18n";
 
 const UNIT_LABEL = {
   per_person: "/pax",
@@ -50,6 +51,7 @@ const money = (n) =>
   Number(n).toLocaleString("en-US", { maximumFractionDigits: 0 });
 
 export default function RestaurantDetail() {
+  const { t } = useI18n();
   const { slug } = useParams();
 
   const [restaurant, setRestaurant] = useState(null);
@@ -216,7 +218,7 @@ export default function RestaurantDetail() {
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500" />
-          <p className="mt-4 text-gray-500">Loading restaurant…</p>
+          <p className="mt-4 text-gray-500">{t("restaurants.loading")}</p>
         </div>
       </div>
     );
@@ -229,20 +231,20 @@ export default function RestaurantDetail() {
           to="/restaurant"
           className="inline-flex items-center gap-1 text-brand-600 hover:underline text-sm"
         >
-          <ArrowLeft size={14} /> Back to restaurants
+          <ArrowLeft size={14} /> {t("restaurants.back")}
         </Link>
         <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-12 text-center space-y-4">
           <h2 className="text-2xl font-semibold text-gray-900">
-            Restaurant not found
+            {t("restaurants.notFound")}
           </h2>
           <p className="text-gray-500">
-            We couldn&apos;t load this restaurant. It may have been removed.
+            {t("restaurants.notFoundHint")}
           </p>
           <button
             onClick={fetchRestaurant}
             className="px-5 py-2.5 bg-brand-600 text-white rounded-xl font-medium hover:bg-brand-700"
           >
-            Try again
+            {t("common.retry")}
           </button>
         </div>
       </div>
@@ -260,7 +262,7 @@ export default function RestaurantDetail() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         <nav className="flex items-center gap-2 text-sm text-gray-500">
           <Link to="/restaurant" className="hover:text-brand-700">
-            Restaurants
+            {t("restaurants.title")}
           </Link>
           <ChevronRight size={14} className="text-gray-400" />
           <span className="text-gray-900 font-medium truncate max-w-[220px]">
@@ -287,13 +289,13 @@ export default function RestaurantDetail() {
           <button
             onClick={handleShare}
             className="absolute top-6 right-6 bg-black/30 backdrop-blur-md text-white/80 hover:text-white hover:bg-black/50 p-3 rounded-full transition"
-            title="Share"
+            title={t("common.share")}
           >
             {copied ? <Check size={18} /> : <Link2 size={18} />}
           </button>
           {copied && (
             <span className="absolute top-6 right-20 bg-black/60 text-white text-xs px-3 py-2 rounded-full">
-              Link copied!
+              {t("common.linkCopied")}
             </span>
           )}
 
@@ -310,7 +312,7 @@ export default function RestaurantDetail() {
             )}
             {!restaurant.is_active && (
               <span className="bg-gray-700 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                Inactive
+                {t("common.inactive")}
               </span>
             )}
           </div>
@@ -367,23 +369,23 @@ export default function RestaurantDetail() {
             {/* Net Rates */}
             <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm ring-1 ring-black/5">
               <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-                <h2 className="text-2xl font-semibold text-gray-900">Net Rates</h2>
+                <h2 className="text-2xl font-semibold text-gray-900">{t("common.netRates")}</h2>
                 <Link
                   to={`/restaurant/rates/${slug}`}
                   className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-brand-50 text-brand-700 rounded-lg hover:bg-brand-100"
                 >
-                  <Pencil size={15} /> Edit rates
+                  <Pencil size={15} /> {t("restaurants.editRates")}
                 </Link>
               </div>
 
               {!rateMatrix ? (
                 <p className="text-gray-500 text-sm">
-                  No rates entered yet.{" "}
+                  {t("restaurants.noRates")} {" "}
                   <Link
                     to={`/restaurant/rates/${slug}`}
                     className="text-brand-600 hover:underline"
                   >
-                    Add the contract rates
+                    {t("restaurants.addRates")}
                   </Link>
                   .
                 </p>
@@ -393,7 +395,7 @@ export default function RestaurantDetail() {
                     <thead>
                       <tr>
                         <th className="sticky left-0 bg-white text-left px-3 py-2 font-medium text-gray-500 border-b border-gray-100">
-                          Menu
+                          {t("restaurants.menu")}
                         </th>
                         {rateMatrix.periods.map((p) => (
                           <th
@@ -461,7 +463,7 @@ export default function RestaurantDetail() {
             {/* Menus */}
             {menus.length > 0 && (
               <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm ring-1 ring-black/5">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-5">Menus</h2>
+                <h2 className="text-2xl font-semibold text-gray-900 mb-5">{t("restaurants.menus")}</h2>
                 <div className="flex flex-col gap-4">
                   {menus.map((m, i) => {
                     const from = menuPriceFrom[m.name];
@@ -488,7 +490,7 @@ export default function RestaurantDetail() {
                           </div>
                           {from && (
                             <div className="text-right">
-                              <span className="text-xs text-gray-400 block">from</span>
+                              <span className="text-xs text-gray-400 block">{t("restaurants.from")}</span>
                               <span className="text-lg font-semibold text-gray-900 tabular-nums">
                                 {money(from.price)}
                               </span>
@@ -526,7 +528,7 @@ export default function RestaurantDetail() {
             {restaurant.description && (
               <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm ring-1 ring-black/5">
                 <h2 className="text-2xl font-semibold text-gray-900 mb-3">
-                  About {restaurant.name}
+                  {t("restaurants.about", { name: restaurant.name })}
                 </h2>
                 <p className="text-gray-600 leading-relaxed whitespace-pre-line">
                   {restaurant.description}
@@ -538,7 +540,7 @@ export default function RestaurantDetail() {
             {images.length > 0 && (
               <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm ring-1 ring-black/5">
                 <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-                  <h2 className="text-2xl font-semibold text-gray-900">Gallery</h2>
+                  <h2 className="text-2xl font-semibold text-gray-900">{t("common.gallery")}</h2>
                   {categories.length > 1 && (
                     <div className="flex flex-wrap gap-1.5">
                       {["all", ...categories].map((c) => (
@@ -554,7 +556,7 @@ export default function RestaurantDetail() {
                               : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                           }`}
                         >
-                          {c === "all" ? "All" : c}
+                          {c === "all" ? t("common.all") : c}
                         </button>
                       ))}
                     </div>
@@ -584,7 +586,7 @@ export default function RestaurantDetail() {
           <div className="flex flex-col gap-6">
             <div className="bg-white rounded-2xl p-6 shadow-sm ring-1 ring-black/5">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                Contact & Location
+                {t("common.contactLocation")}
               </h2>
               <dl className="flex flex-col gap-3 text-sm">
                 {restaurant.address && (
@@ -644,7 +646,7 @@ export default function RestaurantDetail() {
                         rel="noreferrer"
                         className="text-brand-600 hover:underline"
                       >
-                        Open in Google Maps
+                        {t("common.viewMap")}
                       </a>
                     </dd>
                   </div>
@@ -659,7 +661,7 @@ export default function RestaurantDetail() {
                   <div className="flex gap-3">
                     <Users size={16} className="text-gray-400 shrink-0 mt-0.5" />
                     <dd className="text-gray-600">
-                      Seats {restaurant.seating_capacity} pax
+                      {t("restaurants.seatCount", { count: restaurant.seating_capacity })}
                     </dd>
                   </div>
                 ) : null}
@@ -669,7 +671,7 @@ export default function RestaurantDetail() {
             {facilities.length > 0 && (
               <div className="bg-white rounded-2xl p-6 shadow-sm ring-1 ring-black/5">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                  Facilities
+                  {t("restaurants.facilities")}
                 </h2>
                 <ul className="flex flex-col gap-2">
                   {facilities.map((f, i) => (
@@ -688,12 +690,12 @@ export default function RestaurantDetail() {
             {(restaurant.rate_validity || restaurant.rate_terms) && (
               <div className="bg-white rounded-2xl p-6 shadow-sm ring-1 ring-black/5 space-y-4">
                 <h2 className="text-lg font-semibold text-gray-900">
-                  Rate conditions
+                  {t("common.rateConditions")}
                 </h2>
                 {restaurant.rate_validity && (
                   <div>
                     <h3 className="text-sm font-medium text-gray-700 mb-1">
-                      Validity & Market
+                      {t("common.validityMarket")}
                     </h3>
                     <p className="text-sm text-gray-500 whitespace-pre-line leading-relaxed">
                       {restaurant.rate_validity}
@@ -703,7 +705,7 @@ export default function RestaurantDetail() {
                 {restaurant.rate_terms && (
                   <div>
                     <h3 className="text-sm font-medium text-gray-700 mb-1">
-                      Terms & Conditions
+                      {t("common.termsConditions")}
                     </h3>
                     <p className="text-sm text-gray-500 whitespace-pre-line leading-relaxed">
                       {restaurant.rate_terms}
@@ -725,7 +727,7 @@ export default function RestaurantDetail() {
           <button
             onClick={closeLightbox}
             className="absolute top-5 right-5 text-white/70 hover:text-white p-2"
-            aria-label="Close"
+            aria-label={t("common.close")}
           >
             <X size={26} />
           </button>
@@ -737,7 +739,7 @@ export default function RestaurantDetail() {
                   prevImage();
                 }}
                 className="absolute left-4 text-white/70 hover:text-white p-3"
-                aria-label="Previous"
+                aria-label={t("common.previous")}
               >
                 <ChevronLeft size={32} />
               </button>
@@ -747,7 +749,7 @@ export default function RestaurantDetail() {
                   nextImage();
                 }}
                 className="absolute right-4 text-white/70 hover:text-white p-3"
-                aria-label="Next"
+                aria-label={t("common.next")}
               >
                 <ChevronRight size={32} />
               </button>

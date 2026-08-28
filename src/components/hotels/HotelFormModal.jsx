@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { hotelsService } from "../../services/api-service";
+import { useI18n } from "../../i18n";
 
 const PRESET_CATEGORIES = [
   "Exterior",
@@ -36,10 +37,10 @@ const EMPTY = {
 };
 
 const TABS = [
-  { key: "basic", label: "Basic Info" },
-  { key: "media", label: "Media" },
-  { key: "rooms", label: "Room Types" },
-  { key: "settings", label: "Settings" },
+  { key: "basic", labelKey: "common.basicInfo" },
+  { key: "media", labelKey: "common.media" },
+  { key: "rooms", labelKey: "hotels.roomTypes" },
+  { key: "settings", labelKey: "common.settings" },
 ];
 
 const inputClass =
@@ -107,6 +108,7 @@ function hotelToForm(h) {
  * reorder) and room-type builder — restyled to this app's UI.
  */
 const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
+  const { t } = useI18n();
   const isEdit = Boolean(hotel);
   const [tab, setTab] = useState("basic");
   const [form, setForm] = useState(EMPTY);
@@ -225,7 +227,7 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
           caption: "",
         })),
       ]);
-      if (data.errors?.length) setError("Some uploads failed: " + data.errors.join(", "));
+      if (data.errors?.length) setError(t("common.uploadFailed", { message: data.errors.join(", ") }));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -249,7 +251,7 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
   };
 
   const deleteSelected = () => {
-    if (!window.confirm(`Delete ${selected.size} selected image(s)?`)) return;
+    if (!window.confirm(t("common.deleteSelectedImages", { count: selected.size }))) return;
     setGallery((g) => g.filter((_, i) => !selected.has(i)));
     setSelected(new Set());
   };
@@ -334,13 +336,13 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     for (const [key, label] of [
-      ["name", "Hotel Name"],
-      ["destination", "Destination"],
-      ["description", "Full Description"],
+      ["name", t("hotels.col.name")],
+      ["destination", t("hotels.col.destination")],
+      ["description", t("common.fullDescription")],
     ]) {
       if (!form[key] || !String(form[key]).trim()) {
         setTab("basic");
-        setError(`Please fill in "${label}"`);
+        setError(t("common.fillField", { field: label }));
         return;
       }
     }
@@ -350,7 +352,7 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
       const payload = buildPayload();
       if (isEdit) await hotelsService.updateHotel(hotel.id, payload);
       else await hotelsService.createHotel(payload);
-      onSaved(isEdit ? "Hotel updated successfully" : "Hotel created successfully");
+      onSaved(isEdit ? t("hotels.updatedSuccess") : t("hotels.createdSuccess"));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -368,17 +370,17 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">
-              {isEdit ? "Edit Hotel" : "Add New Hotel"}
+              {isEdit ? t("hotels.edit") : t("hotels.add")}
             </h2>
             <p className="text-sm text-gray-500 mt-0.5">
               {isEdit
-                ? "Update the hotel property details"
-                : "Fill in the details to add a hotel property"}
+                ? t("hotels.editSubtitle")
+                : t("hotels.addSubtitle")}
             </p>
           </div>
           <button
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t("common.close")}
             className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-400 hover:bg-danger-50 hover:text-danger-600 transition text-2xl leading-none"
           >
             &times;
@@ -387,18 +389,18 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
 
         {/* Tabs */}
         <div className="flex flex-wrap px-6 bg-gray-50 border-b border-gray-100 gap-1">
-          {TABS.map((t) => (
+          {TABS.map((tabItem) => (
             <button
-              key={t.key}
+              key={tabItem.key}
               type="button"
-              onClick={() => setTab(t.key)}
+              onClick={() => setTab(tabItem.key)}
               className={`shrink-0 px-4 py-3 text-sm font-medium border-b-2 transition ${
-                tab === t.key
+                tab === tabItem.key
                   ? "text-brand-700 border-brand-600"
                   : "text-gray-500 border-transparent hover:text-gray-700"
               }`}
             >
-              {t.label}
+              {t(tabItem.labelKey)}
             </button>
           ))}
         </div>
@@ -407,23 +409,23 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
           {/* Basic */}
           {tab === "basic" && (
             <div>
-              <SectionCard title="Hotel Identity">
+              <SectionCard title={t("hotels.identity")}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                  <Field label="Hotel Name" required>
+                  <Field label={t("hotels.col.name")} required>
                     <input
                       className={inputClass}
                       value={form.name}
                       onChange={set("name")}
-                      placeholder="e.g. The Naka Island Resort"
+                      placeholder={t("hotels.namePlaceholder")}
                     />
                   </Field>
-                  <Field label="Destination" required>
+                  <Field label={t("hotels.col.destination")} required>
                     <input
                       className={inputClass}
                       value={form.destination}
                       onChange={set("destination")}
                       list="hotel-destinations"
-                      placeholder="e.g. Phuket, Thailand"
+                      placeholder={t("hotels.destinationPlaceholder")}
                     />
                     <datalist id="hotel-destinations">
                       {(destinations || []).map((d) => (
@@ -432,7 +434,7 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                     </datalist>
                   </Field>
                 </div>
-                <Field label="Stars">
+                <Field label={t("hotels.col.stars")}>
                   <select className={inputClass} value={form.stars} onChange={set("stars")}>
                     {[1, 2, 3, 4, 5].map((n) => (
                       <option key={n} value={n}>
@@ -443,42 +445,42 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                 </Field>
               </SectionCard>
 
-              <SectionCard title="Description">
+              <SectionCard title={t("common.description")}>
                 <div className="mb-4">
-                  <Field label="Short Description" hint="(shown on cards)">
+                  <Field label={t("common.shortDescription")} hint={t("common.shownOnCards")}>
                     <input
                       className={inputClass}
                       value={form.short_description}
                       onChange={set("short_description")}
                       maxLength={160}
-                      placeholder="Brief one-liner"
+                      placeholder={t("common.taglinePlaceholder")}
                     />
                   </Field>
                 </div>
-                <Field label="Full Description" required>
+                <Field label={t("common.fullDescription")} required>
                   <textarea
                     rows={5}
                     className={`${inputClass} resize-y`}
                     value={form.description}
                     onChange={set("description")}
-                    placeholder="Describe the property..."
+                    placeholder={t("hotels.descriptionPlaceholder")}
                   />
                 </Field>
               </SectionCard>
 
-              <SectionCard title="Contact & Location">
+              <SectionCard title={t("common.contactLocation")}>
                 <div className="mb-4">
-                  <Field label="Address">
+                  <Field label={t("suppliers.address")}>
                     <input
                       className={inputClass}
                       value={form.address}
                       onChange={set("address")}
-                      placeholder="Full address"
+                      placeholder={t("common.addressPlaceholder")}
                     />
                   </Field>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                  <Field label="Contact Phone">
+                  <Field label={t("common.contactPhone")}>
                     <input
                       className={inputClass}
                       value={form.contact_phone}
@@ -486,7 +488,7 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                       placeholder="+66..."
                     />
                   </Field>
-                  <Field label="Contact Email">
+                  <Field label={t("common.contactEmail")}>
                     <input
                       type="email"
                       className={inputClass}
@@ -497,7 +499,7 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                   </Field>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                  <Field label="Website">
+                  <Field label={t("common.website")}>
                     <input
                       className={inputClass}
                       value={form.website}
@@ -508,7 +510,7 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                   <div />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="Check-in Time">
+                  <Field label={t("hotels.checkInTime")}>
                     <input
                       className={inputClass}
                       value={form.check_in_time}
@@ -516,7 +518,7 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                       placeholder="14:00"
                     />
                   </Field>
-                  <Field label="Check-out Time">
+                  <Field label={t("hotels.checkOutTime")}>
                     <input
                       className={inputClass}
                       value={form.check_out_time}
@@ -535,12 +537,12 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
               {/* Logo and cover sit side by side so the whole media tab fits
                   without much scrolling. */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <SectionCard title="Logo" right="brand mark">
+                <SectionCard title={t("common.logo")} right="brand mark">
                   {form.logo ? (
                     <div className="relative inline-block">
                       <img
                         src={form.logo}
-                        alt="Logo"
+                        alt={t("hotels.logoAlt")}
                         className="h-[140px] w-auto max-w-full object-contain rounded-lg border border-gray-200 bg-white p-2"
                       />
                       <button
@@ -554,10 +556,10 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                   ) : (
                     <label className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center cursor-pointer hover:border-brand-500 hover:bg-brand-50 transition min-h-[140px] flex flex-col items-center justify-center">
                       <p className="text-sm font-medium text-gray-600">
-                        {logoUploading ? "Uploading…" : "Click to upload logo"}
+                        {logoUploading ? t("common.uploading") : t("common.clickUploadLogo")}
                       </p>
                       <small className="text-xs text-gray-400 mt-1">
-                        PNG with transparent background works best
+                        {t("common.logoHint")}
                       </small>
                       <input
                         type="file"
@@ -570,12 +572,12 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                 </SectionCard>
 
                 <div className="sm:col-span-2">
-                  <SectionCard title="Cover Image">
+                  <SectionCard title={t("common.coverImage")}>
                     {form.main_image ? (
                       <div className="relative inline-block">
                         <img
                           src={form.main_image}
-                          alt="Main"
+                          alt={t("hotels.coverAlt")}
                           className="h-[140px] w-auto max-w-full object-cover rounded-lg border border-gray-200"
                         />
                         <button
@@ -589,10 +591,10 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                     ) : (
                       <label className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center cursor-pointer hover:border-brand-500 hover:bg-brand-50 transition min-h-[140px] flex flex-col items-center justify-center">
                         <p className="text-sm font-medium text-gray-600">
-                          {mainUploading ? "Uploading…" : "Click to upload cover image"}
+                          {mainUploading ? t("common.uploading") : t("common.clickUploadCover")}
                         </p>
                         <small className="text-xs text-gray-400 mt-1">
-                          JPEG, PNG, WebP (max 10MB)
+                          {t("common.imageFormatHint")}
                         </small>
                         <input
                           type="file"
@@ -606,20 +608,20 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                 </div>
               </div>
 
-              <SectionCard title="Gallery Images" right={`${gallery.length} images`}>
+              <SectionCard title={t("common.galleryImages")} right={t("common.imageCount", { count: gallery.length })}>
                 {/* Upload row with category */}
                 <div className="flex flex-wrap items-end gap-3 mb-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Category
+                      {t("common.category")}
                     </label>
                     <select
                       className={catSelectClass}
                       value={uploadCategory}
                       onChange={(e) => setUploadCategory(e.target.value)}
                     >
-                      <option value="Uncategorized">Uncategorized</option>
-                      <optgroup label="General">
+                      <option value="Uncategorized">{t("common.uncategorized")}</option>
+                      <optgroup label={t("common.general")}>
                         {categoryOptions.presets.map((c) => (
                           <option key={c} value={c}>
                             {c}
@@ -627,7 +629,7 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                         ))}
                       </optgroup>
                       {categoryOptions.rooms.length > 0 && (
-                        <optgroup label="Room Types">
+                        <optgroup label={t("hotels.roomTypesCategory")}>
                           {categoryOptions.rooms.map((c) => (
                             <option key={c} value={c}>
                               {c}
@@ -636,7 +638,7 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                         </optgroup>
                       )}
                       {categoryOptions.custom.length > 0 && (
-                        <optgroup label="Custom">
+                        <optgroup label={t("common.custom")}>
                           {categoryOptions.custom.map((c) => (
                             <option key={c} value={c}>
                               {c}
@@ -644,7 +646,7 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                           ))}
                         </optgroup>
                       )}
-                      <option value="__custom__">+ New category…</option>
+                      <option value="__custom__">{t("common.newCategory")}</option>
                     </select>
                   </div>
                   {uploadCategory === "__custom__" && (
@@ -652,11 +654,11 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                       className={catSelectClass}
                       value={customCategory}
                       onChange={(e) => setCustomCategory(e.target.value)}
-                      placeholder="New category name"
+                      placeholder={t("common.newCategoryPlaceholder")}
                     />
                   )}
                   <label className="px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-medium cursor-pointer hover:bg-brand-700 transition">
-                    {galleryUploading ? "Uploading…" : "Upload Images"}
+                    {galleryUploading ? t("common.uploading") : t("common.uploadImages")}
                     <input
                       type="file"
                       accept="image/jpeg,image/png,image/webp"
@@ -671,7 +673,7 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                 {selected.size > 0 && (
                   <div className="flex flex-wrap items-center gap-3 mb-4 rounded-lg bg-brand-50 border border-brand-200 px-4 py-2.5">
                     <span className="text-sm font-medium text-brand-700">
-                      {selected.size} selected
+                      {t("common.selectedCount", { count: selected.size })}
                     </span>
                     <select
                       className={`${catSelectClass} !py-1.5 !text-xs`}
@@ -679,7 +681,7 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                       onChange={(e) => {
                         applyCategory(
                           e.target.value === "__custom__"
-                            ? (window.prompt("New category name:") || "").trim()
+                            ? (window.prompt(t("common.newCategoryPlaceholder")) || "").trim()
                             : e.target.value
                         );
                         e.target.value = "";
@@ -688,7 +690,7 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                       <option value="" disabled>
                         Apply category…
                       </option>
-                      <option value="Uncategorized">Uncategorized</option>
+                      <option value="Uncategorized">{t("common.uncategorized")}</option>
                       {categoryOptions.presets.map((c) => (
                         <option key={c} value={c}>
                           {c}
@@ -699,21 +701,21 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                           {c}
                         </option>
                       ))}
-                      <option value="__custom__">+ New category…</option>
+                      <option value="__custom__">{t("common.newCategory")}</option>
                     </select>
                     <button
                       type="button"
                       onClick={() => setSelected(new Set())}
                       className="px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50"
                     >
-                      Deselect
+                      {t("common.deselect")}
                     </button>
                     <button
                       type="button"
                       onClick={deleteSelected}
                       className="ml-auto px-3 py-1.5 text-xs font-medium text-danger-700 border border-danger-200 rounded-lg hover:bg-danger-50"
                     >
-                      Delete Selected
+                      {t("common.deleteSelected")}
                     </button>
                   </div>
                 )}
@@ -721,7 +723,7 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                 {/* Grouped gallery */}
                 {gallery.length === 0 ? (
                   <p className="text-sm text-gray-400 text-center py-6">
-                    No gallery images yet. Upload photos above.
+                    {t("common.emptyGallery")}
                   </p>
                 ) : (
                   <div className="flex flex-col gap-3">
@@ -802,7 +804,7 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
           {/* Rooms */}
           {tab === "rooms" && (
             <SectionCard
-              title="Room Types"
+              title={t("hotels.roomTypes")}
               right={`${rooms.length} room type${rooms.length === 1 ? "" : "s"}`}
             >
               <div className="flex flex-col gap-3">
@@ -810,32 +812,32 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                   <div key={i} className="rounded-lg border border-gray-200 p-4">
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-sm font-semibold text-gray-900">
-                        Room Type {i + 1}
+                        {t("hotels.roomTypeNumber", { number: i + 1 })}
                       </span>
                       <button
                         type="button"
                         onClick={() => removeRoom(i)}
                         className="text-sm text-danger-600 hover:underline"
                       >
-                        Remove
+                        {t("common.remove")}
                       </button>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-                      <Field label="Room Name" required>
+                      <Field label={t("hotels.roomName")} required>
                         <input
                           className={inputClass}
                           value={room.name}
                           onChange={(e) => updateRoom(i, "name", e.target.value)}
-                          placeholder="e.g. Deluxe Ocean View"
+                          placeholder={t("hotels.rateRoomPlaceholder")}
                         />
                       </Field>
-                      <Field label="Bed Type">
+                      <Field label={t("hotels.bedType")}>
                         <select
                           className={inputClass}
                           value={room.bed_type}
                           onChange={(e) => updateRoom(i, "bed_type", e.target.value)}
                         >
-                          <option value="">Select…</option>
+                          <option value="">{t("common.select")}</option>
                           {BED_TYPES.map((b) => (
                             <option key={b} value={b}>
                               {b}
@@ -845,7 +847,7 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                       </Field>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-                      <Field label="Max Guests">
+                      <Field label={t("hotels.maxGuestsLabel")}>
                         <input
                           type="number"
                           min="1"
@@ -854,7 +856,7 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                           onChange={(e) => updateRoom(i, "max_guests", e.target.value)}
                         />
                       </Field>
-                      <Field label="Room Size (sqm)">
+                      <Field label={t("hotels.roomSize")}>
                         <input
                           type="number"
                           min="0"
@@ -867,22 +869,22 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                       </Field>
                     </div>
                     <div className="mb-3">
-                      <Field label="Description">
+                      <Field label={t("common.description")}>
                         <textarea
                           rows={2}
                           className={`${inputClass} resize-y`}
                           value={room.description}
                           onChange={(e) => updateRoom(i, "description", e.target.value)}
-                          placeholder="Describe this room type..."
+                          placeholder={t("hotels.roomDescriptionPlaceholder")}
                         />
                       </Field>
                     </div>
-                    <Field label="Amenities" hint="(comma-separated)">
+                    <Field label={t("hotels.amenities")} hint={t("restaurants.commaSeparated")}>
                       <input
                         className={inputClass}
                         value={room.amenities}
                         onChange={(e) => updateRoom(i, "amenities", e.target.value)}
-                        placeholder="WiFi, TV, Minibar, Balcony"
+                        placeholder={t("hotels.roomAmenitiesPlaceholder")}
                       />
                     </Field>
                   </div>
@@ -893,7 +895,7 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                 onClick={addRoom}
                 className="mt-3 w-full px-4 py-3 border-2 border-dashed border-gray-200 rounded-lg text-sm text-gray-500 hover:border-brand-500 hover:text-brand-600 transition"
               >
-                + Add Room Type
+                  {t("hotels.addRoomType")}
               </button>
             </SectionCard>
           )}
@@ -901,9 +903,9 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
           {/* Settings */}
           {tab === "settings" && (
             <div>
-              <SectionCard title="Ratings">
+              <SectionCard title={t("common.ratings")}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="Rating (0-5)">
+                  <Field label={t("common.ratings")}>
                     <input
                       type="number"
                       min="0"
@@ -914,7 +916,7 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                       onChange={set("rating")}
                     />
                   </Field>
-                  <Field label="Review Count">
+                  <Field label={t("common.ratings")}>
                     <input
                       type="number"
                       min="0"
@@ -925,8 +927,8 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                   </Field>
                 </div>
               </SectionCard>
-              <SectionCard title="Hotel Amenities">
-                <Field label="Amenities" hint="(one per line)">
+              <SectionCard title={t("hotels.amenities")}>
+                <Field label={t("hotels.amenities")}>
                   <textarea
                     rows={5}
                     className={`${inputClass} resize-y`}
@@ -936,7 +938,7 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                   />
                 </Field>
               </SectionCard>
-              <SectionCard title="Visibility">
+              <SectionCard title={t("common.visibility")}>
                 <label className="flex items-center gap-3 mb-4 cursor-pointer">
                   <input
                     type="checkbox"
@@ -945,8 +947,8 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                     className="w-4 h-4 accent-brand-600"
                   />
                   <div>
-                    <span className="text-sm font-medium text-gray-700">Featured Hotel</span>
-                    <p className="text-xs text-gray-400">Highlighted in the hotel list</p>
+                    <span className="text-sm font-medium text-gray-700">{t("hotels.featured")}</span>
+                    <p className="text-xs text-gray-400">{t("hotels.featuredHint")}</p>
                   </div>
                 </label>
                 <label className="flex items-center gap-3 cursor-pointer">
@@ -957,8 +959,8 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
                     className="w-4 h-4 accent-brand-600"
                   />
                   <div>
-                    <span className="text-sm font-medium text-gray-700">Active</span>
-                    <p className="text-xs text-gray-400">Visible to users</p>
+                    <span className="text-sm font-medium text-gray-700">{t("common.active")}</span>
+                    <p className="text-xs text-gray-400">{t("common.visibleToUsers")}</p>
                   </div>
                 </label>
               </SectionCard>
@@ -975,7 +977,7 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
               onClick={onClose}
               className="px-5 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
             <button
               type="submit"
@@ -983,7 +985,7 @@ const HotelFormModal = ({ hotel, destinations, onClose, onSaved }) => {
               disabled={saving}
               className="px-6 py-2 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {saving ? "Saving…" : "Save Hotel"}
+              {saving ? t("common.saving") : t("hotels.saveHotel")}
             </button>
           </div>
         </div>

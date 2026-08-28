@@ -45,6 +45,7 @@ import {
   Star,
   EyeOff,
 } from "lucide-react";
+import { useI18n } from "../../i18n";
 
 // Collapsible section (module scope so its open/closed state persists across re-renders)
 const AccordionSection = ({
@@ -90,6 +91,7 @@ const TourDetails = ({
   showHeader = true,
   className = "",
 }) => {
+  const { t } = useI18n();
   const [selectedImage, setSelectedImage] = useState(null);
   const [activeFileTab, setActiveFileTab] = useState("all");
   const { filesByCategory, loading: filesLoading } = useTourFiles(tour?.id);
@@ -322,7 +324,7 @@ const TourDetails = ({
                 className="truncate text-xl font-semibold text-gray-900"
                 title={tour.tour_name}
               >
-                {tour.tour_name || "Tour Details"}
+                {tour.tour_name || t("tour.details")}
               </h2>
 
               <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -372,7 +374,7 @@ const TourDetails = ({
                 {isExpired && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-danger-50 px-3 py-1 text-xs font-medium text-danger-700 ring-1 ring-inset ring-danger-200">
                     <AlertTriangle className="h-3 w-3" />
-                    Expired
+                    {t("common.expired")}
                   </span>
                 )}
               </div>
@@ -385,7 +387,7 @@ const TourDetails = ({
                   <button
                     onClick={() => onShare(tour)}
                     className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 active:scale-[.98]"
-                    title="Open share page"
+                    title={t("tour.action.openShare")}
                   >
                     <Share2 className="h-4 w-4" />
                     Share
@@ -413,19 +415,19 @@ const TourDetails = ({
         <AccordionSection
           icon={Banknote}
           iconClass="text-success-600"
-          title="Net Price (THB)"
+          title={t("tour.section.netPrice")}
           defaultOpen
         >
           <div className="space-y-3 p-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="rounded-lg bg-gray-50 p-4 ring-1 ring-gray-200">
-                <div className="text-xs text-gray-500">Adult</div>
+                <div className="text-xs text-gray-500">{t("tour.adult")}</div>
                 <div className="mt-1 text-2xl font-bold text-success-600">
                   THB {formatPrice(tour.adult_price)}
                 </div>
               </div>
               <div className="rounded-lg bg-gray-50 p-4 ring-1 ring-gray-200">
-                <div className="text-xs text-gray-500">Child</div>
+                <div className="text-xs text-gray-500">{t("tour.child")}</div>
                 <div className="mt-1 text-2xl font-bold text-success-600">
                   THB {formatPrice(tour.child_price)}
                 </div>
@@ -433,13 +435,13 @@ const TourDetails = ({
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
-                <span className="text-xs font-medium text-gray-500">From</span>
+                <span className="text-xs font-medium text-gray-500">{t("tour.from")}</span>
                 <span className="text-sm text-gray-900">
                   {formatDate(tour.start_date)}
                 </span>
               </div>
               <div className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
-                <span className="text-xs font-medium text-gray-500">Until</span>
+                <span className="text-xs font-medium text-gray-500">{t("tour.until")}</span>
                 <span
                   className={`text-sm ${
                     isExpired ? "font-medium text-danger-600" : "text-gray-900"
@@ -472,24 +474,24 @@ const TourDetails = ({
             {hasPriceDetail && (
               <dl className="divide-y divide-gray-100 rounded-lg ring-1 ring-gray-200">
                 {!!detail.priceMode && (
-                  <Row label="Charged">{detail.priceMode}</Row>
+                  <Row label={t("tour.field.priceMode")}>{detail.priceMode}</Row>
                 )}
                 {!!detail.childAge && (
-                  <Row label="Child age">{detail.childAge}</Row>
+                  <Row label={t("tour.field.childAge")}>{detail.childAge}</Row>
                 )}
                 {(!!detail.infantAge || !!detail.infantPrice) && (
-                  <Row label="Infant">
+                  <Row label={t("tour.field.infantPrice")}>
                     {[detail.infantAge, detail.infantPrice]
                       .filter(Boolean)
                       .join(" · ")}
                   </Row>
                 )}
                 {!!detail.singleSupplement && (
-                  <Row label="Single supplement">
+                  <Row label={t("tour.field.singleSupplement")}>
                     {detail.singleSupplement}
                   </Row>
                 )}
-                {!!detail.paxRange && <Row label="Pax">{detail.paxRange}</Row>}
+                {!!detail.paxRange && <Row label={t("tour.field.capacity")}>{detail.paxRange}</Row>}
               </dl>
             )}
           </div>
@@ -499,19 +501,19 @@ const TourDetails = ({
         <AccordionSection
           icon={Info}
           iconClass="text-brand-600"
-          title="Tour Information"
+          title={t("tour.section.information")}
           defaultOpen
         >
           <dl className="divide-y divide-gray-100">
-            <Row label="Tour name">{tour.tour_name}</Row>
+            <Row label={t("tour.field.name")}>{tour.tour_name}</Row>
             {!!tour.tour_type && (
-              <Row label="Tour type">{getTourTypeLabel(tour.tour_type)}</Row>
+              <Row label={t("tour.field.tourType")}>{getTourTypeLabel(tour.tour_type)}</Row>
             )}
-            <Row label="Departure from">{tour.departure_from}</Row>
+            <Row label={t("tour.field.departureFrom")}>{tour.departure_from}</Row>
             {!!tour.destination && (
-              <Row label="Destination">{tour.destination}</Row>
+              <Row label={t("tour.field.destination")}>{tour.destination}</Row>
             )}
-            <Row label="Pier">{tour.pier}</Row>
+            <Row label={t("tour.field.pier")}>{tour.pier}</Row>
           </dl>
           {tour.map_url && (
             <div className="border-t border-gray-100 p-4">
@@ -529,26 +531,26 @@ const TourDetails = ({
           <AccordionSection
             icon={Clock}
             iconClass="text-brand-600"
-            title="Duration & schedule"
+            title={t("tour.section.duration")}
             defaultOpen
           >
             <dl className="divide-y divide-gray-100">
               {!!detail.durationType && (
-                <Row label="Duration">{detail.durationType}</Row>
+                <Row label={t("tour.field.duration")}>{detail.durationType}</Row>
               )}
-              {!!detail.hours && <Row label="Hours">{detail.hours}</Row>}
-              {!!detail.tourTime && <Row label="Time">{detail.tourTime}</Row>}
+              {!!detail.hours && <Row label={t("tour.field.hours")}>{detail.hours}</Row>}
+              {!!detail.tourTime && <Row label={t("tour.schedule")}>{detail.tourTime}</Row>}
               {!!detail.timeNote && (
-                <Row label="Timing note">{detail.timeNote}</Row>
+                <Row label={t("tour.field.timingNote")}>{detail.timeNote}</Row>
               )}
               {!!detail.operatingDays && (
-                <Row label="Operating days">{detail.operatingDays}</Row>
+                <Row label={t("tour.field.operatingDays")}>{detail.operatingDays}</Row>
               )}
               {!!detail.leadHours && (
-                <Row label="Book ahead">{detail.leadHours}</Row>
+                <Row label={t("tour.field.bookAhead")}>{detail.leadHours}</Row>
               )}
               {!!detail.verifiedAt && (
-                <Row label="Rate confirmed">{detail.verifiedAt}</Row>
+                <Row label={t("tour.field.rateConfirmed")}>{detail.verifiedAt}</Row>
               )}
             </dl>
           </AccordionSection>
@@ -559,19 +561,19 @@ const TourDetails = ({
           <AccordionSection
             icon={UtensilsCrossed}
             iconClass="text-warning-600"
-            title="Meals"
+            title={t("tour.section.meals")}
           >
             <dl className="divide-y divide-gray-100">
-              {!!detail.meals && <Row label="Included">{detail.meals}</Row>}
+              {!!detail.meals && <Row label={t("tour.field.included")}>{detail.meals}</Row>}
               {!!detail.mealStyle && (
-                <Row label="Served as">{detail.mealStyle}</Row>
+                <Row label={t("tour.field.mealStyle")}>{detail.mealStyle}</Row>
               )}
-              {!!detail.mealVenue && <Row label="Where">{detail.mealVenue}</Row>}
-              {!!detail.halal && <Row label="Halal">{detail.halal}</Row>}
+              {!!detail.mealVenue && <Row label={t("tour.field.mealVenue")}>{detail.mealVenue}</Row>}
+              {!!detail.halal && <Row label={t("tour.field.halal")}>{detail.halal}</Row>}
               {!!detail.vegetarian && (
-                <Row label="Vegetarian">{detail.vegetarian}</Row>
+                <Row label={t("tour.field.vegetarian")}>{detail.vegetarian}</Row>
               )}
-              {!!detail.mealNote && <Row label="Note">{detail.mealNote}</Row>}
+              {!!detail.mealNote && <Row label={t("common.note")}>{detail.mealNote}</Row>}
             </dl>
           </AccordionSection>
         )}
@@ -581,20 +583,20 @@ const TourDetails = ({
           <AccordionSection
             icon={Ship}
             iconClass="text-brand-600"
-            title="Boat / vehicle & guide"
+            title={t("tour.section.transport")}
           >
             <dl className="divide-y divide-gray-100">
-              {!!detail.vesselType && <Row label="Type">{detail.vesselType}</Row>}
-              {!!detail.vesselName && <Row label="Name">{detail.vesselName}</Row>}
+              {!!detail.vesselType && <Row label={t("tour.field.type")}>{detail.vesselType}</Row>}
+              {!!detail.vesselName && <Row label={t("common.name")}>{detail.vesselName}</Row>}
               {!!detail.vesselCapacity && (
-                <Row label="Capacity">{detail.vesselCapacity}</Row>
+                <Row label={t("tour.field.capacity")}>{detail.vesselCapacity}</Row>
               )}
               {!!detail.vesselDetail && (
-                <Row label="Detail">{detail.vesselDetail}</Row>
+                <Row label={t("tour.field.detail")}>{detail.vesselDetail}</Row>
               )}
-              {!!detail.guide && <Row label="Guide">{detail.guide}</Row>}
+              {!!detail.guide && <Row label={t("tour.field.guide")}>{detail.guide}</Row>}
               {!!detail.guideLanguages && (
-                <Row label="Languages">{detail.guideLanguages}</Row>
+                <Row label={t("tour.field.guideLanguages")}>{detail.guideLanguages}</Row>
               )}
             </dl>
           </AccordionSection>
@@ -605,20 +607,20 @@ const TourDetails = ({
           <AccordionSection
             icon={BusFront}
             iconClass="text-brand-600"
-            title="Pickup & transfer"
+            title={t("tour.section.pickup")}
           >
             <dl className="divide-y divide-gray-100">
               {!!detail.transferIncluded && (
-                <Row label="Hotel transfer">{detail.transferIncluded}</Row>
+                <Row label={t("tour.field.hotelTransfer")}>{detail.transferIncluded}</Row>
               )}
               {!!detail.transferType && (
-                <Row label="Transfer type">{detail.transferType}</Row>
+                <Row label={t("tour.field.transferType")}>{detail.transferType}</Row>
               )}
               {!!detail.pickupWindow && (
-                <Row label="Pickup window">{detail.pickupWindow}</Row>
+                <Row label={t("tour.section.pickup")}>{detail.pickupWindow}</Row>
               )}
               {!!detail.meetingPoint && (
-                <Row label="Meeting point">{detail.meetingPoint}</Row>
+                <Row label={t("tour.field.meetingPoint")}>{detail.meetingPoint}</Row>
               )}
             </dl>
           </AccordionSection>
@@ -628,7 +630,7 @@ const TourDetails = ({
         <AccordionSection
           icon={Phone}
           iconClass="text-brand-600"
-          title="Contact & Supplier"
+          title={t("tour.section.contact")}
         >
           <dl className="divide-y divide-gray-100">
             {renderPhoneNumbers()}
@@ -679,8 +681,8 @@ const TourDetails = ({
             )}
             {hasSupplier && (
               <>
-                <Row label="Supplier">{tour.supplier_name}</Row>
-                {tour.address && <Row label="Address">{tour.address}</Row>}
+                <Row label={t("tour.field.supplier")}>{tour.supplier_name}</Row>
+                {tour.address && <Row label={t("suppliers.address")}>{tour.address}</Row>}
               </>
             )}
             {!hasContact && !hasSupplier && (
@@ -695,14 +697,14 @@ const TourDetails = ({
         {filesLoading ? (
           <div className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 py-4">
             <Loader2 className="h-5 w-5 animate-spin text-brand-600" />
-            <p className="text-sm text-gray-500">Loading files...</p>
+            <p className="text-sm text-gray-500">{t("tour.loadingFiles")}</p>
           </div>
         ) : (
           totalFiles > 0 && (
             <AccordionSection
               icon={Paperclip}
               iconClass="text-warning-600"
-              title="Files & Gallery"
+              title={t("tour.section.files")}
               badge={totalFiles}
             >
               {/* Category tabs — keeps the panel short instead of stacking
@@ -710,7 +712,7 @@ const TourDetails = ({
               {fileCategories.length > 1 && (
                 <div
                   role="tablist"
-                  aria-label="File categories"
+                  aria-label={t("common.fileCategories")}
                   className="flex items-center gap-2 overflow-x-auto border-b border-gray-100 px-4 py-3"
                 >
                   <button
@@ -766,8 +768,10 @@ const TourDetails = ({
                       {effectiveFileTab === "all" && (
                         <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900">
                           <CategoryIcon className="h-4 w-4 text-gray-400" />
-                          {categoryInfo.label} ({files.length}{" "}
-                          {isImageGroup ? "images" : "files"})
+                          {t(`file.category.${key}`)} ({" "}
+                          {isImageGroup
+                            ? t("common.imageCount", { count: files.length })
+                            : t("document.fileCount", { count: files.length })})
                         </h4>
                       )}
 
@@ -826,7 +830,7 @@ const TourDetails = ({
           {isExpired && (
             <p className="mt-2 flex items-center gap-1.5 text-sm font-medium text-danger-600">
               <AlertTriangle className="h-4 w-4" />
-              Expired, please renew
+              {t("tour.expiredRenew")}
             </p>
           )}
         </div>
@@ -847,7 +851,7 @@ const TourDetails = ({
           <div className="relative h-auto max-h-[90vh] w-auto max-w-4xl">
             <img
               src={selectedImage}
-              alt="Enlarged view"
+              alt={t("common.enlargedView")}
               className="max-h-[90vh] max-w-full rounded-lg object-contain shadow-xl"
               onClick={(e) => e.stopPropagation()}
             />

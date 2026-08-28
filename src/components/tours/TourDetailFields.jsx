@@ -20,6 +20,7 @@ import {
   toggleInArray,
   sortDays,
 } from "../../utils/tour-details";
+import { useI18n } from "../../i18n";
 
 // The detail fields shared by the add form (TourMultiForm) and the edit form.
 // Both screens render the same sections in the same order, so a tour looks the
@@ -40,8 +41,9 @@ const hintClass = "font-normal text-gray-400";
 
 // Multi-select rendered as toggle chips - faster to fill in than a list of
 // checkboxes and it shows the whole set at a glance.
-const ChipGroup = ({ options, selected, onToggle, columns = false }) => (
-  <div className={`flex flex-wrap gap-1.5 ${columns ? "" : "items-center"}`}>
+const ChipGroup = ({ options, selected, onToggle, columns = false }) => {
+  const { t } = useI18n();
+  return <div className={`flex flex-wrap gap-1.5 ${columns ? "" : "items-center"}`}>
     {options.map((opt) => {
       const active = selected.includes(opt.value);
       return (
@@ -56,28 +58,32 @@ const ChipGroup = ({ options, selected, onToggle, columns = false }) => (
               : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
           }`}
         >
-          {opt.label}
+          {t(`tour.option.${opt.value}`)}
         </button>
       );
     })}
-  </div>
-);
+  </div>;
+};
 
 // Yes / No / not recorded. A blank is meaningful: it means nobody has answered
 // this yet, and the detail view hides the row rather than showing "No".
-const TriState = ({ value, onChange, yes = "Yes", no = "No" }) => (
+const TriState = ({ value, onChange, yes, no }) => {
+  const { t } = useI18n();
+  return (
   <select
     value={value === null || value === undefined ? "" : String(value)}
     onChange={(e) => onChange(e.target.value)}
     className={inputClass}
   >
-    <option value="">Not recorded</option>
-    <option value="1">{yes}</option>
-    <option value="0">{no}</option>
+    <option value="">{t("tour.notRecorded")}</option>
+    <option value="1">{yes || t("tour.option.yes")}</option>
+    <option value="0">{no || t("tour.option.no")}</option>
   </select>
-);
+  );
+};
 
 const TourDetailFields = ({ values, onChange, className = "" }) => {
+  const { t } = useI18n();
   const v = values || {};
   const meals = toArray(v.meals_included);
   const languages = toArray(v.guide_languages);
@@ -91,20 +97,20 @@ const TourDetailFields = ({ values, onChange, className = "" }) => {
       {/* Duration */}
       <section>
         <h5 className={`${sectionHead} text-brand-600`}>
-          <Clock className="w-3.5 h-3.5" /> Duration &amp; times
+          <Clock className="w-3.5 h-3.5" /> {t("tour.section.duration")}
         </h5>
         <div className={`${sectionCard} border-l-brand-500 md:grid-cols-2`}>
           <div>
-            <label className={labelClass}>Duration</label>
+            <label className={labelClass}>{t("tour.field.duration")}</label>
             <select
               value={v.duration_type || ""}
               onChange={set("duration_type")}
               className={inputClass}
             >
-              <option value="">Not specified</option>
+              <option value="">{t("tour.notSpecified")}</option>
               {DURATION_TYPES.map((d) => (
                 <option key={d.value} value={d.value}>
-                  {d.label}
+                  {t(`tour.option.${d.value}`)}
                 </option>
               ))}
             </select>
@@ -112,7 +118,7 @@ const TourDetailFields = ({ values, onChange, className = "" }) => {
 
           <div>
             <label className={labelClass}>
-              Hours <span className={hintClass}>— total, e.g. 8.5</span>
+              {t("tour.field.hours")}
             </label>
             <input
               type="number"
@@ -126,7 +132,7 @@ const TourDetailFields = ({ values, onChange, className = "" }) => {
           </div>
 
           <div>
-            <label className={labelClass}>Start time</label>
+            <label className={labelClass}>{t("tour.field.startTime")}</label>
             <input
               type="time"
               value={(v.start_time || "").slice(0, 5)}
@@ -136,7 +142,7 @@ const TourDetailFields = ({ values, onChange, className = "" }) => {
           </div>
 
           <div>
-            <label className={labelClass}>End time</label>
+            <label className={labelClass}>{t("tour.field.endTime")}</label>
             <input
               type="time"
               value={(v.end_time || "").slice(0, 5)}
@@ -147,14 +153,13 @@ const TourDetailFields = ({ values, onChange, className = "" }) => {
 
           <div className="md:col-span-2">
             <label className={labelClass}>
-              Timing note{" "}
-              <span className={hintClass}>— when the times are not fixed</span>
+              {t("tour.field.timingNote")}
             </label>
             <input
               type="text"
               value={v.time_note || ""}
               onChange={set("time_note")}
-              placeholder="Lazy trip departs 10:30"
+              placeholder={t("tour.placeholder.timingNote")}
               className={inputClass}
             />
           </div>
@@ -164,27 +169,26 @@ const TourDetailFields = ({ values, onChange, className = "" }) => {
       {/* Pricing detail */}
       <section>
         <h5 className={`${sectionHead} text-success-600`}>
-          <Users className="w-3.5 h-3.5" /> Pricing detail
+          <Users className="w-3.5 h-3.5" /> {t("tour.section.pricing")}
         </h5>
         <div className={`${sectionCard} border-l-success-500 md:grid-cols-3`}>
           <div className="md:col-span-3">
-            <label className={labelClass}>How the price is charged</label>
+            <label className={labelClass}>{t("tour.field.priceMode")}</label>
             <select
               value={v.price_mode || ""}
               onChange={set("price_mode")}
               className={inputClass}
             >
-              <option value="">Not specified</option>
+              <option value="">{t("tour.notSpecified")}</option>
               {PRICE_MODES.map((p) => (
                 <option key={p.value} value={p.value}>
-                  {p.label}
+                  {t(`tour.option.${p.value}`)}
                 </option>
               ))}
             </select>
             {!perPerson && (
               <p className="mt-1 text-xs text-gray-500">
-                The adult / child boxes above hold the whole-group price for this
-                mode.
+                {t("tour.priceGroupHint")}
               </p>
             )}
           </div>
@@ -193,7 +197,7 @@ const TourDetailFields = ({ values, onChange, className = "" }) => {
             <>
               <div>
                 <label className={labelClass}>
-                  Child age <span className={hintClass}>— from</span>
+                  {t("tour.field.childAgeFrom")}
                 </label>
                 <input
                   type="number"
@@ -208,7 +212,7 @@ const TourDetailFields = ({ values, onChange, className = "" }) => {
 
               <div>
                 <label className={labelClass}>
-                  Child age <span className={hintClass}>— to</span>
+                  {t("tour.field.childAgeTo")}
                 </label>
                 <input
                   type="number"
@@ -223,7 +227,7 @@ const TourDetailFields = ({ values, onChange, className = "" }) => {
 
               <div>
                 <label className={labelClass}>
-                  Infant up to <span className={hintClass}>— age</span>
+                  {t("tour.field.infantAge")}
                 </label>
                 <input
                   type="number"
@@ -238,7 +242,7 @@ const TourDetailFields = ({ values, onChange, className = "" }) => {
 
               <div>
                 <label className={labelClass}>
-                  Infant net price <span className={hintClass}>฿</span>
+                  {t("tour.field.infantPrice")} <span className={hintClass}>฿</span>
                 </label>
                 <input
                   type="number"
@@ -254,7 +258,7 @@ const TourDetailFields = ({ values, onChange, className = "" }) => {
 
           <div>
             <label className={labelClass}>
-              Single supplement <span className={hintClass}>฿</span>
+              {t("tour.field.singleSupplement")} <span className={hintClass}>฿</span>
             </label>
             <input
               type="number"
@@ -268,7 +272,7 @@ const TourDetailFields = ({ values, onChange, className = "" }) => {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelClass}>Min pax</label>
+              <label className={labelClass}>{t("tour.field.minPax")}</label>
               <input
                 type="number"
                 min="0"
@@ -279,7 +283,7 @@ const TourDetailFields = ({ values, onChange, className = "" }) => {
               />
             </div>
             <div>
-              <label className={labelClass}>Max pax</label>
+              <label className={labelClass}>{t("tour.field.maxPax")}</label>
               <input
                 type="number"
                 min="0"
@@ -296,12 +300,12 @@ const TourDetailFields = ({ values, onChange, className = "" }) => {
       {/* Meals */}
       <section>
         <h5 className={`${sectionHead} text-warning-600`}>
-          <UtensilsCrossed className="w-3.5 h-3.5" /> Meals
+          <UtensilsCrossed className="w-3.5 h-3.5" /> {t("tour.section.meals")}
         </h5>
         <div className={`${sectionCard} border-l-warning-500 md:grid-cols-2`}>
           <div className="md:col-span-2">
             <label className={labelClass}>
-              Included <span className={hintClass}>— tap what the price covers</span>
+              {t("tour.field.included")}
             </label>
             <ChipGroup
               options={MEALS}
@@ -313,59 +317,59 @@ const TourDetailFields = ({ values, onChange, className = "" }) => {
           </div>
 
           <div>
-            <label className={labelClass}>Served as</label>
+            <label className={labelClass}>{t("tour.field.mealStyle")}</label>
             <select
               value={v.meal_style || ""}
               onChange={set("meal_style")}
               className={inputClass}
             >
-              <option value="">Not specified</option>
+              <option value="">{t("tour.notSpecified")}</option>
               {MEAL_STYLES.map((m) => (
                 <option key={m.value} value={m.value}>
-                  {m.label}
+                  {t(`tour.option.${m.value}`)}
                 </option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className={labelClass}>Eaten where</label>
+            <label className={labelClass}>{t("tour.field.mealVenue")}</label>
             <input
               type="text"
               value={v.meal_venue || ""}
               onChange={set("meal_venue")}
-              placeholder="Buffet on Phi Phi island"
+              placeholder={t("tour.placeholder.mealVenue")}
               className={inputClass}
             />
           </div>
 
           <div>
-            <label className={labelClass}>Halal</label>
+            <label className={labelClass}>{t("tour.field.halal")}</label>
             <TriState
               value={v.halal_available}
               onChange={(val) => onChange("halal_available", val)}
-              yes="Available"
-              no="Not available"
+              yes={t("tour.option.available")}
+              no={t("tour.option.notAvailable")}
             />
           </div>
 
           <div>
-            <label className={labelClass}>Vegetarian</label>
+            <label className={labelClass}>{t("tour.field.vegetarian")}</label>
             <TriState
               value={v.vegetarian_available}
               onChange={(val) => onChange("vegetarian_available", val)}
-              yes="Available"
-              no="Not available"
+              yes={t("tour.option.available")}
+              no={t("tour.option.notAvailable")}
             />
           </div>
 
           <div className="md:col-span-2">
-            <label className={labelClass}>Meal note</label>
+            <label className={labelClass}>{t("tour.field.mealNote")}</label>
             <input
               type="text"
               value={v.meal_note || ""}
               onChange={set("meal_note")}
-              placeholder="Order one day ahead"
+              placeholder={t("tour.placeholder.mealNote")}
               className={inputClass}
             />
           </div>
@@ -375,20 +379,20 @@ const TourDetailFields = ({ values, onChange, className = "" }) => {
       {/* Vessel */}
       <section>
         <h5 className={`${sectionHead} text-brand-600`}>
-          <Ship className="w-3.5 h-3.5" /> Boat / vehicle &amp; guide
+          <Ship className="w-3.5 h-3.5" /> {t("tour.section.transport")}
         </h5>
         <div className={`${sectionCard} border-l-brand-500 md:grid-cols-2`}>
           <div>
-            <label className={labelClass}>Type</label>
+            <label className={labelClass}>{t("tour.field.type")}</label>
             <select
               value={v.vessel_type || ""}
               onChange={set("vessel_type")}
               className={inputClass}
             >
-              <option value="">Not specified</option>
-              {VESSEL_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
+              <option value="">{t("tour.notSpecified")}</option>
+              {VESSEL_TYPES.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {t(`tour.option.${option.value}`)}
                 </option>
               ))}
             </select>
@@ -396,19 +400,19 @@ const TourDetailFields = ({ values, onChange, className = "" }) => {
 
           <div>
             <label className={labelClass}>
-              Name <span className={hintClass}>— of the actual boat</span>
+              {t("tour.field.nameActual")}
             </label>
             <input
               type="text"
               value={v.vessel_name || ""}
               onChange={set("vessel_name")}
-              placeholder="MV KOON1"
+              placeholder={t("tour.placeholder.vesselName")}
               className={inputClass}
             />
           </div>
 
           <div>
-            <label className={labelClass}>Capacity (pax)</label>
+            <label className={labelClass}>{t("tour.field.capacity")}</label>
             <input
               type="number"
               min="0"
@@ -420,7 +424,7 @@ const TourDetailFields = ({ values, onChange, className = "" }) => {
           </div>
 
           <div>
-            <label className={labelClass}>Detail</label>
+            <label className={labelClass}>{t("tour.field.detail")}</label>
             <input
               type="text"
               value={v.vessel_detail || ""}
@@ -431,17 +435,17 @@ const TourDetailFields = ({ values, onChange, className = "" }) => {
           </div>
 
           <div>
-            <label className={labelClass}>Guide</label>
+            <label className={labelClass}>{t("tour.field.guide")}</label>
             <TriState
               value={v.guide_included}
               onChange={(val) => onChange("guide_included", val)}
-              yes="Guide included"
-              no="Staff only"
+              yes={t("tour.option.guideIncluded")}
+              no={t("tour.option.staffOnly")}
             />
           </div>
 
           <div>
-            <label className={labelClass}>Guide languages</label>
+            <label className={labelClass}>{t("tour.field.guideLanguages")}</label>
             <ChipGroup
               options={GUIDE_LANGUAGES}
               selected={languages}
@@ -456,30 +460,30 @@ const TourDetailFields = ({ values, onChange, className = "" }) => {
       {/* Pickup */}
       <section>
         <h5 className={`${sectionHead} text-brand-600`}>
-          <BusFront className="w-3.5 h-3.5" /> Pickup &amp; transfer
+          <BusFront className="w-3.5 h-3.5" /> {t("tour.section.pickup")}
         </h5>
         <div className={`${sectionCard} border-l-brand-500 md:grid-cols-2`}>
           <div>
-            <label className={labelClass}>Hotel transfer</label>
+            <label className={labelClass}>{t("tour.field.hotelTransfer")}</label>
             <TriState
               value={v.transfer_included}
               onChange={(val) => onChange("transfer_included", val)}
-              yes="Included"
-              no="Not included"
+              yes={t("tour.option.included")}
+              no={t("tour.option.notIncluded")}
             />
           </div>
 
           <div>
-            <label className={labelClass}>Transfer type</label>
+            <label className={labelClass}>{t("tour.field.transferType")}</label>
             <select
               value={v.transfer_type || ""}
               onChange={set("transfer_type")}
               className={inputClass}
             >
-              <option value="">Not specified</option>
-              {TRANSFER_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
+              <option value="">{t("tour.notSpecified")}</option>
+              {TRANSFER_TYPES.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {t(`tour.option.${option.value}`)}
                 </option>
               ))}
             </select>
@@ -487,7 +491,7 @@ const TourDetailFields = ({ values, onChange, className = "" }) => {
 
           <div>
             <label className={labelClass}>
-              Pickup from <span className={hintClass}>— standard zone</span>
+              {t("tour.field.pickupFrom")}
             </label>
             <input
               type="time"
@@ -498,7 +502,7 @@ const TourDetailFields = ({ values, onChange, className = "" }) => {
           </div>
 
           <div>
-            <label className={labelClass}>Pickup until</label>
+            <label className={labelClass}>{t("tour.field.pickupUntil")}</label>
             <input
               type="time"
               value={(v.pickup_time_to || "").slice(0, 5)}
@@ -509,13 +513,13 @@ const TourDetailFields = ({ values, onChange, className = "" }) => {
 
           <div className="md:col-span-2">
             <label className={labelClass}>
-              Meeting point <span className={hintClass}>— when there is no pickup</span>
+              {t("tour.field.meetingPoint")}
             </label>
             <input
               type="text"
               value={v.meeting_point || ""}
               onChange={set("meeting_point")}
-              placeholder="Nopparat Thara Pier, ticket office"
+              placeholder={t("tour.placeholder.meetingPoint")}
               className={inputClass}
             />
           </div>
@@ -525,13 +529,13 @@ const TourDetailFields = ({ values, onChange, className = "" }) => {
       {/* Availability */}
       <section>
         <h5 className={`${sectionHead} text-success-600`}>
-          <CalendarCheck className="w-3.5 h-3.5" /> Availability
+          <CalendarCheck className="w-3.5 h-3.5" /> {t("tour.section.availability")}
         </h5>
         <div className={`${sectionCard} border-l-success-500 md:grid-cols-2`}>
           <div className="md:col-span-2">
             <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
               <label className="block text-sm font-medium text-gray-700">
-                Operating days
+                {t("tour.field.operatingDays")}
               </label>
               <div className="flex items-center gap-3 text-xs">
                 <button
@@ -544,14 +548,14 @@ const TourDetailFields = ({ values, onChange, className = "" }) => {
                   }
                   className="text-brand-600 hover:underline"
                 >
-                  Every day
+                  {t("tour.option.everyDay")}
                 </button>
                 <button
                   type="button"
                   onClick={() => onChange("operating_days", [])}
                   className="text-gray-500 hover:underline"
                 >
-                  Clear
+                  {t("tour.clear")}
                 </button>
               </div>
             </div>
@@ -566,7 +570,7 @@ const TourDetailFields = ({ values, onChange, className = "" }) => {
 
           <div>
             <label className={labelClass}>
-              Book ahead <span className={hintClass}>— hours</span>
+              {t("tour.field.bookAhead")}
             </label>
             <input
               type="number"
@@ -580,8 +584,7 @@ const TourDetailFields = ({ values, onChange, className = "" }) => {
 
           <div>
             <label className={labelClass}>
-              Rate confirmed on{" "}
-              <span className={hintClass}>— with the supplier</span>
+              {t("tour.field.rateConfirmed")}
             </label>
             <input
               type="date"
@@ -600,7 +603,7 @@ const TourDetailFields = ({ values, onChange, className = "" }) => {
                 className="rounded border-gray-300 text-success-600 focus:ring-success-500"
               />
               <span className="ml-2 text-sm text-gray-700">
-                Active — still being sold
+                {t("tour.field.activeSelling")}
               </span>
             </label>
 
@@ -618,7 +621,7 @@ const TourDetailFields = ({ values, onChange, className = "" }) => {
                 className="rounded border-gray-300 text-warning-600 focus:ring-warning-500"
               />
               <span className="ml-2 text-sm text-gray-700">
-                Frequently used — pin to the top of the list
+                {t("tour.field.frequent")}
               </span>
             </label>
           </div>

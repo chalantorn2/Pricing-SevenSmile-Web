@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Images } from "lucide-react";
+import { useI18n } from "../../i18n";
 
-const FileGallery = ({ files, getFileUrl, title = "Images" }) => {
+const FileGallery = ({ files, getFileUrl, title }) => {
+  const { t } = useI18n();
   const [selectedImage, setSelectedImage] = useState(null);
 
   if (!files || files.length === 0) return null;
@@ -19,7 +21,7 @@ const FileGallery = ({ files, getFileUrl, title = "Images" }) => {
       <div className="file-gallery-section">
         <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
           <Images className="mr-2 w-4 h-4 text-gray-400" />
-          {title} ({files.length} images)
+          {title || t("common.galleryImages")} ({t("common.imageCount", { count: files.length })})
         </h3>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -49,6 +51,7 @@ const FileGallery = ({ files, getFileUrl, title = "Images" }) => {
           <div className="relative max-w-4xl max-h-[90vh] p-4">
             <button
               onClick={handleCloseModal}
+              aria-label={t("common.close")}
               className="absolute top-2 right-2 z-10 w-8 h-8 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70 transition-colors"
             >
               <svg

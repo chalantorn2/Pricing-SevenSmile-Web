@@ -7,8 +7,10 @@ import {
   Sparkles,
   Target,
 } from "lucide-react";
+import { useI18n } from "../../i18n";
 
 const SupplierFilters = ({ onFilterChange, suppliers, tours }) => {
+  const { t } = useI18n();
   const [isOpen, setIsOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState([]);
 
@@ -29,7 +31,7 @@ const SupplierFilters = ({ onFilterChange, suppliers, tours }) => {
         });
       }).length,
 
-      noFiles: suppliers.filter((supplier) => {
+      noFiles: suppliers.filter(() => {
         // This would need to be checked against actual files, for now assume all have files
         return false; // Placeholder
       }).length,
@@ -56,35 +58,35 @@ const SupplierFilters = ({ onFilterChange, suppliers, tours }) => {
   const filterOptions = [
     {
       id: "expiring_soon",
-      label: "Tours expiring soon (30 days)",
+      label: t("suppliers.filterExpiring"),
       count: filterCounts.expiringSoon,
       color: "bg-warning-100 text-warning-700",
       icon: AlarmClock,
     },
     {
       id: "no_tours",
-      label: "No tours",
+      label: t("suppliers.filterNoTours"),
       count: filterCounts.noTours,
       color: "bg-warning-100 text-warning-700",
       icon: AlertTriangle,
     },
     {
       id: "incomplete_info",
-      label: "Incomplete contact info",
+      label: t("suppliers.filterIncomplete"),
       count: filterCounts.incompleteInfo,
       color: "bg-danger-100 text-danger-700",
       icon: ClipboardList,
     },
     {
       id: "has_active_promo",
-      label: "Has promotion (park fee included)",
+      label: t("suppliers.filterPromotion"),
       count: filterCounts.hasActivePromo,
       color: "bg-success-100 text-success-700",
       icon: Target,
     },
     {
       id: "recent_activity",
-      label: "Updated within 7 days",
+      label: t("suppliers.filterRecent"),
       count: suppliers.filter((supplier) => {
         const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
         return new Date(supplier.updated_at) > weekAgo;
@@ -126,7 +128,7 @@ const SupplierFilters = ({ onFilterChange, suppliers, tours }) => {
         }`}
       >
         <Search className="w-4 h-4" />
-        <span>Smart Filters</span>
+        <span>{t("suppliers.smartFilters")}</span>
         {hasActiveFilters && (
           <span className="bg-brand-600 text-white text-xs px-2 py-0.5 rounded-full">
             {activeFilters.length}
@@ -163,14 +165,14 @@ const SupplierFilters = ({ onFilterChange, suppliers, tours }) => {
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-medium text-gray-700">
-                  Smart Filters
+                  {t("suppliers.smartFilters")}
                 </h3>
                 {hasActiveFilters && (
                   <button
                     onClick={clearAllFilters}
                     className="text-xs text-brand-600 hover:text-brand-800"
                   >
-                    Clear all
+                    {t("common.clearFilters")}
                   </button>
                 )}
               </div>
@@ -213,7 +215,7 @@ const SupplierFilters = ({ onFilterChange, suppliers, tours }) => {
               {/* Quick Stats */}
               <div className="mt-4 pt-4 border-t border-gray-200">
                 <p className="text-xs text-gray-500 text-center">
-                  Total: {suppliers.length} Suppliers • {tours.length} Tours
+                  {t("suppliers.totalSummary", { suppliers: suppliers.length, tours: tours.length })}
                 </p>
               </div>
             </div>

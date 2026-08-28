@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
+import { useI18n } from "../../i18n";
 import { Link } from "react-router-dom";
 
 const SupplierDashboard = ({ suppliers, tours, loading }) => {
-  const [recentlyUpdated, setRecentlyUpdated] = useState([]);
+  const { t } = useI18n();
+  const [RECENTLY_UPDATED, setRecentlyUpdated] = useState([]);
 
   useEffect(() => {
     if (!loading && suppliers.length > 0) {
@@ -21,7 +23,7 @@ const SupplierDashboard = ({ suppliers, tours, loading }) => {
     setRecentlyUpdated(recentSuppliers);
   };
 
-  const formatDateTime = (dateString) => {
+  const FORMAT_DATE_TIME = (dateString) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
@@ -68,9 +70,9 @@ const SupplierDashboard = ({ suppliers, tours, loading }) => {
       {/* Dashboard Header */}
       <div className="bg-gradient-to-r from-brand-50 to-brand-50 rounded-lg p-6 border border-brand-200">
         <h2 className="text-xl font-bold text-gray-900 mb-2">
-          Supplier Dashboard
+          {t("suppliers.title")}
         </h2>
-        <p className="text-gray-500">Overview and important alerts</p>
+        <p className="text-gray-500">{t("suppliers.overview")}</p>
       </div>
 
       {/* Recently Updated - Horizontal Layout */}
@@ -85,7 +87,7 @@ const SupplierDashboard = ({ suppliers, tours, loading }) => {
               to="/suppliers"
               className="text-brand-600 hover:text-brand-800 text-sm font-medium"
             >
-              View all →
+              {t("common.viewAll")} →
             </Link>
           </div>
         </div>
@@ -128,7 +130,7 @@ const SupplierDashboard = ({ suppliers, tours, loading }) => {
           ) : (
             <div className="text-center py-8">
               <div className="text-gray-400 text-4xl mb-2">📅</div>
-              <p className="text-gray-500">No updates in the last 7 days</p>
+              <p className="text-gray-500">{t("suppliers.noRecentUpdates")}</p>
             </div>
           )}
         </div>

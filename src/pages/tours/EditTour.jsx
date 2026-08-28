@@ -33,13 +33,14 @@ import { COMMON_PROVINCES } from "../../utils/provinces";
 import SupplierFileUpload from "../../components/suppliers/SupplierFileUpload";
 import {
   toursService,
-  suppliersService,
   filesService,
   supplierFilesService,
 } from "../../services/api-service";
 import { useTourFiles } from "../../hooks";
+import { useI18n } from "../../i18n";
 
 const EditTour = () => {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { id } = useParams();
 
@@ -47,7 +48,6 @@ const EditTour = () => {
   const {
     files: tourFiles,
     sharedGalleryGroups,
-    ownGalleryFiles,
     refreshFiles,
   } = useTourFiles(id);
 
@@ -56,7 +56,6 @@ const EditTour = () => {
   const [saving, setSaving] = useState(false);
 
   // Data states
-  const [tour, setTour] = useState(null);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [supplierFiles, setSupplierFiles] = useState([]);
 
@@ -106,7 +105,6 @@ const EditTour = () => {
       const tourData = tours.find((t) => String(t.id) === String(id));
 
       if (tourData) {
-        setTour(tourData);
 
         // Check if tour has no end date
         const hasNoEndDate =
@@ -154,12 +152,12 @@ const EditTour = () => {
           });
         }
       } else {
-        alert("Tour not found");
+        alert(t("tour.notFound"));
         navigate("/tours");
       }
     } catch (error) {
       console.error("Error fetching tour:", error);
-      alert("An error occurred while loading data");
+      alert(t("tour.loadError"));
       navigate("/tours");
     } finally {
       setLoading(false);
@@ -196,30 +194,30 @@ const EditTour = () => {
     setSupplierFiles((prev) => [newFile, ...prev]);
   };
 
-  const handleTourFileUploaded = (newFile) => {
+  const handleTourFileUploaded = () => {
     refreshFiles(); // use refreshFiles from the hook instead
   };
 
   const handleDeleteTourFile = async (fileId) => {
-    if (window.confirm("Do you want to delete this file?")) {
+    if (window.confirm(t("tour.deleteFileConfirm"))) {
       try {
         await filesService.deleteFile(fileId);
         refreshFiles();
       } catch (error) {
         console.error("Error deleting file:", error);
-        alert("An error occurred while deleting the file");
+        alert(t("common.deleteError"));
       }
     }
   };
 
   const handleDeleteSupplierFile = async (fileId) => {
-    if (window.confirm("Do you want to delete this file?")) {
+    if (window.confirm(t("tour.deleteFileConfirm"))) {
       try {
         await supplierFilesService.deleteSupplierFile(fileId);
         setSupplierFiles((prev) => prev.filter((file) => file.id !== fileId));
       } catch (error) {
         console.error("Error deleting supplier file:", error);
-        alert("An error occurred while deleting the file");
+        alert(t("common.deleteError"));
       }
     }
   };
@@ -235,10 +233,10 @@ const EditTour = () => {
     try {
       await filesService.unshareGalleryFiles(sourceTourId, id);
       refreshFiles(); // use refreshFiles instead of manual setTourFiles
-      alert("Gallery images unshared successfully");
+      alert(t("tour.gallery.unshareSuccess"));
     } catch (error) {
       console.error("Error unsharing gallery:", error);
-      alert("An error occurred while unsharing: " + error.message);
+      alert(t("tour.gallery.unshareError", { message: error.message }));
     }
   };
 
@@ -255,7 +253,7 @@ const EditTour = () => {
       refreshFiles(); // use refreshFiles instead of manual setTourFiles
     } catch (error) {
       console.error("Error unsharing file:", error);
-      alert("An error occurred while deleting the file");
+      alert(t("common.deleteError"));
     }
   };
 
@@ -324,7 +322,7 @@ const EditTour = () => {
 
     // Required fields
     if (!formData.tour_name.trim()) {
-      newErrors.tour_name = "Please enter a tour name";
+      newErrors.tour_name = t("tour.validation.nameRequired");
     }
 
     // Date validation
@@ -333,17 +331,17 @@ const EditTour = () => {
       const endDate = new Date(formData.end_date);
 
       if (endDate <= startDate) {
-        newErrors.end_date = "End date must be later than start date";
+        newErrors.end_date = t("tour.validation.endAfterStart");
       }
     }
 
     // Number validation
     if (formData.adult_price && isNaN(parseFloat(formData.adult_price))) {
-      newErrors.adult_price = "Please enter a valid number";
+      newErrors.adult_price = t("tour.validation.validNumber");
     }
 
     if (formData.child_price && isNaN(parseFloat(formData.child_price))) {
-      newErrors.child_price = "Please enter a valid number";
+      newErrors.child_price = t("tour.validation.validNumber");
     }
 
     setErrors(newErrors);
@@ -354,7 +352,7 @@ const EditTour = () => {
     e.preventDefault();
 
     if (!validateForm()) {
-      alert("Please make sure all information is complete and correct");
+      alert(t("tour.validation.incomplete"));
       return;
     }
 
@@ -380,11 +378,11 @@ const EditTour = () => {
       };
 
       await toursService.updateTour(id, submitData);
-      alert("Data updated successfully");
+      alert(t("tour.saveSuccess"));
       navigate(-1);
     } catch (error) {
       console.error("Error saving tour:", error);
-      alert("An error occurred while saving data");
+      alert(t("tour.saveError"));
     } finally {
       setSaving(false);
     }
@@ -392,18 +390,16 @@ const EditTour = () => {
 
   const handleDelete = async () => {
     if (
-      window.confirm(
-        `Do you want to delete the tour "${formData.tour_name}"?\n\nThis deletion cannot be undone!`
-      )
+      window.confirm(t("tour.deleteConfirm"))
     ) {
       try {
         setSaving(true);
         await toursService.deleteTour(id);
-        alert("Data deleted successfully");
+        alert(t("tour.deleteSuccess"));
         navigate(-1);
       } catch (error) {
         console.error("Error deleting tour:", error);
-        alert("An error occurred while deleting data");
+        alert(t("tour.deleteError"));
         setSaving(false);
       }
     }
@@ -421,13 +417,13 @@ const EditTour = () => {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Edit Tour</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t("tour.editTitle")}</h1>
         <button
           onClick={() => navigate(-1)}
           className="inline-flex items-center gap-1 px-4 py-2 text-gray-500 hover:text-gray-900 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back
+          {t("common.back")}
         </button>
       </div>
 
@@ -437,13 +433,13 @@ const EditTour = () => {
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
             <Building2 className="h-5 w-5" />
-            Supplier
+            {t("tour.field.supplier")}
           </h2>
           <SupplierAutocomplete
             onSelect={handleSupplierSelect}
             onCreateNew={handleCreateNewSupplier}
             value={selectedSupplier}
-            placeholder="Select or change Supplier..."
+            placeholder={t("tour.placeholder.supplier")}
           />
         </div>
 
@@ -451,13 +447,13 @@ const EditTour = () => {
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
             <Palmtree className="h-5 w-5" />
-            Tour Information
+            {t("tour.section.information")}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Tour Name */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tour name <span className="text-danger-600">*</span>
+                {t("tour.field.name")} <span className="text-danger-600">*</span>
               </label>
               <input
                 type="text"
@@ -468,7 +464,7 @@ const EditTour = () => {
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 ${
                   errors.tour_name ? "border-danger-500" : "border-gray-300"
                 }`}
-                placeholder="Enter tour name"
+                placeholder={t("tour.placeholder.name")}
               />
               {errors.tour_name && (
                 <p className="text-danger-600 text-xs mt-1">{errors.tour_name}</p>
@@ -478,7 +474,7 @@ const EditTour = () => {
             {/* Tour Type */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tour type
+                {t("tour.field.tourType")}
               </label>
               <select
                 name="tour_type"
@@ -486,9 +482,9 @@ const EditTour = () => {
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
               >
-                {TOUR_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
+                {TOUR_TYPES.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {t(`tour.option.${option.value}`)}
                   </option>
                 ))}
               </select>
@@ -497,9 +493,9 @@ const EditTour = () => {
             {/* Departure From - province picker (can be more than one) */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Departure from{" "}
+                {t("tour.field.departureFrom")}{" "}
                 <span className="font-normal text-gray-400">
-                  — can be more than one
+                  {t("tour.multipleAllowed")}
                 </span>
               </label>
               <ProvincePicker
@@ -516,7 +512,7 @@ const EditTour = () => {
                 onChange={(arr) =>
                   handleAutocompleteChange("departure_from", arr.join(", "))
                 }
-                placeholder="Type a province"
+                placeholder={t("tour.placeholder.province")}
               />
               {errors.departure_from && (
                 <p className="text-danger-600 text-xs mt-1">
@@ -528,9 +524,9 @@ const EditTour = () => {
             {/* Destination - single province */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Destination{" "}
+                {t("tour.field.destination")}{" "}
                 <span className="font-normal text-gray-400">
-                  — one province
+                  {t("tour.oneProvince")}
                 </span>
               </label>
               <ProvincePicker
@@ -539,20 +535,20 @@ const EditTour = () => {
                 onChange={(val) =>
                   handleAutocompleteChange("destination", val || "")
                 }
-                placeholder="Type a province"
+                placeholder={t("tour.placeholder.province")}
               />
             </div>
 
             {/* Pier - with Autocomplete */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Pier
+                {t("tour.field.pier")}
               </label>
               <AutocompleteInput
                 type="pier"
                 value={formData.pier}
                 onChange={(value) => handleAutocompleteChange("pier", value)}
-                placeholder="Pier name"
+                placeholder={t("tour.placeholder.pier")}
                 className={errors.pier ? "border-danger-500" : ""}
               />
               {errors.pier && (
@@ -563,7 +559,7 @@ const EditTour = () => {
             {/* Adult Price */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Adult price (THB)
+                {t("tour.adultPrice")}
               </label>
               <input
                 type="number"
@@ -586,7 +582,7 @@ const EditTour = () => {
             {/* Child Price */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Child price (THB)
+                {t("tour.childPrice")}
               </label>
               <input
                 type="number"
@@ -609,7 +605,7 @@ const EditTour = () => {
             {/* Start Date */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Start date
+                {t("tour.field.startDate")}
               </label>
               <input
                 type="date"
@@ -623,7 +619,7 @@ const EditTour = () => {
             {/* End Date - with Optional Toggle */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                End date
+                {t("tour.field.endDate")}
               </label>
 
               {/* End Date Input - conditionally shown */}
@@ -643,7 +639,7 @@ const EditTour = () => {
               {formData.no_end_date && (
                 <input
                   type="text"
-                  value="Not specified"
+                  value={t("tour.notSpecified")}
                   disabled
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-warning-50 text-warning-700 cursor-not-allowed"
                 />
@@ -659,7 +655,7 @@ const EditTour = () => {
                     className="rounded border-gray-300 text-warning-600 focus:ring-warning-500"
                   />
                   <span className="ml-2 text-sm text-warning-700">
-                    No end date (valid until changed)
+                    {t("tour.noEndDateHint")}
                   </span>
                 </label>
               </div>
@@ -673,7 +669,7 @@ const EditTour = () => {
             <div className="md:col-span-2">
               <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-2">
                 <Map className="h-4 w-4" />
-                Google Maps URL
+                {t("tour.field.mapUrl")}
               </label>
               <input
                 type="url"
@@ -684,14 +680,14 @@ const EditTour = () => {
                 placeholder="https://maps.google.com/... or https://goo.gl/maps/..."
               />
               <p className="text-xs text-gray-500 mt-1">
-                Copy the URL from Google Maps and paste it here (optional)
+                {t("tour.mapUrlHint")}
               </p>
             </div>
 
             {/* Park Fee — Adult */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Park fee / adult (THB)
+                {t("tour.parkFeeAdult")}
               </label>
               <input
                 type="number"
@@ -708,7 +704,7 @@ const EditTour = () => {
             {/* Park Fee — Child */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Park fee / child (THB)
+                {t("tour.parkFeeChild")}
               </label>
               <input
                 type="number"
@@ -733,7 +729,7 @@ const EditTour = () => {
                   className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
                 />
                 <span className="ml-2 text-sm text-gray-700">
-                  This Net price includes the park fee
+                  {t("tour.includesParkFee")}
                 </span>
               </label>
             </div>
@@ -741,7 +737,7 @@ const EditTour = () => {
             {/* Notes */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Notes
+                {t("common.note")}
               </label>
               <textarea
                 name="notes"
@@ -749,7 +745,7 @@ const EditTour = () => {
                 onChange={handleChange}
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-                placeholder="Enter additional notes..."
+                placeholder={t("tour.placeholder.notes")}
               />
             </div>
           </div>
@@ -759,7 +755,7 @@ const EditTour = () => {
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
             <ListChecks className="h-5 w-5" />
-            Tour details
+            {t("tour.details")}
           </h2>
           <TourDetailFields
             values={formData}
@@ -814,14 +810,14 @@ const EditTour = () => {
                             onClick={() => handleViewFile(file, true)}
                             className="inline-flex items-center gap-1 px-2 py-1 text-brand-600 hover:bg-brand-100 rounded text-sm"
                           >
-                            <Eye className="h-4 w-4" /> View
+                      <Eye className="h-4 w-4" /> {t("document.view")}
                           </button>
                           <button
                             type="button"
                             onClick={() => handleDeleteSupplierFile(file.id)}
                             className="inline-flex items-center gap-1 px-2 py-1 text-danger-600 hover:bg-danger-50 rounded text-sm"
                           >
-                            <Trash2 className="h-4 w-4" /> Delete
+                      <Trash2 className="h-4 w-4" /> {t("common.delete")}
                           </button>
                         </div>
                       </div>
@@ -836,7 +832,7 @@ const EditTour = () => {
           <div className="bg-white rounded-lg shadow-sm border p-6">
             <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
               <Paperclip className="h-5 w-5" />
-              Files for this tour
+              {t("tour.filesForTour")}
             </h2>
 
             <TourFileUpload
@@ -856,7 +852,7 @@ const EditTour = () => {
                   <div className="mb-4">
                     <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-2">
                       <Folder className="h-4 w-4" />
-                      Files for this tour
+                      {t("tour.filesForTour")}
                     </h4>
                     <div className="space-y-2">
                       {tourFiles
@@ -888,14 +884,14 @@ const EditTour = () => {
                                 onClick={() => handleViewFile(file, false)}
                                 className="inline-flex items-center gap-1 px-2 py-1 text-brand-600 hover:bg-brand-100 rounded text-sm"
                               >
-                                <Eye className="h-4 w-4" /> View
+                                <Eye className="h-4 w-4" /> {t("document.view")}
                               </button>
                               <button
                                 type="button"
                                 onClick={() => handleDeleteTourFile(file.id)}
                                 className="inline-flex items-center gap-1 px-2 py-1 text-danger-600 hover:bg-danger-50 rounded text-sm"
                               >
-                                <Trash2 className="h-4 w-4" /> Delete
+                                <Trash2 className="h-4 w-4" /> {t("common.delete")}
                               </button>
                             </div>
                           </div>
@@ -909,7 +905,7 @@ const EditTour = () => {
                   <div>
                     <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-2">
                       <Link2 className="h-4 w-4" />
-                      Shared Gallery images
+                      {t("tour.sharedGallery")}
                     </h4>
                     {Object.values(sharedGalleryGroups).map((group) => (
                       <SharedGalleryGroup
@@ -938,7 +934,7 @@ const EditTour = () => {
               className="flex-1 inline-flex items-center justify-center gap-2 bg-brand-600 text-white py-3 px-4 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium shadow-md"
             >
               <Save className="h-4 w-4" />
-              {saving ? "Saving..." : "Save changes"}
+              {saving ? t("common.saving") : t("packages.saveChanges")}
             </button>
 
             <button
@@ -948,7 +944,7 @@ const EditTour = () => {
               className="flex-1 inline-flex items-center justify-center gap-2 bg-danger-600 text-white py-3 px-4 rounded-lg hover:bg-danger-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium shadow-md"
             >
               <Trash2 className="h-4 w-4" />
-              {saving ? "Deleting..." : "Delete this tour"}
+              {saving ? t("suppliers.deleting") : t("tour.deleteThis")}
             </button>
 
             <button
@@ -956,7 +952,7 @@ const EditTour = () => {
               onClick={() => navigate(-1)}
               className="flex-1 bg-gray-200 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-400 transition-colors font-medium shadow-md"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
           </div>
         </div>

@@ -20,6 +20,7 @@ import {
   emptyDetailValues,
   DETAIL_ARRAY_FIELDS,
 } from "../../utils/tour-details";
+import { useI18n } from "../../i18n";
 
 // Shared grid template so the header and every row stay aligned
 const ROW_GRID =
@@ -32,6 +33,7 @@ const TourMultiForm = ({
   initialTours = null,
   submitLabel = null,
 }) => {
+  const { t } = useI18n();
   const [tours, setTours] = useState([]);
   const [errors, setErrors] = useState({});
   // Which rows have their detail panel open, keyed by tour id
@@ -111,7 +113,7 @@ const TourMultiForm = ({
   // Remove tour
   const removeTour = (tourId) => {
     if (tours.length <= 1) {
-      alert("At least 1 tour is required");
+      alert(t("tour.validation.oneRequired"));
       return;
     }
     setTours((prev) => prev.filter((tour) => tour.id !== tourId));
@@ -224,11 +226,11 @@ const TourMultiForm = ({
     const tourErrors = {};
 
     if (!tour.tour_name.trim()) {
-      tourErrors.tour_name = "Please enter a tour name";
+      tourErrors.tour_name = t("tour.validation.nameRequired");
     }
 
     if (!tour.tour_type) {
-      tourErrors.tour_type = "Please select a tour type";
+      tourErrors.tour_type = t("tour.validation.typeRequired");
     }
 
     // Validate dates only if end date is specified
@@ -237,7 +239,7 @@ const TourMultiForm = ({
       const endDate = new Date(tour.end_date);
 
       if (endDate <= startDate) {
-        tourErrors.end_date = "End date must be later than start date";
+        tourErrors.end_date = t("tour.validation.endAfterStart");
       }
     }
 
@@ -276,7 +278,7 @@ const TourMultiForm = ({
     e.preventDefault();
 
     if (!validateAllTours()) {
-      alert("Please make sure all information is complete and correct");
+      alert(t("tour.validation.incomplete"));
       return;
     }
 
@@ -338,11 +340,11 @@ const TourMultiForm = ({
           className={`${ROW_GRID} px-3 py-2 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-500`}
         >
           <span className="text-center">#</span>
-          <span>Tour name</span>
-          <span>Type</span>
-          <span>Adult ฿</span>
-          <span>Child ฿</span>
-          <span className="text-center">Edit</span>
+          <span>{t("tour.field.name")}</span>
+          <span>{t("tour.field.type")}</span>
+          <span>{t("tour.adult")} ฿</span>
+          <span>{t("tour.child")} ฿</span>
+          <span className="text-center">{t("tour.field.edit")}</span>
         </div>
 
         {/* Rows */}
@@ -360,7 +362,7 @@ const TourMultiForm = ({
                 onChange={(e) =>
                   updateTour(tour.id, "tour_name", e.target.value)
                 }
-                placeholder="Tour name *"
+                placeholder={t("tour.placeholder.name")}
                 className={`${cellInput} ${
                   hasFieldError(tour.id, "tour_name")
                     ? "border-danger-500 ring-1 ring-danger-500"
@@ -379,10 +381,10 @@ const TourMultiForm = ({
                     : ""
                 }`}
               >
-                <option value="">Select type *</option>
-                {TOUR_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
+                <option value="">{t("tour.selectType")} *</option>
+                {TOUR_TYPES.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {t(`tour.option.${option.value}`)}
                   </option>
                 ))}
               </select>
@@ -414,7 +416,7 @@ const TourMultiForm = ({
                   type="button"
                   onClick={() => toggleExpand(tour.id)}
                   className="relative p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
-                  title="More details"
+                    title={t("tour.action.moreDetails")}
                 >
                   <ChevronDown
                     className={`w-4 h-4 transition-transform ${
@@ -430,7 +432,7 @@ const TourMultiForm = ({
                     type="button"
                     onClick={() => removeTour(tour.id)}
                     className="p-1.5 text-danger-600 hover:text-danger-700 hover:bg-danger-50 rounded transition-colors"
-                    title="Remove this tour"
+                    title={t("tour.action.remove")}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -444,15 +446,15 @@ const TourMultiForm = ({
                 {/* Route & pickup */}
                 <section>
                   <h5 className={`${sectionHead} text-brand-600`}>
-                    <MapPin className="w-3.5 h-3.5" /> Route &amp; pickup
+                    <MapPin className="w-3.5 h-3.5" /> {t("tour.routePickup")}
                   </h5>
                   <div className={`${sectionCard} border-l-brand-500 md:grid-cols-2`}>
                   {/* Departure from */}
                   <div>
                     <label className={labelClass}>
-                      Departure from{" "}
+                      {t("tour.field.departureFrom")}{" "}
                       <span className="font-normal text-gray-400">
-                        — can be more than one
+                        {t("tour.multipleAllowed")}
                       </span>
                     </label>
                     <ProvincePicker
@@ -469,16 +471,16 @@ const TourMultiForm = ({
                       onChange={(arr) =>
                         updateTour(tour.id, "departure_from", arr.join(", "))
                       }
-                      placeholder="Type a province"
+                      placeholder={t("tour.placeholder.province")}
                     />
                   </div>
 
                   {/* Destination (single province) */}
                   <div>
                     <label className={labelClass}>
-                      Destination{" "}
+                      {t("tour.field.destination")}{" "}
                       <span className="font-normal text-gray-400">
-                        — one province
+                        {t("tour.oneProvince")}
                       </span>
                     </label>
                     <ProvincePicker
@@ -487,24 +489,24 @@ const TourMultiForm = ({
                       onChange={(val) =>
                         updateTour(tour.id, "destinations", val ? [val] : [])
                       }
-                      placeholder="Type a province"
+                      placeholder={t("tour.placeholder.province")}
                     />
                   </div>
 
                   {/* Pier */}
                   <div>
-                    <label className={labelClass}>Pier</label>
+                    <label className={labelClass}>{t("tour.field.pier")}</label>
                     <AutocompleteInput
                       type="pier"
                       value={tour.pier}
                       onChange={(value) => updateTour(tour.id, "pier", value)}
-                      placeholder="Pier name"
+                      placeholder={t("tour.placeholder.pier")}
                     />
                   </div>
 
                   {/* Map URL */}
                   <div>
-                    <label className={labelClass}>Google Maps URL</label>
+                    <label className={labelClass}>{t("tour.field.mapUrl")}</label>
                     <input
                       type="url"
                       value={tour.map_url}
@@ -521,12 +523,12 @@ const TourMultiForm = ({
                 {/* Schedule */}
                 <section>
                   <h5 className={`${sectionHead} text-brand-600`}>
-                    <CalendarDays className="w-3.5 h-3.5" /> Schedule
+                    <CalendarDays className="w-3.5 h-3.5" /> {t("tour.schedule")}
                   </h5>
                   <div className={`${sectionCard} border-l-brand-500 md:grid-cols-2`}>
                   {/* Start Date */}
                   <div>
-                    <label className={labelClass}>Start date</label>
+                    <label className={labelClass}>{t("tour.field.startDate")}</label>
                     <input
                       type="date"
                       value={tour.start_date}
@@ -541,7 +543,7 @@ const TourMultiForm = ({
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
                       <label className="block text-sm font-medium text-gray-700">
-                        End date
+                        {t("tour.field.endDate")}
                       </label>
                       <label className="inline-flex items-center cursor-pointer">
                         <input
@@ -553,7 +555,7 @@ const TourMultiForm = ({
                           className="rounded border-gray-300 text-warning-600 focus:ring-warning-500"
                         />
                         <span className="ml-1.5 text-xs text-warning-700">
-                          No end date
+                          {t("tour.noEndDate")}
                         </span>
                       </label>
                     </div>
@@ -573,7 +575,7 @@ const TourMultiForm = ({
                     ) : (
                       <input
                         type="text"
-                        value="Not specified"
+                        value={t("tour.notSpecified")}
                         disabled
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-warning-50 text-warning-700 cursor-not-allowed"
                       />
@@ -590,14 +592,14 @@ const TourMultiForm = ({
                 {/* Park fee */}
                 <section>
                   <h5 className={`${sectionHead} text-warning-600`}>
-                    <Ticket className="w-3.5 h-3.5" /> Park fee
+                    <Ticket className="w-3.5 h-3.5" /> {t("tour.parkFee")}
                   </h5>
                   <div className={`${sectionCard} border-l-warning-500 md:grid-cols-3 md:items-end`}>
                   {/* Park fee — adult */}
                   <div>
                     <label className={labelClass}>
-                      Park fee{" "}
-                      <span className="font-normal text-gray-400">/ adult ฿</span>
+                      {t("tour.parkFee")}{" "}
+                      <span className="font-normal text-gray-400">/ {t("tour.adult")} ฿</span>
                     </label>
                     <input
                       type="number"
@@ -614,8 +616,8 @@ const TourMultiForm = ({
                   {/* Park fee — child */}
                   <div>
                     <label className={labelClass}>
-                      Park fee{" "}
-                      <span className="font-normal text-gray-400">/ child ฿</span>
+                      {t("tour.parkFee")}{" "}
+                      <span className="font-normal text-gray-400">/ {t("tour.child")} ฿</span>
                     </label>
                     <input
                       type="number"
@@ -645,7 +647,7 @@ const TourMultiForm = ({
                         className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
                       />
                       <span className="ml-2 text-sm text-gray-700">
-                        Net price includes park fee
+                        {t("tour.includesParkFee")}
                       </span>
                     </label>
                   </div>
@@ -663,10 +665,10 @@ const TourMultiForm = ({
                 {/* Notes */}
                 <section>
                   <h5 className={`${sectionHead} text-gray-500`}>
-                    <StickyNote className="w-3.5 h-3.5" /> Notes
+                    <StickyNote className="w-3.5 h-3.5" /> {t("common.note")}
                   </h5>
                   <div className={`${sectionCard} border-l-gray-300`}>
-                    <label className="sr-only">Notes specific to this tour</label>
+                    <label className="sr-only">{t("tour.field.notes")}</label>
                     <textarea
                       value={tour.notes}
                       onChange={(e) =>
@@ -674,7 +676,7 @@ const TourMultiForm = ({
                       }
                       rows={2}
                       className={inputClass}
-                      placeholder="Additional notes for this tour..."
+                      placeholder={t("tour.placeholder.notes")}
                     />
                   </div>
                 </section>
@@ -682,12 +684,12 @@ const TourMultiForm = ({
                 {/* Attachments */}
                 <section>
                   <h5 className={`${sectionHead} text-success-600`}>
-                    <Paperclip className="w-3.5 h-3.5" /> Attachments
+                    <Paperclip className="w-3.5 h-3.5" /> {t("document.attachments")}
                   </h5>
                   <div className={`${sectionCard} border-l-success-500 md:grid-cols-3`}>
                     {/* Our Brochure */}
                     <div>
-                      <label className={labelClass}>Our brochure</label>
+                      <label className={labelClass}>{t("tour.field.ourBrochure")}</label>
                       <input
                         type="file"
                         multiple
@@ -723,7 +725,7 @@ const TourMultiForm = ({
 
                     {/* Supplier Brochure */}
                     <div>
-                      <label className={labelClass}>Supplier brochure</label>
+                      <label className={labelClass}>{t("tour.field.supplierBrochure")}</label>
                       <input
                         type="file"
                         multiple
@@ -767,7 +769,7 @@ const TourMultiForm = ({
 
                     {/* Images / Gallery */}
                     <div>
-                      <label className={labelClass}>Images</label>
+                      <label className={labelClass}>{t("tour.field.images")}</label>
                       <input
                         type="file"
                         multiple
@@ -816,7 +818,7 @@ const TourMultiForm = ({
           className="flex items-center gap-2 px-4 py-2 bg-success-600 text-white rounded-lg hover:bg-success-700 transition-colors text-sm font-medium"
         >
           <Plus className="w-4 h-4" />
-          <span>Add another tour</span>
+          <span>{t("tour.addAnother")}</span>
         </button>
       </div>
 
@@ -825,12 +827,12 @@ const TourMultiForm = ({
         <div className="flex items-center justify-between gap-4">
           <div>
             <h4 className="font-medium text-gray-900">
-              Ready to save {tours.length} tour{tours.length > 1 ? "s" : ""}
+              {t("tour.readyCount", { count: tours.length })}
             </h4>
             {tours.length > 1 && (
               <p className="flex items-center gap-1.5 text-xs text-brand-600 mt-1">
                 <Lightbulb className="w-3.5 h-3.5" />
-                New rows copy all fields from the previous row
+                {t("tour.copyRowHint")}
               </p>
             )}
           </div>
@@ -842,13 +844,13 @@ const TourMultiForm = ({
             {loading ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                <span>Saving...</span>
+                <span>{t("tour.saving")}</span>
               </>
             ) : (
               <>
                 <Save className="w-4 h-4" />
                 <span>
-                  {submitLabel || `Save all tours (${tours.length})`}
+                  {submitLabel || t("tour.add.saveAll", { count: tours.length })}
                 </span>
               </>
             )}
