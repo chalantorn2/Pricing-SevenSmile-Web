@@ -6,6 +6,22 @@ import { useTourFiles } from "../../hooks";
 import { getTourCategoryInfo } from "../../utils/file-categories";
 import { getTourTypeLabel } from "../../utils/tour-types";
 import {
+  DURATION_TYPES,
+  PRICE_MODES,
+  MEALS,
+  MEAL_STYLES,
+  VESSEL_TYPES,
+  TRANSFER_TYPES,
+  GUIDE_LANGUAGES,
+  getLabel,
+  toArray,
+  formatOperatingDays,
+  formatTimeRange,
+  formatHours,
+  formatAgeRange,
+  formatTriState,
+} from "../../utils/tour-details";
+import {
   Pencil,
   Share2,
   Banknote,
@@ -22,6 +38,12 @@ import {
   Loader2,
   ChevronDown,
   Layers,
+  Clock,
+  UtensilsCrossed,
+  Ship,
+  BusFront,
+  Star,
+  EyeOff,
 } from "lucide-react";
 
 // Collapsible section (module scope so its open/closed state persists across re-renders)
@@ -119,6 +141,100 @@ const TourDetails = ({
   const hasParkFee =
     Number(tour.park_fee_adult) > 0 || Number(tour.park_fee_child) > 0;
 
+  // Detail fields, pre-formatted. A blank string means the field was never
+  // filled in, and the section that would hold it is hidden rather than
+  // showing a row of dashes.
+  const detail = {
+    durationType: getLabel(DURATION_TYPES, tour.duration_type),
+    hours: formatHours(tour.duration_hours),
+    tourTime: formatTimeRange(tour.start_time, tour.end_time),
+    timeNote: tour.time_note || "",
+    operatingDays: formatOperatingDays(tour.operating_days),
+    leadHours: tour.booking_lead_hours ? `${tour.booking_lead_hours} hrs` : "",
+    verifiedAt: tour.last_verified_at ? formatDate(tour.last_verified_at) : "",
+
+    priceMode: getLabel(PRICE_MODES, tour.price_mode),
+    childAge: formatAgeRange(tour.child_age_min, tour.child_age_max),
+    infantAge: formatAgeRange(null, tour.infant_age_max),
+    infantPrice:
+      tour.infant_price === null || tour.infant_price === undefined
+        ? ""
+        : `THB ${formatPrice(tour.infant_price)}`,
+    singleSupplement:
+      Number(tour.single_supplement) > 0
+        ? `THB ${formatPrice(tour.single_supplement)}`
+        : "",
+    paxRange:
+      tour.min_pax || tour.max_pax
+        ? [tour.min_pax, tour.max_pax].filter(Boolean).join(" – ") + " pax"
+        : "",
+
+    meals: toArray(tour.meals_included)
+      .map((m) => getLabel(MEALS, m))
+      .join(", "),
+    mealStyle: getLabel(MEAL_STYLES, tour.meal_style),
+    mealVenue: tour.meal_venue || "",
+    halal: formatTriState(tour.halal_available),
+    vegetarian: formatTriState(tour.vegetarian_available),
+    mealNote: tour.meal_note || "",
+
+    vesselType: getLabel(VESSEL_TYPES, tour.vessel_type),
+    vesselName: tour.vessel_name || "",
+    vesselCapacity: tour.vessel_capacity ? `${tour.vessel_capacity} pax` : "",
+    vesselDetail: tour.vessel_detail || "",
+    guide: formatTriState(tour.guide_included),
+    guideLanguages: toArray(tour.guide_languages)
+      .map((l) => getLabel(GUIDE_LANGUAGES, l))
+      .join(", "),
+
+    transferIncluded: formatTriState(tour.transfer_included),
+    transferType: getLabel(TRANSFER_TYPES, tour.transfer_type),
+    pickupWindow: formatTimeRange(tour.pickup_time_from, tour.pickup_time_to),
+    meetingPoint: tour.meeting_point || "",
+  };
+
+  const filled = (...values) => values.some((v) => v !== "" && v != null);
+
+  const hasSchedule = filled(
+    detail.durationType,
+    detail.hours,
+    detail.tourTime,
+    detail.timeNote,
+    detail.operatingDays,
+    detail.leadHours,
+    detail.verifiedAt
+  );
+  const hasMeals = filled(
+    detail.meals,
+    detail.mealStyle,
+    detail.mealVenue,
+    detail.halal,
+    detail.vegetarian,
+    detail.mealNote
+  );
+  const hasVessel = filled(
+    detail.vesselType,
+    detail.vesselName,
+    detail.vesselCapacity,
+    detail.vesselDetail,
+    detail.guide,
+    detail.guideLanguages
+  );
+  const hasPickup = filled(
+    detail.transferIncluded,
+    detail.transferType,
+    detail.pickupWindow,
+    detail.meetingPoint
+  );
+  const hasPriceDetail = filled(
+    detail.priceMode,
+    detail.childAge,
+    detail.infantAge,
+    detail.infantPrice,
+    detail.singleSupplement,
+    detail.paxRange
+  );
+
   const getNotes = (tour) => {
     const base = tour.park_fee_included
       ? "This Net price includes the park fee"
@@ -213,6 +329,29 @@ const TourDetails = ({
                 {!!tour.tour_type && (
                   <span className="inline-flex items-center rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700 ring-1 ring-inset ring-brand-200">
                     {getTourTypeLabel(tour.tour_type)}
+                  </span>
+                )}
+                {Number(tour.is_frequent) === 1 && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-warning-50 px-3 py-1 text-xs font-medium text-warning-700 ring-1 ring-inset ring-warning-200">
+                    <Star className="h-3 w-3 fill-current" />
+                    Frequently used
+                  </span>
+                )}
+                {Number(tour.is_active) === 0 && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-300">
+                    <EyeOff className="h-3 w-3" />
+                    Inactive
+                  </span>
+                )}
+                {!!detail.durationType && (
+                  <span className="inline-flex items-center rounded-full bg-gray-50 px-3 py-1 text-xs text-gray-700 ring-1 ring-inset ring-gray-200">
+                    {detail.durationType}
+                    {detail.hours && ` · ${detail.hours}`}
+                  </span>
+                )}
+                {!!detail.vesselType && (
+                  <span className="inline-flex items-center rounded-full bg-gray-50 px-3 py-1 text-xs text-gray-700 ring-1 ring-inset ring-gray-200">
+                    {detail.vesselType}
                   </span>
                 )}
                 {!!tour.pier && (
@@ -330,6 +469,29 @@ const TourDetails = ({
                 </div>
               </div>
             )}
+            {hasPriceDetail && (
+              <dl className="divide-y divide-gray-100 rounded-lg ring-1 ring-gray-200">
+                {!!detail.priceMode && (
+                  <Row label="Charged">{detail.priceMode}</Row>
+                )}
+                {!!detail.childAge && (
+                  <Row label="Child age">{detail.childAge}</Row>
+                )}
+                {(!!detail.infantAge || !!detail.infantPrice) && (
+                  <Row label="Infant">
+                    {[detail.infantAge, detail.infantPrice]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </Row>
+                )}
+                {!!detail.singleSupplement && (
+                  <Row label="Single supplement">
+                    {detail.singleSupplement}
+                  </Row>
+                )}
+                {!!detail.paxRange && <Row label="Pax">{detail.paxRange}</Row>}
+              </dl>
+            )}
           </div>
         </AccordionSection>
 
@@ -361,6 +523,106 @@ const TourDetails = ({
             </div>
           )}
         </AccordionSection>
+
+        {/* Duration & schedule — only when something was recorded */}
+        {hasSchedule && (
+          <AccordionSection
+            icon={Clock}
+            iconClass="text-brand-600"
+            title="Duration & schedule"
+            defaultOpen
+          >
+            <dl className="divide-y divide-gray-100">
+              {!!detail.durationType && (
+                <Row label="Duration">{detail.durationType}</Row>
+              )}
+              {!!detail.hours && <Row label="Hours">{detail.hours}</Row>}
+              {!!detail.tourTime && <Row label="Time">{detail.tourTime}</Row>}
+              {!!detail.timeNote && (
+                <Row label="Timing note">{detail.timeNote}</Row>
+              )}
+              {!!detail.operatingDays && (
+                <Row label="Operating days">{detail.operatingDays}</Row>
+              )}
+              {!!detail.leadHours && (
+                <Row label="Book ahead">{detail.leadHours}</Row>
+              )}
+              {!!detail.verifiedAt && (
+                <Row label="Rate confirmed">{detail.verifiedAt}</Row>
+              )}
+            </dl>
+          </AccordionSection>
+        )}
+
+        {/* Meals */}
+        {hasMeals && (
+          <AccordionSection
+            icon={UtensilsCrossed}
+            iconClass="text-warning-600"
+            title="Meals"
+          >
+            <dl className="divide-y divide-gray-100">
+              {!!detail.meals && <Row label="Included">{detail.meals}</Row>}
+              {!!detail.mealStyle && (
+                <Row label="Served as">{detail.mealStyle}</Row>
+              )}
+              {!!detail.mealVenue && <Row label="Where">{detail.mealVenue}</Row>}
+              {!!detail.halal && <Row label="Halal">{detail.halal}</Row>}
+              {!!detail.vegetarian && (
+                <Row label="Vegetarian">{detail.vegetarian}</Row>
+              )}
+              {!!detail.mealNote && <Row label="Note">{detail.mealNote}</Row>}
+            </dl>
+          </AccordionSection>
+        )}
+
+        {/* Boat / vehicle & guide */}
+        {hasVessel && (
+          <AccordionSection
+            icon={Ship}
+            iconClass="text-brand-600"
+            title="Boat / vehicle & guide"
+          >
+            <dl className="divide-y divide-gray-100">
+              {!!detail.vesselType && <Row label="Type">{detail.vesselType}</Row>}
+              {!!detail.vesselName && <Row label="Name">{detail.vesselName}</Row>}
+              {!!detail.vesselCapacity && (
+                <Row label="Capacity">{detail.vesselCapacity}</Row>
+              )}
+              {!!detail.vesselDetail && (
+                <Row label="Detail">{detail.vesselDetail}</Row>
+              )}
+              {!!detail.guide && <Row label="Guide">{detail.guide}</Row>}
+              {!!detail.guideLanguages && (
+                <Row label="Languages">{detail.guideLanguages}</Row>
+              )}
+            </dl>
+          </AccordionSection>
+        )}
+
+        {/* Pickup & transfer */}
+        {hasPickup && (
+          <AccordionSection
+            icon={BusFront}
+            iconClass="text-brand-600"
+            title="Pickup & transfer"
+          >
+            <dl className="divide-y divide-gray-100">
+              {!!detail.transferIncluded && (
+                <Row label="Hotel transfer">{detail.transferIncluded}</Row>
+              )}
+              {!!detail.transferType && (
+                <Row label="Transfer type">{detail.transferType}</Row>
+              )}
+              {!!detail.pickupWindow && (
+                <Row label="Pickup window">{detail.pickupWindow}</Row>
+              )}
+              {!!detail.meetingPoint && (
+                <Row label="Meeting point">{detail.meetingPoint}</Row>
+              )}
+            </dl>
+          </AccordionSection>
+        )}
 
         {/* Contact & Supplier — collapsed by default */}
         <AccordionSection

@@ -15,6 +15,11 @@ import {
 import { AutocompleteInput, ProvincePicker } from "../common";
 import { COMMON_PROVINCES } from "../../utils/provinces";
 import { TOUR_TYPES } from "../../utils/tour-types";
+import TourDetailFields from "./TourDetailFields";
+import {
+  emptyDetailValues,
+  DETAIL_ARRAY_FIELDS,
+} from "../../utils/tour-details";
 
 // Shared grid template so the header and every row stay aligned
 const ROW_GRID =
@@ -64,6 +69,11 @@ const TourMultiForm = ({
       park_fee_adult: "", // Park fee per adult
       park_fee_child: "", // Park fee per child
       map_url: "",
+
+      // Detail fields (duration, meals, vessel, pickup, availability) come from
+      // one shared factory so the add and edit forms start from the same shape.
+      ...emptyDetailValues(),
+
       brochureFiles: [], // Our brochure - staged File objects (uploaded after tour is created)
       supplierBrochureFiles: [], // Supplier brochure - staged File objects
       galleryFiles: [], // Images - staged File objects
@@ -90,6 +100,9 @@ const TourMultiForm = ({
       });
       // Clone array fields so siblings don't share the same reference
       newTour.destinations = [...(lastTour.destinations || [])];
+      DETAIL_ARRAY_FIELDS.forEach((key) => {
+        newTour[key] = [...(lastTour[key] || [])];
+      });
     }
 
     setTours((prev) => [...prev, newTour]);
@@ -167,6 +180,12 @@ const TourMultiForm = ({
     if (tour.destinations.length) n++;
     if (tour.map_url) n++;
     if (tour.notes) n++;
+    if (tour.duration_type || tour.start_time) n++;
+    if (tour.price_mode || tour.child_age_max || tour.min_pax) n++;
+    if (tour.meals_included?.length || tour.meal_style) n++;
+    if (tour.vessel_type || tour.vessel_name) n++;
+    if (tour.transfer_included !== "" || tour.pickup_time_from) n++;
+    if (tour.operating_days?.length) n++;
     const files =
       tour.brochureFiles.length +
       tour.supplierBrochureFiles.length +
@@ -632,6 +651,14 @@ const TourMultiForm = ({
                   </div>
                   </div>
                 </section>
+
+                {/* Duration, pricing detail, meals, vessel, pickup, availability */}
+                <TourDetailFields
+                  values={tour}
+                  onChange={(field, value) =>
+                    updateTour(tour.id, field, value)
+                  }
+                />
 
                 {/* Notes */}
                 <section>

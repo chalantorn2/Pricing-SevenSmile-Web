@@ -13,6 +13,7 @@ import {
   Eye,
   Trash2,
   Save,
+  ListChecks,
 } from "lucide-react";
 import { SupplierAutocomplete } from "../../components/suppliers";
 import { SupplierModal } from "../../components/suppliers";
@@ -20,9 +21,14 @@ import {
   TourFileUpload,
   ShareGalleryManager,
   SharedGalleryGroup,
+  TourDetailFields,
 } from "../../components/tours";
 import { AutocompleteInput, ProvincePicker } from "../../components/common";
 import { TOUR_TYPES } from "../../utils/tour-types";
+import {
+  emptyDetailValues,
+  detailValuesFromRow,
+} from "../../utils/tour-details";
 import { COMMON_PROVINCES } from "../../utils/provinces";
 import SupplierFileUpload from "../../components/suppliers/SupplierFileUpload";
 import {
@@ -75,6 +81,7 @@ const EditTour = () => {
     park_fee_adult: "",
     park_fee_child: "",
     map_url: "",
+    ...emptyDetailValues(),
   });
 
   // Validation errors
@@ -131,6 +138,7 @@ const EditTour = () => {
               ? parseFloat(tourData.park_fee_child).toString()
               : "",
           map_url: tourData.map_url || "",
+          ...detailValuesFromRow(tourData),
         });
 
         // Set supplier if exists
@@ -745,6 +753,18 @@ const EditTour = () => {
               />
             </div>
           </div>
+        </div>
+
+        {/* Duration, pricing detail, meals, vessel, pickup, availability */}
+        <div className="bg-white rounded-lg shadow-sm border p-6">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
+            <ListChecks className="h-5 w-5" />
+            Tour details
+          </h2>
+          <TourDetailFields
+            values={formData}
+            onChange={handleAutocompleteChange}
+          />
         </div>
 
         {/* Files Section */}

@@ -36,6 +36,164 @@ try {
 
     $method = $_SERVER['REQUEST_METHOD'];
 
+    // ---------------------------------------------------------------------
+    // Writable columns on `tours`, with how a posted value is normalised.
+    //
+    //   str   trimmed string, '' -> NULL
+    //   text  string kept verbatim (newlines matter), '' -> NULL
+    //   num   decimal, '' -> NULL
+    //   num0  decimal that must never be NULL (the two headline prices)
+    //   int   integer, '' -> NULL
+    //   int0  integer that must never be NULL (a NOT NULL column with a default)
+    //   bool  1/0, never NULL
+    //   flag  tri-state 1/0/NULL - NULL means "nobody recorded this yet" and
+    //         must not be shown as "no"
+    //   date  YYYY-MM-DD, '' -> NULL
+    //   time  HH:MM[:SS], '' -> NULL
+    //   json  array (or comma list) -> JSON text, empty -> NULL
+    //
+    // Both INSERT and UPDATE are built from this list, so adding a column here
+    // is the only edit needed to make it writable.
+    // ---------------------------------------------------------------------
+    $TOUR_FIELDS = array(
+        'tour_name'            => 'str',
+        'departure_from'       => 'str',
+        'destination'          => 'str',
+        'pier'                 => 'str',
+        'tour_type'            => 'str',
+        'adult_price'          => 'num0',
+        'child_price'          => 'num0',
+        'start_date'           => 'date',
+        'end_date'             => 'date',
+        'notes'                => 'text',
+        'park_fee_included'    => 'bool',
+        'park_fee_adult'       => 'num',
+        'park_fee_child'       => 'num',
+        'map_url'              => 'str',
+        // Duration
+        'duration_type'        => 'str',
+        'duration_hours'       => 'num',
+        'start_time'           => 'time',
+        'end_time'             => 'time',
+        'time_note'            => 'str',
+        // Pricing detail (all net rates)
+        'price_mode'           => 'str',
+        'child_age_min'        => 'int',
+        'child_age_max'        => 'int',
+        'infant_price'         => 'num',
+        'infant_age_max'       => 'int',
+        'single_supplement'    => 'num',
+        'min_pax'              => 'int',
+        'max_pax'              => 'int',
+        // Meals
+        'meals_included'       => 'json',
+        'meal_style'           => 'str',
+        'meal_venue'           => 'str',
+        'halal_available'      => 'flag',
+        'vegetarian_available' => 'flag',
+        'meal_note'            => 'str',
+        // Vessel / vehicle
+        'vessel_type'          => 'str',
+        'vessel_name'          => 'str',
+        'vessel_capacity'      => 'int',
+        'vessel_detail'        => 'str',
+        'guide_included'       => 'flag',
+        'guide_languages'      => 'json',
+        // Pickup / transfer
+        'transfer_included'    => 'flag',
+        'transfer_type'        => 'str',
+        'pickup_time_from'     => 'time',
+        'pickup_time_to'       => 'time',
+        'meeting_point'        => 'str',
+        // Availability
+        'operating_days'       => 'json',
+        'booking_lead_hours'   => 'int',
+        'is_active'            => 'bool',
+        'last_verified_at'     => 'date',
+        // Frequently used
+        'is_frequent'          => 'bool',
+        'frequent_order'       => 'int0',
+    );
+
+    function normalizeTourValue($kind, $value)
+    {
+        switch ($kind) {
+            case 'str':
+                $v = is_string($value) ? trim($value) : $value;
+                return ($v === '' || $v === null) ? null : $v;
+
+            case 'text':
+                return ($value === '' || $value === null) ? null : $value;
+
+            case 'num':
+                if ($value === '' || $value === null) return null;
+                return is_numeric($value) ? (float) $value : null;
+
+            case 'num0':
+                return is_numeric($value) ? (float) $value : 0;
+
+            case 'int':
+                if ($value === '' || $value === null) return null;
+                return is_numeric($value) ? (int) $value : null;
+
+            case 'int0':
+                return is_numeric($value) ? (int) $value : 0;
+
+            case 'bool':
+                return ($value === true || $value === 1 || $value === '1' || $value === 'true') ? 1 : 0;
+
+            case 'flag':
+                if ($value === '' || $value === null) return null;
+                return ($value === true || $value === 1 || $value === '1' || $value === 'true') ? 1 : 0;
+
+            case 'date':
+                if ($value === '' || $value === null || $value === '0000-00-00') return null;
+                return substr($value, 0, 10);
+
+            case 'time':
+                if ($value === '' || $value === null) return null;
+                // Accept "08:00" and "08:00:00"; anything else is dropped.
+                return preg_match('/^\d{2}:\d{2}(:\d{2})?$/', $value) ? substr($value, 0, 5) . ':00' : null;
+
+            case 'json':
+                if (is_string($value)) {
+                    $value = trim($value);
+                    if ($value === '') return null;
+                    $decoded = json_decode($value, true);
+                    $value = is_array($decoded)
+                        ? $decoded
+                        : array_values(array_filter(array_map('trim', explode(',', $value)), 'strlen'));
+                }
+                if (!is_array($value) || count($value) === 0) return null;
+                return json_encode(array_values($value), JSON_UNESCAPED_UNICODE);
+        }
+        return $value;
+    }
+
+    /**
+     * Turn a posted payload into [column => value] pairs.
+     *
+     * $onlyProvided keeps an UPDATE to the keys the client actually sent, so a
+     * screen that edits a handful of columns (the bulk editor) cannot blank out
+     * the ones it knows nothing about.
+     */
+    function collectTourFields($data, $fields, $onlyProvided)
+    {
+        $out = array();
+        foreach ($fields as $column => $kind) {
+            if ($onlyProvided && !array_key_exists($column, $data)) {
+                continue;
+            }
+            $raw = array_key_exists($column, $data) ? $data[$column] : null;
+            $out[$column] = normalizeTourValue($kind, $raw);
+        }
+        // "No end date" wins over whatever sits in the end_date box.
+        if (array_key_exists('end_date', $out) && !empty($data['no_end_date'])) {
+            $out['end_date'] = null;
+        }
+        return $out;
+    }
+
     switch ($method) {
         case 'GET':
             // Get a single tour by id
@@ -170,28 +328,19 @@ try {
                         throw new Exception("Please enter a tour name");
                     }
 
-                    $sql = "INSERT INTO tours (supplier_id, tour_name, departure_from, destination, pier, tour_type, adult_price, child_price, start_date, end_date, notes, park_fee_included, park_fee_adult, park_fee_child, map_url, updated_by)
-                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    // Only the columns the client sent are written, so a payload
+                    // that says nothing about is_active / is_frequent gets the
+                    // table's default rather than a blanket 0.
+                    $values = collectTourFields($tour, $TOUR_FIELDS, true);
+                    $values['supplier_id'] = $supplier_id;
+                    $values['updated_by']  = $updated_by;
+
+                    $columns      = array_keys($values);
+                    $placeholders = implode(', ', array_fill(0, count($columns), '?'));
+                    $sql = "INSERT INTO tours (`" . implode('`, `', $columns) . "`) VALUES ($placeholders)";
 
                     $stmt = $pdo->prepare($sql);
-                    $result = $stmt->execute(array(
-                        $supplier_id,
-                        $tour['tour_name'],
-                        isset($tour['departure_from']) ? $tour['departure_from'] : null,
-                        isset($tour['destination']) ? $tour['destination'] : null,
-                        isset($tour['pier']) ? $tour['pier'] : null,
-                        isset($tour['tour_type']) ? $tour['tour_type'] : null,
-                        isset($tour['adult_price']) ? $tour['adult_price'] : 0,
-                        isset($tour['child_price']) ? $tour['child_price'] : 0,
-                        isset($tour['start_date']) && $tour['start_date'] ? $tour['start_date'] : null,
-                        isset($tour['end_date']) && $tour['end_date'] && !$tour['no_end_date'] ? $tour['end_date'] : null,
-                        isset($tour['notes']) ? $tour['notes'] : null,
-                        isset($tour['park_fee_included']) && $tour['park_fee_included'] ? 1 : 0,
-                        isset($tour['park_fee_adult']) && $tour['park_fee_adult'] !== '' ? $tour['park_fee_adult'] : null,
-                        isset($tour['park_fee_child']) && $tour['park_fee_child'] !== '' ? $tour['park_fee_child'] : null,
-                        isset($tour['map_url']) ? $tour['map_url'] : null, // New field
-                        $updated_by
-                    ));
+                    $result = $stmt->execute(array_values($values));
 
                     if ($result) {
                         $id = $pdo->lastInsertId();
@@ -338,6 +487,28 @@ try {
                 break;
             }
 
+            // Pin / unpin a tour as one the office uses often (the star in the list)
+            if (isset($_GET['action']) && $_GET['action'] === 'toggle_frequent') {
+                $input = file_get_contents('php://input');
+                $data = json_decode($input, true);
+
+                $id = isset($data['id']) ? (int) $data['id'] : 0;
+                if ($id <= 0) {
+                    throw new Exception("ID not found");
+                }
+                $is_frequent = !empty($data['is_frequent']) ? 1 : 0;
+
+                $stmt = $pdo->prepare("UPDATE tours SET is_frequent = ? WHERE id = ?");
+                $stmt->execute(array($is_frequent, $id));
+
+                echo json_encode(array(
+                    'success' => true,
+                    'data' => array('id' => $id, 'is_frequent' => $is_frequent),
+                    'message' => $is_frequent ? 'Pinned as frequently used' : 'Unpinned'
+                ));
+                break;
+            }
+
             // Update tour
             $id = isset($_GET['id']) ? $_GET['id'] : null;
             if (!$id) {
@@ -347,31 +518,28 @@ try {
             $input = file_get_contents('php://input');
             $data = json_decode($input, true);
 
-            // ✅ Add this line to support map_url
-            $sql = "UPDATE tours
-           SET supplier_id=?, tour_name=?, departure_from=?, destination=?, pier=?, tour_type=?, adult_price=?, child_price=?, start_date=?, end_date=?, notes=?, park_fee_included=?, park_fee_adult=?, park_fee_child=?, map_url=?, updated_by=?, updated_at=NOW()
-           WHERE id=?";
+            // Only the columns the client actually sent are written, so a screen
+            // that edits a subset (the bulk editor) leaves the rest untouched.
+            $values = collectTourFields($data, $TOUR_FIELDS, true);
+            if (array_key_exists('tour_name', $values) && $values['tour_name'] === null) {
+                throw new Exception("Please enter a tour name");
+            }
+            if (count($values) === 0) {
+                throw new Exception("Nothing to update");
+            }
+            if (array_key_exists('supplier_id', $data)) {
+                $values['supplier_id'] = $data['supplier_id'] !== '' ? $data['supplier_id'] : null;
+            }
+            $values['updated_by'] = isset($data['updated_by']) ? $data['updated_by'] : 'Unknown';
+
+            $assignments = array();
+            foreach (array_keys($values) as $column) {
+                $assignments[] = "`$column` = ?";
+            }
+            $sql = "UPDATE tours SET " . implode(', ', $assignments) . ", updated_at = NOW() WHERE id = ?";
 
             $stmt = $pdo->prepare($sql);
-            $result = $stmt->execute(array(
-                isset($data['supplier_id']) ? $data['supplier_id'] : null,
-                $data['tour_name'],
-                isset($data['departure_from']) ? $data['departure_from'] : null,
-                isset($data['destination']) ? $data['destination'] : null,
-                isset($data['pier']) ? $data['pier'] : null,
-                isset($data['tour_type']) ? $data['tour_type'] : null,
-                isset($data['adult_price']) ? $data['adult_price'] : 0,
-                isset($data['child_price']) ? $data['child_price'] : 0,
-                isset($data['start_date']) && $data['start_date'] ? $data['start_date'] : null,
-                isset($data['end_date']) && $data['end_date'] && !$data['no_end_date'] ? $data['end_date'] : null,
-                isset($data['notes']) ? $data['notes'] : null,
-                isset($data['park_fee_included']) && $data['park_fee_included'] ? 1 : 0,
-                isset($data['park_fee_adult']) && $data['park_fee_adult'] !== '' ? $data['park_fee_adult'] : null,
-                isset($data['park_fee_child']) && $data['park_fee_child'] !== '' ? $data['park_fee_child'] : null,
-                isset($data['map_url']) ? $data['map_url'] : null, // ✅ Add this line
-                isset($data['updated_by']) ? $data['updated_by'] : 'Unknown',
-                $id
-            ));
+            $result = $stmt->execute(array_merge(array_values($values), array($id)));
 
             if ($result) {
                 // Get updated tour with supplier info

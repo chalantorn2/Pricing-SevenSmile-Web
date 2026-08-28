@@ -62,16 +62,54 @@ GET /api/public/tours.php
 |---|---|---|
 | `id` | `?id=19` | One tour |
 | `supplier_id` | `?supplier_id=7` | All tours of one supplier |
-| `search` | `?search=phi phi` | Match tour name or supplier name |
+| `search` | `?search=phi phi` | Match tour name, supplier name or boat name |
+| `destination` | `?destination=Krabi` | Exact destination province |
+| `departure_from` | `?departure_from=Phuket` | Substring match (a tour can list several) |
+| `tour_type` | `?tour_type=one_day_trip` | `one_day_trip`, `private`, `show_ticket`, `activity`, `package` |
+| `duration_type` | `?duration_type=full_day` | `full_day`, `half_day_am`, `half_day_pm`, `multi_day`, `flexible` |
+| `vessel_type` | `?vessel_type=speedboat` | `speedboat`, `catamaran`, `longtail`, … |
+| `price_mode` | `?price_mode=per_person` | `per_person`, `per_group`, `per_boat`, `per_vehicle` |
+| `active` | `?active=1` | Active only (omit to get both, for mirroring) |
+| `frequent` | `?frequent=1` | Only the tours the office sells often |
+| `since` | `?since=2026-08-01` | Only tours changed on/after that date (incremental sync) |
+| `page`, `limit` | `?page=2&limit=50` | Opt-in pagination — **omit `limit` and you get every tour**, as before |
+
+Sorted with the frequently-used tours first, then most recently updated.
 
 Fields returned:
 
-Tour: `id`, `supplier_id`, `tour_name`, `departure_from`, `destination`, `pier`, `tour_type`,
-`adult_price`, `child_price`, `start_date`, `end_date`, `notes`,
-`park_fee_included`, `park_fee_adult`, `park_fee_child`, `map_url`, `created_at`, `updated_at`
+**Core** — `id`, `supplier_id`, `tour_name`, `departure_from`, `destination`, `pier`,
+`tour_type`, `adult_price`, `child_price`, `start_date`, `end_date`, `notes`,
+`park_fee_included`, `park_fee_adult`, `park_fee_child`, `map_url`,
+`created_at`, `updated_at`
 
-Supplier: `supplier_name`, `address`, `phone`, `phone_2` … `phone_5`,
+**Duration** — `duration_type`, `duration_hours`, `start_time`, `end_time`, `time_note`
+
+**Pricing detail** — `price_mode`, `child_age_min`, `child_age_max`, `infant_price`,
+`infant_age_max`, `single_supplement`, `min_pax`, `max_pax`
+
+**Meals** — `meals_included[]`, `meal_style`, `meal_venue`, `halal_available`,
+`vegetarian_available`, `meal_note`
+
+**Boat / vehicle** — `vessel_type`, `vessel_name`, `vessel_capacity`, `vessel_detail`,
+`guide_included`, `guide_languages[]`
+
+**Pickup** — `transfer_included`, `transfer_type`, `pickup_time_from`, `pickup_time_to`,
+`meeting_point`
+
+**Availability** — `operating_days[]`, `booking_lead_hours`, `is_active`,
+`last_verified_at`, `is_frequent`
+
+**Supplier** — `supplier_name`, `address`, `phone`, `phone_2` … `phone_5`,
 `line`, `facebook`, `whatsapp`, `website`, `email`
+
+`meals_included`, `guide_languages` and `operating_days` come back as real arrays.
+An empty array means the field was never filled in — we never store an explicit
+"none".
+
+`halal_available`, `vegetarian_available`, `guide_included` and `transfer_included`
+are three-state: `"1"` yes, `"0"` no, `null` **nobody has recorded it yet**. Do not
+render `null` as "no".
 
 Example:
 ```json
@@ -80,16 +118,47 @@ Example:
   "supplier_id": 7,
   "tour_name": "4 Islands Speed Boat",
   "departure_from": "Krabi",
+  "destination": "Krabi",
   "pier": "Nopparat Thara Pier",
+  "tour_type": "one_day_trip",
   "adult_price": "500.00",
   "child_price": "400.00",
   "start_date": "2025-05-15",
   "end_date": "2026-05-15",
-  "park_fee_included": 0,
+  "park_fee_included": "0",
+  "duration_type": "full_day",
+  "duration_hours": "8.0",
+  "start_time": "09:00:00",
+  "end_time": "17:00:00",
+  "price_mode": "per_person",
+  "child_age_min": "4",
+  "child_age_max": "11",
+  "min_pax": "2",
+  "meals_included": ["lunch", "drinking_water"],
+  "meal_style": "buffet",
+  "halal_available": "1",
+  "vegetarian_available": null,
+  "vessel_type": "speedboat",
+  "vessel_capacity": "35",
+  "guide_languages": ["th", "en"],
+  "transfer_included": "1",
+  "transfer_type": "join",
+  "pickup_time_from": "08:30:00",
+  "pickup_time_to": "08:45:00",
+  "operating_days": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"],
+  "is_active": "1",
+  "is_frequent": "0",
   "supplier_name": "Orchid",
   "phone": "0984541233"
 }
 ```
+
+**`adult_price`, `child_price`, `infant_price` and `single_supplement` are NET
+(cost) prices from the supplier, not selling prices.** A consumer may store them,
+but must never render them on a customer-facing page — add your own markup first.
+
+Still lives in `notes` and has no column yet: per-zone pickup times and surcharges,
+inclusion / exclusion lists, seasonal rates, and monsoon closure periods.
 
 ### 2. Suppliers — `suppliers.php`
 
@@ -292,6 +361,7 @@ curl -H "X-API-Key: sevensmile_2026_001_2026" \
 ## Notes
 
 - Read-only. No write endpoints exist.
-- Prices are strings from MySQL `DECIMAL` (e.g. `"500.00"`) — cast before doing math.
+- Prices and other numbers come back as strings from MySQL (e.g. `"500.00"`, `"35"`) — cast before doing math.
+- A `null` means "not recorded", which is never the same as `0` or `false`.
 - Empty contact fields may be `""` or `null` — check both.
 - Image and PDF links (`file_url`) are public; no key needed to open them.

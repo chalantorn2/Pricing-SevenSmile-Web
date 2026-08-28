@@ -21,6 +21,7 @@ import {
   ChevronsUpDown,
   AlertTriangle,
   RotateCcw,
+  Star,
 } from "lucide-react";
 
 // Labels are i18n keys — the header row renders them through t().
@@ -140,6 +141,9 @@ const TourList = () => {
   const [supplierFilter, setSupplierFilter] = useState("");
   const [destinationFilter, setDestinationFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState(initialStatus); // all | active | expired
+  const [frequentOnly, setFrequentOnly] = useState(false);
+  // Ids currently being pinned/unpinned, so the star can't be double-clicked
+  const [pendingFrequent, setPendingFrequent] = useState([]);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -226,6 +230,7 @@ const TourList = () => {
       ) {
         return false;
       }
+      if (frequentOnly && Number(tour.is_frequent) !== 1) return false;
       if (supplierFilter && tour.supplier_name !== supplierFilter) return false;
       if (destinationFilter && tour.destination !== destinationFilter) {
         return false;
@@ -267,6 +272,12 @@ const TourList = () => {
         if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
         return 0;
       });
+    } else {
+      // No column chosen: the tours the office sells often come first, and the
+      // API's "most recently updated" order is preserved within each group.
+      filtered.sort(
+        (a, b) => Number(b.is_frequent || 0) - Number(a.is_frequent || 0)
+      );
     }
 
     return filtered;
@@ -276,6 +287,7 @@ const TourList = () => {
     supplierFilter,
     destinationFilter,
     statusFilter,
+    frequentOnly,
     sortConfig,
     activeProvince,
   ]);
@@ -284,6 +296,7 @@ const TourList = () => {
     Boolean(searchTerm) ||
     Boolean(supplierFilter) ||
     Boolean(destinationFilter) ||
+    frequentOnly ||
     statusFilter !== "all";
 
   const clearFilters = () => {
@@ -292,6 +305,7 @@ const TourList = () => {
     setSupplierFilter("");
     setDestinationFilter("");
     setStatusFilter("all");
+    setFrequentOnly(false);
   };
 
   const handleSort = (key) => {
@@ -364,6 +378,51 @@ const TourList = () => {
   // ========= Sub-renders =========
   // In the desktop table the buttons stay dimmed until the row is hovered or
   // something inside them takes focus; the mobile cards always show them.
+  // Pin / unpin "frequently used". Updated locally first so the list re-orders
+  // straight away, and rolled back if the write fails.
+  const handleToggleFrequent = async (tour) => {
+    const next = Number(tour.is_frequent) === 1 ? 0 : 1;
+    setPendingFrequent((prev) => [...prev, tour.id]);
+    setTours((prev) =>
+      prev.map((t) => (t.id === tour.id ? { ...t, is_frequent: next } : t))
+    );
+    try {
+      await toursService.setFrequent(tour.id, next);
+    } catch (error) {
+      console.error("Failed to update frequently-used flag", error);
+      setTours((prev) =>
+        prev.map((t) =>
+          t.id === tour.id ? { ...t, is_frequent: tour.is_frequent } : t
+        )
+      );
+      setToast({ message: "Could not update the pin", type: "error" });
+    } finally {
+      setPendingFrequent((prev) => prev.filter((id) => id !== tour.id));
+    }
+  };
+
+  // Always visible (unlike the hover actions) - a pin only helps if you can see it.
+  const renderFrequentButton = (tour) => {
+    const pinned = Number(tour.is_frequent) === 1;
+    return (
+      <button
+        type="button"
+        onClick={() => handleToggleFrequent(tour)}
+        disabled={pendingFrequent.includes(tour.id)}
+        aria-pressed={pinned}
+        title={pinned ? "Remove from frequently used" : "Mark as frequently used"}
+        aria-label={`${pinned ? "Unpin" : "Pin"} ${tour.tour_name}`}
+        className={`inline-flex shrink-0 items-center justify-center w-6 h-6 rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-50 ${
+          pinned
+            ? "text-warning-500 hover:text-warning-600"
+            : "text-gray-300 hover:text-warning-500"
+        }`}
+      >
+        <Star className={`w-4 h-4 ${pinned ? "fill-current" : ""}`} />
+      </button>
+    );
+  };
+
   const renderActions = (tour, { revealOnHover = false } = {}) => (
     <div
       className={`inline-flex items-center gap-1 ${
@@ -415,6 +474,23 @@ const TourList = () => {
           <p className="text-sm text-gray-500 mt-1">
             Try a different keyword or clear the filters.
           </p>
+          {/* Frequently used */}
+          <button
+            type="button"
+            onClick={() => setFrequentOnly((on) => !on)}
+            aria-pressed={frequentOnly}
+            className={`inline-flex items-center justify-center gap-1.5 self-start px-3 py-2 rounded-lg border text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
+              frequentOnly
+                ? "border-warning-400 bg-warning-50 text-warning-700"
+                : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+            }`}
+          >
+            <Star
+              className={`w-4 h-4 ${frequentOnly ? "fill-current" : ""}`}
+            />
+            Frequently used
+          </button>
+
           {hasActiveFilters && (
             <button
               onClick={clearFilters}
@@ -726,6 +802,7 @@ const TourList = () => {
                           {/* Tour Name + Supplier + expired badge */}
                           <td className="px-6 py-3 align-top">
                             <div className="flex items-start gap-2">
+                              {renderFrequentButton(tour)}
                               <div className="font-medium text-gray-900 leading-5">
                                 {tour.tour_name}
                               </div>
@@ -791,11 +868,14 @@ const TourList = () => {
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <div className="font-medium text-gray-900 leading-5">
-                            {tour.tour_name}
+                          <div className="flex items-start gap-2">
+                            {renderFrequentButton(tour)}
+                            <div className="font-medium text-gray-900 leading-5">
+                              {tour.tour_name}
+                            </div>
                           </div>
                           {tour.supplier_name && (
-                            <div className="mt-1 inline-flex items-center gap-1 text-xs text-gray-500">
+                            <div className="mt-1 ml-8 inline-flex items-center gap-1 text-xs text-gray-500">
                               <Building2 className="w-3.5 h-3.5" />
                               <span className="truncate">
                                 {tour.supplier_name}

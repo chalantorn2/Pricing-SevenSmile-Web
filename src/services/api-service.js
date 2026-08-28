@@ -533,6 +533,23 @@ export const toursService = {
     }
   },
 
+  // Pin / unpin a tour as one the office sells often. Writes only that one
+  // column, so it is safe to call from the list without loading the whole tour.
+  async setFrequent(id, isFrequent) {
+    try {
+      const response = await apiCall("/tours.php?action=toggle_frequent", {
+        method: "PUT",
+        body: JSON.stringify({ id, is_frequent: isFrequent ? 1 : 0 }),
+      });
+      return response.data;
+    } catch (error) {
+      console.error("❌ Failed to update frequently-used flag:", error);
+      throw new Error(
+        "An error occurred while updating the tour: " + error.message
+      );
+    }
+  },
+
   // Delete tour
   async deleteTour(id) {
     try {
