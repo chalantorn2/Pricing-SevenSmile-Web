@@ -4,12 +4,15 @@ import { Eye, Pencil, Plus, Trash2 } from "lucide-react";
 import { packageToursService } from "../../services/api-service";
 import { ConfirmDialog, Toast } from "../../components/core";
 import { useI18n } from "../../i18n";
+import { hasCache, readCache, writeCache } from "../../utils";
+
+const CACHE_KEY = "packages";
 
 const PackageTourList = () => {
   const { t } = useI18n();
-  const [packages, setPackages] = useState([]);
+  const [packages, setPackages] = useState(() => readCache(CACHE_KEY) || []);
   const [filteredPackages, setFilteredPackages] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !hasCache(CACHE_KEY));
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -26,9 +29,9 @@ const PackageTourList = () => {
 
   const fetchPackages = async () => {
     try {
-      setLoading(true);
+      if (!hasCache(CACHE_KEY)) setLoading(true);
       const data = await packageToursService.getAllPackages();
-      setPackages(data);
+      setPackages(writeCache(CACHE_KEY, data));
     } catch (error) {
       console.error("Error fetching packages:", error);
       alert(t("packages.loadError"));

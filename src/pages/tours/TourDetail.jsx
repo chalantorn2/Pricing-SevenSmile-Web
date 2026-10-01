@@ -13,6 +13,7 @@ import { TourDetails } from "../../components/tours";
 import { DocumentModal } from "../../components/common";
 import { Toast } from "../../components/core";
 import { pushRecentItem } from "../../utils/recentItems";
+import { isExpired as isDateExpired } from "../../utils";
 import { useI18n } from "../../i18n";
 
 const TourDetail = () => {
@@ -104,10 +105,7 @@ const TourDetail = () => {
     );
   }
 
-  const isExpired =
-    tour.end_date &&
-    tour.end_date !== "0000-00-00" &&
-    new Date(tour.end_date) < new Date();
+  const isExpired = isDateExpired(tour.end_date);
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">

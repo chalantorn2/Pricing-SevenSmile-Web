@@ -179,12 +179,44 @@ textarea:focus {
 }
 button:focus-visible,
 a:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible,
 [role="button"]:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
+}
+
+/* Text fields get ONE focus ring, never two. The old rule drew an outline 2px
+   outside a field that already had its own focus:ring-*, which read as a second
+   frame around the box. These rules are unlayered, so they also win over the
+   per-field ring utilities — every text field in the app now focuses the same
+   way instead of each screen inventing its own. */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+  border-color: var(--color-brand-500);
+  box-shadow: 0 0 0 2px rgb(14 165 233 / 0.3);
+}
+/* Checkboxes, radios and file pickers have no ring of their own — they keep the
+   outline, or keyboard users lose them entirely. */
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible,
+input[type="file"]:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+/* A field flagged invalid stays red while focused. */
+.input-error:focus-visible {
+  border-color: var(--color-danger-500);
+  box-shadow: 0 0 0 2px rgb(239 68 68 / 0.3);
+}
+/* A field inside a shell that draws its own focus-within ring adds nothing. */
+.focus-shell input:focus-visible,
+.focus-shell textarea:focus-visible,
+.focus-shell select:focus-visible {
+  outline: none;
+  border-color: inherit;
+  box-shadow: none;
 }
 button,
 .action-button,
@@ -213,6 +245,10 @@ button,
   justify-content: center;
   padding: 1rem;
   min-height: 100vh;
+  /* A dialog taller than the viewport must stay reachable, not be clipped by
+     the centering. */
+  max-height: 100vh;
+  overflow-y: auto;
 }
 
 .modal-content {
@@ -683,11 +719,9 @@ button,
 @keyframes pageEnter {
   from {
     opacity: 0;
-    transform: translateY(8px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -705,7 +739,12 @@ button,
 }
 
 .page-enter {
-  animation: pageEnter 0.3s ease-out both;
+  /* Every menu switch plays this, so it is deliberately short and opacity-only:
+     at 0.3s with a slide the new screen was still arriving well after the click,
+     which reads as the app lagging behind the nav. Opacity alone also keeps the
+     wrapper from becoming the containing block for the `position: fixed` modals
+     rendered inside a page - an animated transform would. */
+  animation: pageEnter 0.12s ease-out backwards;
 }
 
 @media (prefers-reduced-motion: reduce) {

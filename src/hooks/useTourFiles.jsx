@@ -46,21 +46,16 @@ const useTourFiles = (tourId) => {
       gallery: [],
     };
 
-    console.log("🛠 Raw files:", files); // Debug
-
     files.forEach((file) => {
       const category = file.file_category || "general";
-      console.log(`🛠 File ${file.id}: category = "${category}"`); // Debug
 
       if (categories[category]) {
         categories[category].push(file);
       } else {
-        console.log(`🛠 Unknown category: ${category}, adding to general`); // Debug
         categories.general.push(file);
       }
     });
 
-    console.log("🛠 Final categories:", categories); // Debug
     return categories;
   }, [files]);
 
@@ -68,19 +63,8 @@ const useTourFiles = (tourId) => {
   const sharedGalleryGroups = useMemo(() => {
     const groups = {};
 
-    console.log("🔍 DEBUG: All files:", files);
-    console.log("🔍 DEBUG: Gallery files:", filesByCategory.gallery);
-
     if (filesByCategory.gallery) {
       filesByCategory.gallery.forEach((file) => {
-        console.log(
-          "🔍 DEBUG: File",
-          file.id,
-          "isSharedFile:",
-          file.isSharedFile,
-          "sharedFromTourId:",
-          file.sharedFromTourId
-        );
 
         if (file.isSharedFile && file.sharedFromTourId) {
           const sourceId = file.sharedFromTourId;
@@ -97,7 +81,6 @@ const useTourFiles = (tourId) => {
       });
     }
 
-    console.log("🔍 DEBUG: Shared gallery groups:", groups);
     return groups;
   }, [filesByCategory.gallery]);
 

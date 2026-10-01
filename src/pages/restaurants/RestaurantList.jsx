@@ -14,6 +14,7 @@ import { restaurantsService } from "../../services/api-service";
 import RestaurantFormModal from "../../components/restaurants/RestaurantFormModal";
 import { ConfirmDialog, Toast } from "../../components/core";
 import { useI18n } from "../../i18n";
+import { hasCache, readCache, writeCache } from "../../utils";
 
 const VIEW_KEY = "restaurantsViewMode";
 
@@ -27,8 +28,10 @@ const RestaurantList = () => {
   const [viewMode, setViewMode] = useState(
     () => localStorage.getItem(VIEW_KEY) || "compact"
   );
-  const [restaurants, setRestaurants] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // One entry per province slice, so /restaurant and /restaurant/Krabi keep their own rows.
+  const cacheKey = `restaurants:${province || "all"}`;
+  const [restaurants, setRestaurants] = useState(() => readCache(cacheKey) || []);
+  const [loading, setLoading] = useState(() => !hasCache(cacheKey));
   const [searchTerm, setSearchTerm] = useState(searchParams.get("q") || "");
   const [error, setError] = useState(null);
   // null = closed, {} = create, restaurant object = edit
@@ -39,18 +42,18 @@ const RestaurantList = () => {
 
   const loadRestaurants = useCallback(async () => {
     try {
-      setLoading(true);
+      if (!hasCache(cacheKey)) setLoading(true);
       setError(null);
       const filters = { limit: 500, sort_by: "name", sort_order: "asc" };
       if (province) filters.province = province;
       const res = await restaurantsService.getAllRestaurants(filters);
-      setRestaurants(res.data || []);
+      setRestaurants(writeCache(cacheKey, res.data || []));
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [province]);
+  }, [province, cacheKey]);
 
   useEffect(() => {
     loadRestaurants();

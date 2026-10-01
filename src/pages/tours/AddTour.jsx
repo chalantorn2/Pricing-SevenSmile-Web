@@ -140,7 +140,6 @@ const AddTour = () => {
 
     try {
       const response = await toursService.addTours(toursPayload);
-      console.log("Tours created:", response);
 
       // Normalize: API returns a single object for one tour, array for many
       const createdTours = Array.isArray(response) ? response : [response];

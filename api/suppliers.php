@@ -93,10 +93,12 @@ try {
             $search = isset($_GET['search']) ? $_GET['search'] : '';
 
             if ($search) {
-                // For AutoComplete - search by name and all phone numbers
+                // For AutoComplete - search by name and all phone numbers. A
+                // switched-off supplier is not offered for new tours.
                 $sql = "SELECT id, name, type, phone, phone_2, phone_3, phone_4, phone_5, line, website
                         FROM suppliers
-                        WHERE (name LIKE ?
+                        WHERE is_active = 1
+                        AND (name LIKE ?
                         OR phone LIKE ? OR phone_2 LIKE ? OR phone_3 LIKE ? OR phone_4 LIKE ? OR phone_5 LIKE ?)";
                 $searchParam = '%' . $search . '%';
                 $params = array($searchParam, $searchParam, $searchParam, $searchParam, $searchParam, $searchParam);
@@ -188,6 +190,41 @@ try {
             break;
 
         case 'PUT':
+            if (isset($_GET['action']) && $_GET['action'] === 'status') {
+                // PUT ?action=status switches a supplier on or off. Only `is_active` is
+                // touched, and updated_at is pinned so the switch does not count as an
+                // edit to the supplier's details. (A PUT rather than a PATCH because
+                // the web server answers CORS preflight itself and does not allow PATCH.)
+                $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+                if ($id <= 0) {
+                    throw new Exception("ID not found");
+                }
+
+                $data = json_decode(file_get_contents('php://input'), true);
+                if (!is_array($data) || !array_key_exists('is_active', $data)) {
+                    throw new Exception("is_active is required");
+                }
+
+                $stmt = $pdo->prepare("UPDATE suppliers SET is_active = ?, updated_at = updated_at WHERE id = ?");
+                $stmt->execute(array($data['is_active'] ? 1 : 0, $id));
+
+                $stmt = $pdo->prepare("SELECT * FROM suppliers WHERE id = ?");
+                $stmt->execute(array($id));
+                $supplier = $stmt->fetch();
+                if (!$supplier) {
+                    http_response_code(404);
+                    echo json_encode(array('success' => false, 'error' => 'Supplier not found'));
+                    exit;
+                }
+
+                echo json_encode(array(
+                    'success' => true,
+                    'data' => $supplier,
+                    'message' => 'Supplier status updated'
+                ));
+                break;
+            }
+
             // Update supplier
             $id = isset($_GET['id']) ? $_GET['id'] : null;
             if (!$id) {

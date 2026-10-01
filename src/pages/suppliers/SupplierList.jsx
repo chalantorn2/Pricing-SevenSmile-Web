@@ -1,10 +1,15 @@
 import { useState, useEffect, useMemo } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 import { suppliersService, toursService } from "../../services/api-service";
 import { SupplierModal } from "../../components/suppliers";
 import { Toast } from "../../components/core";
 import { useI18n } from "../../i18n";
-import * as XLSX from "xlsx";
+import { hasCache, readCache, writeCache, isSupplierActive } from "../../utils";
 import {
   FileSpreadsheet,
   Plus,
@@ -56,6 +61,20 @@ const FILTERS = {
     match: (s) =>
       new Date(s.latest_activity) > new Date(Date.now() - 7 * 86400000),
   },
+  // Suppliers no longer in use stay out of every other chip and only show here.
+  inactive: {
+    label: "suppliers.filterInactive",
+    match: (s) => !isSupplierActive(s.is_active),
+    showsInactive: true,
+  },
+};
+
+const matchesFilter = (filterId, supplier) => {
+  const filter = FILTERS[filterId];
+  if (!filter.showsInactive && !isSupplierActive(supplier.is_active)) {
+    return false;
+  }
+  return filter.match(supplier);
 };
 
 const formatDate = (dateString, locale) =>
@@ -77,11 +96,20 @@ const getPhones = (supplier) =>
 const SupplierList = () => {
   const { t, lang } = useI18n();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [suppliers, setSuppliers] = useState([]);
-  const [tours, setTours] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const activeType = TYPES[searchParams.get("type")]
+    ? searchParams.get("type")
+    : DEFAULT_TYPE;
+  const isTourList = activeType === "tour";
+
+  // The type chip decides which suppliers come back, so it belongs in the key.
+  const cacheKey = `suppliers:${activeType}`;
+  const cached = readCache(cacheKey);
+  const [suppliers, setSuppliers] = useState(() => cached?.suppliers || []);
+  const [tours, setTours] = useState(() => cached?.tours || []);
+  const [loading, setLoading] = useState(() => !hasCache(cacheKey));
   const [error, setError] = useState(null);
 
   // Quick search on the home screen lands here with ?q= — seed the filter from it.
@@ -91,11 +119,6 @@ const SupplierList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [showAddModal, setShowAddModal] = useState(false);
   const [toast, setToast] = useState(null);
-
-  const activeType = TYPES[searchParams.get("type")]
-    ? searchParams.get("type")
-    : DEFAULT_TYPE;
-  const isTourList = activeType === "tour";
 
   const requestedFilter = searchParams.get("filter");
   // A tour-only chip left in the URL would silently empty the transfer list.
@@ -132,14 +155,34 @@ const SupplierList = () => {
     return () => clearTimeout(timer);
   }, [toast]);
 
+  // A supplier deleted from its own page confirms here: that page unmounts on
+  // the way over, so it hands the message across in the navigation state.
+  useEffect(() => {
+    const flash = location.state?.flash;
+    if (!flash) return;
+    setToast(flash);
+    // Clear it so a refresh or a back/forward does not replay the message.
+    navigate(location.pathname + location.search, { replace: true, state: null });
+  }, [location, navigate]);
+
   const fetchData = async () => {
     try {
-      setLoading(true);
+      // The type chips swap the list without remounting the screen, so put the
+      // rows for the newly picked type up straight away when they are cached and
+      // fall back to the skeleton only when there is nothing to show.
+      const seed = readCache(cacheKey);
+      if (seed) {
+        setSuppliers(seed.suppliers);
+        setTours(seed.tours);
+      } else {
+        setLoading(true);
+      }
       setError(null);
       const [suppliersData, toursData] = await Promise.all([
         suppliersService.getAllSuppliers(activeType),
         toursService.getAllTours(),
       ]);
+      writeCache(cacheKey, { suppliers: suppliersData, tours: toursData });
       setSuppliers(suppliersData);
       setTours(toursData);
     } catch (error) {
@@ -206,9 +249,9 @@ const SupplierList = () => {
   const filterCounts = useMemo(
     () =>
       Object.fromEntries(
-        visibleFilters.map(([id, filter]) => [
+        visibleFilters.map(([id]) => [
           id,
-          enrichedSuppliers.filter(filter.match).length,
+          enrichedSuppliers.filter((s) => matchesFilter(id, s)).length,
         ]),
       ),
     [enrichedSuppliers, visibleFilters],
@@ -218,7 +261,7 @@ const SupplierList = () => {
     const searchLower = searchTerm.toLowerCase().trim();
 
     const filtered = enrichedSuppliers.filter((supplier) => {
-      if (!FILTERS[activeFilter].match(supplier)) return false;
+      if (!matchesFilter(activeFilter, supplier)) return false;
       if (!searchLower) return true;
 
       return (
@@ -291,8 +334,9 @@ const SupplierList = () => {
   };
 
   // Exports whatever the chips and the search box currently narrow the list to
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     if (filteredSuppliers.length === 0) return;
+    const XLSX = await import("xlsx");
     const locale = lang === "th" ? "th-TH" : "en-US";
 
     const exportData = filteredSuppliers.map((supplier, index) => ({
@@ -431,6 +475,13 @@ const SupplierList = () => {
       {supplier.tour_count} tours
     </span>
   );
+
+  const renderInactiveBadge = (supplier) =>
+    !isSupplierActive(supplier.is_active) && (
+      <span className="ml-2 inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-600 ring-1 ring-inset ring-gray-200 align-middle">
+        {t("suppliers.inactive")}
+      </span>
+    );
 
   const renderSkeleton = () => (
     <div className="divide-y divide-gray-100">
@@ -698,7 +749,9 @@ const SupplierList = () => {
                     <tr
                       key={supplier.id}
                       onClick={(e) => handleRowClick(e, supplier)}
-                      className="group cursor-pointer transition hover:bg-gray-50 focus-within:bg-gray-50"
+                      className={`group cursor-pointer transition hover:bg-gray-50 focus-within:bg-gray-50 ${
+                        isSupplierActive(supplier.is_active) ? "" : "opacity-60"
+                      }`}
                     >
                       <td className="pl-6 pr-3 py-3 text-gray-500 tabular-nums">
                         {startIndex + index + 1}
@@ -711,6 +764,7 @@ const SupplierList = () => {
                         >
                           {supplier.name}
                         </Link>
+                        {renderInactiveBadge(supplier)}
                         {supplier.address && (
                           <div className="mt-1 flex items-start gap-1 text-xs text-gray-500">
                             <MapPin className="w-3.5 h-3.5 mt-px shrink-0" />
@@ -748,7 +802,9 @@ const SupplierList = () => {
                 <div
                   key={supplier.id}
                   onClick={(e) => handleRowClick(e, supplier)}
-                  className="p-4 space-y-2 active:bg-gray-50"
+                  className={`p-4 space-y-2 active:bg-gray-50 ${
+                    isSupplierActive(supplier.is_active) ? "" : "opacity-60"
+                  }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -758,6 +814,7 @@ const SupplierList = () => {
                       >
                         {supplier.name}
                       </Link>
+                      {renderInactiveBadge(supplier)}
                       {supplier.address && (
                         <div className="mt-1 flex items-start gap-1 text-xs text-gray-500">
                           <MapPin className="w-3.5 h-3.5 mt-px shrink-0" />

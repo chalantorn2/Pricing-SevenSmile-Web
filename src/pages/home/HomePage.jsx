@@ -23,18 +23,52 @@ import { getRecentItems } from "../../utils/recentItems";
 
 // One focused card per module. Keep the launcher intentionally quiet: the
 // destination filters belong inside each module, not on the home screen.
+// `image` is an optional watermark drawn faintly in the card's top-right
+// corner. Drop a file at the matching path under public/ and it shows up; a
+// missing file is hidden rather than left as a broken image.
 const CARDS = [
-  { key: "tours", icon: Palmtree, to: "/tours", countKey: "tours" },
-  { key: "hotels", icon: Hotel, to: "/hotel", countKey: "hotels" },
+  {
+    key: "tours",
+    icon: Palmtree,
+    to: "/tours",
+    countKey: "tours",
+    image: "/card-bg/tours.jpg",
+  },
+  {
+    key: "hotels",
+    icon: Hotel,
+    to: "/hotel",
+    countKey: "hotels",
+    image: "/card-bg/hotels.jpg",
+  },
   {
     key: "restaurants",
     icon: UtensilsCrossed,
     to: "/restaurant",
     countKey: "restaurants",
+    image: "/card-bg/restaurants.jpg",
   },
-  { key: "transfers", icon: Car, to: "/transfer", countKey: "transferRoutes" },
-  { key: "suppliers", icon: Building2, to: "/suppliers", countKey: "suppliers" },
-  { key: "packages", icon: Package, to: "/packages", countKey: "packages" },
+  {
+    key: "transfers",
+    icon: Car,
+    to: "/transfer",
+    countKey: "transferRoutes",
+    image: "/card-bg/transfers.jpg",
+  },
+  {
+    key: "suppliers",
+    icon: Building2,
+    to: "/suppliers",
+    countKey: "suppliers",
+    image: "/card-bg/suppliers.jpg",
+  },
+  {
+    key: "packages",
+    icon: Package,
+    to: "/packages",
+    countKey: "packages",
+    image: "/card-bg/packages.jpg",
+  },
 ];
 
 // Where each search-result group links. `itemTo` is the detail page; transfer
@@ -99,46 +133,66 @@ const CategoryCard = ({ card, counts, index }) => {
   const { t } = useI18n();
   const Icon = card.icon;
   const count = counts ? counts[card.countKey] : undefined;
+  // Artwork is optional and self-hosted; if the file is missing, drop it
+  // silently instead of showing a broken image behind the text.
+  const [artHidden, setArtHidden] = useState(false);
 
   return (
     <Link
       to={card.to}
       style={{ "--stagger": `${index * 55}ms` }}
-      className="group card-enter flex min-h-44 flex-col overflow-hidden rounded-2xl bg-white p-5 shadow-soft ring-1 ring-gray-100 transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-card-hover hover:ring-brand-200 active:translate-y-0"
+      className="group card-enter relative flex min-h-44 flex-col overflow-hidden rounded-2xl bg-white p-5 shadow-soft ring-1 ring-gray-100 transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-card-hover hover:ring-brand-200 active:translate-y-0"
     >
-      <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition-colors group-hover:bg-brand-100">
-          <Icon className="w-5.5 h-5.5" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="flex items-center gap-1 font-bold text-gray-900">
-            <span className="truncate">{t(`home.card.${card.key}`)}</span>
-            <ArrowRight className="w-4 h-4 shrink-0 text-gray-300 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-brand-500" />
-          </p>
-          <p className="truncate text-sm text-gray-500">
-            {t(`home.desc.${card.key}`)}
-          </p>
-        </div>
-      </div>
+      {card.image && !artHidden && (
+        <img
+          src={card.image}
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+          onError={() => setArtHidden(true)}
+          className="pointer-events-none absolute right-0 top-0 h-full w-[70%] select-none object-cover opacity-[0.35] transition-opacity duration-300 group-hover:opacity-[0.95]"
+          style={{
+            maskImage: "linear-gradient(to right, transparent, #000 100%)",
+            WebkitMaskImage: "linear-gradient(to right, transparent, #000 100%)",
+          }}
+        />
+      )}
 
-      <p className="mt-4 text-xl font-bold text-gray-900">
-        {count === undefined ? (
-          <span className="inline-block h-7 w-12 animate-pulse rounded bg-gray-100 align-middle" />
-        ) : (
-          <>
-            {count.toLocaleString()}{" "}
-            <span className="text-sm font-medium text-gray-500">
-              {t(`home.unit.${card.key}`)}
-            </span>
-          </>
-        )}
-      </p>
+      <div className="relative flex flex-1 flex-col">
+        <div className="flex items-start gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition-colors group-hover:bg-brand-100">
+            <Icon className="w-5.5 h-5.5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="flex items-center gap-1 font-bold text-gray-900">
+              <span className="truncate">{t(`home.card.${card.key}`)}</span>
+              <ArrowRight className="w-4 h-4 shrink-0 text-gray-300 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-brand-500" />
+            </p>
+            <p className="truncate text-sm text-gray-500">
+              {t(`home.desc.${card.key}`)}
+            </p>
+          </div>
+        </div>
 
-      <div className="mt-auto pt-3">
-        <span className="inline-flex items-center gap-1 text-sm font-medium text-brand-600">
-          {t("common.openModule")}
-          <ChevronRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
-        </span>
+        <p className="mt-4 text-xl font-bold text-gray-900">
+          {count === undefined ? (
+            <span className="inline-block h-7 w-12 animate-pulse rounded bg-gray-100 align-middle" />
+          ) : (
+            <>
+              {count.toLocaleString()}{" "}
+              <span className="text-sm font-medium text-gray-500">
+                {t(`home.unit.${card.key}`)}
+              </span>
+            </>
+          )}
+        </p>
+
+        <div className="mt-auto pt-3">
+          <span className="inline-flex items-center gap-1 text-sm font-medium text-brand-600">
+            {t("common.openModule")}
+            <ChevronRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+          </span>
+        </div>
       </div>
     </Link>
   );
@@ -242,6 +296,7 @@ const HomePage = () => {
   const [recent, setRecent] = useState([]);
   // Guard against out-of-order responses while the user keeps typing
   const requestId = useRef(0);
+  const inputRef = useRef(null);
 
   // undefined = loading, null = failed, object = loaded
   const [stats, setStats] = useState(undefined);
@@ -304,6 +359,36 @@ const HomePage = () => {
     return () => clearTimeout(timer);
   }, [query]);
 
+  // "/" or Ctrl/Cmd+K jumps to the search box from anywhere on the page. The
+  // button shows the same hint, so the two have to stay in sync.
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      const el = e.target;
+      const inField =
+        el?.isContentEditable ||
+        /^(input|textarea|select)$/i.test(el?.tagName || "");
+      const key = e.key?.toLowerCase();
+      const isSlash = key === "/" && !e.metaKey && !e.ctrlKey && !e.altKey;
+      const isCmdK = key === "k" && (e.metaKey || e.ctrlKey);
+      if ((isSlash && !inField) || isCmdK) {
+        e.preventDefault();
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  // Matches across every module — the number the button reports back.
+  const totalMatches = useMemo(() => {
+    if (!results?.groups) return 0;
+    return Object.values(results.groups).reduce(
+      (sum, group) => sum + (group?.total ?? 0),
+      0
+    );
+  }, [results]);
+
   const displayName =
     user?.nickname || user?.full_name || user?.username || "";
 
@@ -318,6 +403,8 @@ const HomePage = () => {
     setPanelOpen(false);
     navigate(to);
   };
+
+  const hasQuery = query.trim().length >= 2;
 
   const handleSubmit = (e) => {
     // Search is live as the user types — Enter just keeps the panel open.
@@ -342,9 +429,10 @@ const HomePage = () => {
 
           <div className="relative mx-auto mt-7 max-w-2xl">
             <form onSubmit={handleSubmit}>
-              <div className="flex items-center gap-3 rounded-2xl bg-white py-1 pl-4 pr-1 shadow-soft ring-1 ring-gray-200 transition-shadow focus-within:ring-2 focus-within:ring-brand-500/40">
+              <div className="focus-shell flex items-center gap-3 rounded-2xl bg-white py-1 pl-4 pr-1 shadow-soft ring-1 ring-gray-200 transition-shadow focus-within:ring-2 focus-within:ring-brand-500/40">
                 <Search className="w-5 h-5 shrink-0 text-gray-400" />
                 <input
+                  ref={inputRef}
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
@@ -367,14 +455,55 @@ const HomePage = () => {
                     <X className="w-4 h-4" />
                   </button>
                 )}
-                <button type="submit" className="btn-primary shrink-0 rounded-xl">
-                  {t("common.search")}
+                {/* The search runs as you type, so this button's real job is to
+                    report state: idle shows the shortcut, then a spinner, then
+                    the match count. */}
+                <button
+                  type="submit"
+                  title={t("home.searchShortcut")}
+                  aria-label={
+                    hasQuery && !searching
+                      ? t("common.searchResultsCount", { count: totalMatches })
+                      : t("common.search")
+                  }
+                  className="group relative inline-flex min-h-11 shrink-0 items-center justify-center gap-2
+                             overflow-hidden rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 px-4
+                             text-sm font-semibold text-white shadow-[0_1px_2px_rgba(2,132,199,0.35)]
+                             transition-all duration-200 hover:-translate-y-px
+                             hover:shadow-[0_6px_16px_-4px_rgba(2,132,199,0.55)]
+                             focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50
+                             focus-visible:ring-offset-2 active:translate-y-0 active:scale-[.98]"
+                >
+                  {/* Light sweeps across the face on hover */}
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r
+                               from-transparent via-white/25 to-transparent transition-transform
+                               duration-700 group-hover:translate-x-full"
+                  />
+                  {searching ? (
+                    <Loader2 className="relative h-4 w-4 shrink-0 animate-spin" />
+                  ) : (
+                    <Search className="relative h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110" />
+                  )}
+                  <span className="relative">{t("common.search")}</span>
+                  {hasQuery ? (
+                    !searching && (
+                      <span className="relative rounded-full bg-white/20 px-1.5 py-0.5 text-[11px] font-bold leading-none tabular-nums ring-1 ring-inset ring-white/30">
+                        {totalMatches}
+                      </span>
+                    )
+                  ) : (
+                    <kbd className="relative hidden rounded border border-white/30 bg-white/15 px-1.5 py-0.5 font-sans text-[10px] leading-none text-white/90 sm:inline-block">
+                      /
+                    </kbd>
+                  )}
                 </button>
               </div>
             </form>
 
             {/* Grouped results, one section per module */}
-            {panelOpen && query.trim().length >= 2 && (
+            {panelOpen && hasQuery && (
               <div
                 className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-2xl bg-white text-left shadow-soft ring-1 ring-gray-200"
                 onMouseDown={(e) => {

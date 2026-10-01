@@ -242,7 +242,6 @@ const EditTour = () => {
 
   const handleUnshareFile = async (file) => {
     try {
-      console.log("🔍 Unsharing single file:", file);
 
       if (file.isSharedFile) {
         await filesService.unshareSingleFile(file.id, id);

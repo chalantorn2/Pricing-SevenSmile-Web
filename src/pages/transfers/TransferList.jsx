@@ -10,6 +10,7 @@ import {
 } from "../../components/transfers";
 import { ConfirmDialog, Toast } from "../../components/core";
 import { useI18n } from "../../i18n";
+import { hasCache, readCache, writeCache } from "../../utils";
 
 const TABS = [
   { key: "routes", label: "transfers.tabs.routes" },
@@ -71,18 +72,27 @@ const TransferList = () => {
   const [searchParams] = useSearchParams();
 
   const [tab, setTab] = useState("routes");
-  const [data, setData] = useState({
-    locations: [],
-    vehicles: [],
-    suppliers: [],
-    routes: [],
-  });
-  const [loading, setLoading] = useState(true);
+  // One entry per province slice: the routes differ, the rest of the payload does not.
+  const cacheKey = `transfers:${province || "all"}`;
+  const [data, setData] = useState(
+    () =>
+      readCache(cacheKey) || {
+        locations: [],
+        vehicles: [],
+        suppliers: [],
+        routes: [],
+      }
+  );
+  const [loading, setLoading] = useState(() => !hasCache(cacheKey));
   const [error, setError] = useState(null);
   const [search, setSearch] = useState(searchParams.get("q") || "");
   // Which rate sheet is on screen. "" until the first load picks one; the fetch
   // sends it so the routes come back carrying only that supplier's prices.
-  const [supplierId, setSupplierId] = useState("");
+  // /transfer?supplier=12 opens straight on that company's rate sheet — the
+  // supplier page links here to have its prices edited.
+  const [supplierId, setSupplierId] = useState(
+    () => searchParams.get("supplier") || ""
+  );
   // On by default: a sheet is mostly dashes for suppliers who only drive part of
   // the network, and the rates you already have are what you come here to read.
   // Untick to get the blank routes back and price them.
@@ -98,18 +108,20 @@ const TransferList = () => {
 
   const load = useCallback(async () => {
     try {
-      setLoading(true);
+      if (!hasCache(cacheKey)) setLoading(true);
       setError(null);
       const result = await transfersService.getTransferData(
         province ? { province } : {}
       );
       const suppliers = result.suppliers || [];
-      setData({
-        locations: result.locations || [],
-        vehicles: result.vehicles || [],
-        suppliers,
-        routes: result.routes || [],
-      });
+      setData(
+        writeCache(cacheKey, {
+          locations: result.locations || [],
+          vehicles: result.vehicles || [],
+          suppliers,
+          routes: result.routes || [],
+        })
+      );
       // Every supplier's prices arrive together and are split apart below, so
       // switching rate sheets costs nothing. Open on whoever prices the most
       // routes: the sheet most likely to be the one being worked on.
@@ -125,7 +137,7 @@ const TransferList = () => {
     } finally {
       setLoading(false);
     }
-  }, [province]);
+  }, [province, cacheKey]);
 
   useEffect(() => {
     load();

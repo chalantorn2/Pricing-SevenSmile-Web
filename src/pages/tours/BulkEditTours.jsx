@@ -17,6 +17,7 @@ import { AutocompleteInput, ProvincePicker } from "../../components/common";
 import { Toast } from "../../components/core";
 import { COMMON_PROVINCES } from "../../utils/provinces";
 import { TOUR_TYPES } from "../../utils/tour-types";
+import { isExpired as isDateExpired } from "../../utils";
 import { toursService, suppliersService } from "../../services/api-service";
 import { useI18n } from "../../i18n";
 
@@ -78,13 +79,8 @@ const toFormRow = (tourData) => {
   };
 };
 
-const isExpired = (row) => {
-  if (row.no_end_date || !row.end_date) return false;
-  const end = new Date(row.end_date);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return end < today;
-};
+// A row with "no end date" ticked never expires, whatever date is still in it.
+const isExpired = (row) => !row.no_end_date && isDateExpired(row.end_date);
 
 const BulkEditTours = () => {
   const { t } = useI18n();
@@ -103,6 +99,12 @@ const BulkEditTours = () => {
   const [errors, setErrors] = useState({});
   const [expanded, setExpanded] = useState({});
   const [selected, setSelected] = useState([]);
+  // Dates to stamp onto every selected row at once; blank fields are skipped
+  const [bulkDates, setBulkDates] = useState({
+    start_date: "",
+    end_date: "",
+    no_end_date: false,
+  });
 
   useEffect(() => {
     fetchData();
@@ -230,6 +232,44 @@ const BulkEditTours = () => {
 
   const selectExpired = () => {
     setSelected(rows.filter(isExpired).map((r) => r.id));
+  };
+
+  const canApplyDates =
+    selected.length > 0 &&
+    (bulkDates.start_date || bulkDates.end_date || bulkDates.no_end_date);
+
+  // Only touches local state; the rows turn dirty and go out with Save.
+  const applyDatesToSelected = () => {
+    if (!canApplyDates) return;
+
+    setRows((prev) =>
+      prev.map((row) => {
+        if (!selected.includes(row.id)) return row;
+        const next = { ...row };
+        if (bulkDates.start_date) next.start_date = bulkDates.start_date;
+        if (bulkDates.no_end_date) {
+          next.no_end_date = true;
+          next.end_date = "";
+        } else if (bulkDates.end_date) {
+          next.no_end_date = false;
+          next.end_date = bulkDates.end_date;
+        }
+        return next;
+      }),
+    );
+
+    setErrors((prev) => {
+      const next = { ...prev };
+      selected.forEach((id) => {
+        if (next[id]) next[id] = { ...next[id], end_date: null };
+      });
+      return next;
+    });
+
+    setToast({
+      message: t("tour.bulk.datesApplied", { count: selected.length }),
+      type: "success",
+    });
   };
 
   const detailCount = (row) => {
@@ -512,6 +552,69 @@ const BulkEditTours = () => {
           >
             {t("tour.bulk.selectExpired")}
           </button>
+        </div>
+      )}
+
+      {/* Set dates for every selected tour at once */}
+      {selected.length > 0 && (
+        <div className="rounded-xl bg-brand-50 px-4 py-3 ring-1 ring-brand-200 text-sm">
+          <div className="flex items-center gap-2 font-medium text-brand-900 mb-2">
+            <CalendarDays className="w-4 h-4 shrink-0" />
+            {t("tour.bulk.setDatesTitle", { count: selected.length })}
+          </div>
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-gray-600">
+                {t("tour.field.startDate")}
+              </span>
+              <input
+                type="date"
+                value={bulkDates.start_date}
+                onChange={(e) =>
+                  setBulkDates((prev) => ({ ...prev, start_date: e.target.value }))
+                }
+                className="px-2 py-1.5 border border-gray-300 rounded text-sm bg-white focus:ring-1 focus:ring-brand-500 focus:border-brand-500"
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-gray-600">
+                {t("tour.field.endDate")}
+              </span>
+              <input
+                type="date"
+                value={bulkDates.end_date}
+                disabled={bulkDates.no_end_date}
+                onChange={(e) =>
+                  setBulkDates((prev) => ({ ...prev, end_date: e.target.value }))
+                }
+                className="px-2 py-1.5 border border-gray-300 rounded text-sm bg-white disabled:bg-gray-100 disabled:text-gray-400 focus:ring-1 focus:ring-brand-500 focus:border-brand-500"
+              />
+            </label>
+            <label className="flex items-center gap-2 py-1.5 text-gray-700">
+              <input
+                type="checkbox"
+                checked={bulkDates.no_end_date}
+                onChange={(e) =>
+                  setBulkDates((prev) => ({
+                    ...prev,
+                    no_end_date: e.target.checked,
+                  }))
+                }
+                className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+              />
+              {t("tour.noEndDate")}
+            </label>
+            <button
+              onClick={applyDatesToSelected}
+              disabled={!canApplyDates}
+              className="px-4 py-1.5 rounded-lg text-sm text-white bg-brand-600 hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {t("tour.bulk.applyDates")}
+            </button>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">
+            {t("tour.bulk.setDatesHint")}
+          </p>
         </div>
       )}
 

@@ -5,6 +5,7 @@ import { filesService } from "../../services/api-service";
 import { useTourFiles } from "../../hooks";
 import { getTourCategoryInfo } from "../../utils/file-categories";
 import { getTourTypeLabel } from "../../utils/tour-types";
+import { isExpired as isDateExpired } from "../../utils";
 import {
   DURATION_TYPES,
   PRICE_MODES,
@@ -134,10 +135,7 @@ const TourDetails = ({
     return new Intl.NumberFormat("en-US").format(n);
   };
 
-  const isExpired =
-    tour.end_date &&
-    tour.end_date !== "0000-00-00" &&
-    new Date(tour.end_date) < new Date();
+  const isExpired = isDateExpired(tour.end_date);
 
   // Show the park-fee breakdown only when an actual amount was entered
   const hasParkFee =

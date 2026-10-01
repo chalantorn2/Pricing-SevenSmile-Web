@@ -99,12 +99,6 @@ const TourFileUpload = ({
     for (let i = 0; i < files.length; i += BATCH_SIZE) {
       const batch = files.slice(i, i + BATCH_SIZE);
 
-      console.log(
-        `🔄 Uploading batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(
-          files.length / BATCH_SIZE
-        )}`
-      );
-
       // Upload one batch at a time
       const batchPromises = batch.map((file) => uploadFile(file));
       const batchResults = await Promise.all(batchPromises);
@@ -113,9 +107,6 @@ const TourFileUpload = ({
 
       // Wait before uploading the next batch
       if (i + BATCH_SIZE < files.length) {
-        console.log(
-          `⏳ Waiting ${DELAY_BETWEEN_BATCHES / 1000}s before next batch...`
-        );
         await new Promise((resolve) =>
           setTimeout(resolve, DELAY_BETWEEN_BATCHES)
         );

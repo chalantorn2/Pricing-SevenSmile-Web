@@ -211,7 +211,8 @@ try {
                   sa.whatsapp,
                   sa.website,
                   sa.created_at as sub_agent_created_at,
-                  sa.updated_at as sub_agent_updated_at
+                  sa.updated_at as sub_agent_updated_at,
+                  sa.is_active as supplier_active
                 FROM tours t
                 LEFT JOIN suppliers sa ON t.supplier_id = sa.id
                 WHERE t.id = ?";
@@ -238,7 +239,9 @@ try {
                 break;
             }
 
-            // Get all tours with supplier information
+            // Get all tours with supplier information. ?supplier_id= narrows the
+            // list to one vendor so the supplier page does not have to pull the
+            // whole catalogue just to show its own rows.
             $sql = "SELECT t.*,
               sa.name as supplier_name,
               sa.address,
@@ -252,13 +255,20 @@ try {
               sa.whatsapp,
               sa.website,
               sa.created_at as sub_agent_created_at,
-              sa.updated_at as sub_agent_updated_at
+              sa.updated_at as sub_agent_updated_at,
+              sa.is_active as supplier_active
             FROM tours t
-            LEFT JOIN suppliers sa ON t.supplier_id = sa.id
-            ORDER BY t.updated_at DESC";
+            LEFT JOIN suppliers sa ON t.supplier_id = sa.id";
+
+            $listParams = array();
+            if (isset($_GET['supplier_id']) && $_GET['supplier_id'] !== '') {
+                $sql .= " WHERE t.supplier_id = ?";
+                $listParams[] = (int) $_GET['supplier_id'];
+            }
+            $sql .= " ORDER BY t.updated_at DESC";
 
             $stmt = $pdo->prepare($sql);
-            $stmt->execute();
+            $stmt->execute($listParams);
             $tours = $stmt->fetchAll();
 
             if (isset($_GET['search_gallery']) && $_GET['search_gallery']) {
@@ -482,6 +492,67 @@ try {
                 echo json_encode(array(
                     'success' => true,
                     'message' => 'Departure updated for ' . $stmt->rowCount() . ' tour(s)',
+                    'updated' => $stmt->rowCount()
+                ));
+                break;
+            }
+
+            // Bulk update rate dates - renew many expired tours in one request.
+            // start_date is optional; end_date is required unless no_end_date.
+            if (isset($_GET['action']) && $_GET['action'] === 'bulk_dates') {
+                $input = file_get_contents('php://input');
+                $data = json_decode($input, true);
+
+                $ids = isset($data['ids']) && is_array($data['ids']) ? $data['ids'] : array();
+                $updated_by = isset($data['updated_by']) ? $data['updated_by'] : 'Unknown';
+                $no_end_date = !empty($data['no_end_date']);
+                $start_date = normalizeTourValue('date', isset($data['start_date']) ? $data['start_date'] : null);
+                $end_date = $no_end_date ? null : normalizeTourValue('date', isset($data['end_date']) ? $data['end_date'] : null);
+
+                $ids = array_values(array_filter(array_map('intval', $ids), function ($v) {
+                    return $v > 0;
+                }));
+
+                if (empty($ids)) {
+                    throw new Exception("No tours selected");
+                }
+                if (!$no_end_date && $end_date === null) {
+                    throw new Exception("End date is required");
+                }
+
+                $placeholders = implode(',', array_fill(0, count($ids), '?'));
+
+                // End date must fall after each tour's (new or current) start date
+                if ($end_date !== null) {
+                    if ($start_date !== null) {
+                        if ($end_date <= $start_date) {
+                            throw new Exception("End date must be after start date");
+                        }
+                    } else {
+                        $check = $pdo->prepare("SELECT COUNT(*) FROM tours WHERE id IN ($placeholders) AND start_date IS NOT NULL AND start_date >= ?");
+                        $check->execute(array_merge($ids, array($end_date)));
+                        if ((int) $check->fetchColumn() > 0) {
+                            throw new Exception("End date must be after start date");
+                        }
+                    }
+                }
+
+                $sets = array('end_date = ?');
+                $params = array($end_date);
+                if ($start_date !== null) {
+                    $sets[] = 'start_date = ?';
+                    $params[] = $start_date;
+                }
+                $sets[] = 'updated_by = ?';
+                $params[] = $updated_by;
+
+                $sql = "UPDATE tours SET " . implode(', ', $sets) . ", updated_at = NOW() WHERE id IN ($placeholders)";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute(array_merge($params, $ids));
+
+                echo json_encode(array(
+                    'success' => true,
+                    'message' => 'Dates updated for ' . $stmt->rowCount() . ' tour(s)',
                     'updated' => $stmt->rowCount()
                 ));
                 break;

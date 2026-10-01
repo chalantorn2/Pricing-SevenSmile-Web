@@ -4,6 +4,7 @@ import { Pencil, Share2, X, AlertTriangle, Maximize2 } from "lucide-react";
 import { Toast } from "../core";
 import TourDetails from "./TourDetails";
 import { useI18n } from "../../i18n";
+import { isExpired as isDateExpired } from "../../utils";
 
 const TourDetailsModal = ({ isOpen, onClose, tour }) => {
   const { t } = useI18n();
@@ -31,10 +32,7 @@ const TourDetailsModal = ({ isOpen, onClose, tour }) => {
 
   if (!isOpen || !tour) return null;
 
-  const isExpired =
-    tour.end_date &&
-    tour.end_date !== "0000-00-00" &&
-    new Date(tour.end_date) < new Date();
+  const isExpired = isDateExpired(tour.end_date);
 
   // Share handler - open the share page in a new tab
   const handleShare = () => {

@@ -5,6 +5,7 @@ import { hotelsService } from "../../services/api-service";
 import HotelFormModal from "../../components/hotels/HotelFormModal";
 import { ConfirmDialog, Toast } from "../../components/core";
 import { useI18n } from "../../i18n";
+import { hasCache, readCache, writeCache } from "../../utils";
 
 const VIEW_KEY = "hotelsViewMode";
 
@@ -18,8 +19,10 @@ const HotelList = () => {
   const [viewMode, setViewMode] = useState(
     () => localStorage.getItem(VIEW_KEY) || "compact"
   );
-  const [hotels, setHotels] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // One entry per province slice, so /hotel and /hotel/Krabi keep their own rows.
+  const cacheKey = `hotels:${province || "all"}`;
+  const [hotels, setHotels] = useState(() => readCache(cacheKey) || []);
+  const [loading, setLoading] = useState(() => !hasCache(cacheKey));
   const [searchTerm, setSearchTerm] = useState(searchParams.get("q") || "");
   const [error, setError] = useState(null);
   // null = closed, {} = create, hotel object = edit
@@ -30,18 +33,18 @@ const HotelList = () => {
 
   const loadHotels = useCallback(async () => {
     try {
-      setLoading(true);
+      if (!hasCache(cacheKey)) setLoading(true);
       setError(null);
       const filters = { limit: 500, sort_by: "name", sort_order: "asc" };
       if (province) filters.province = province;
       const res = await hotelsService.getAllHotels(filters);
-      setHotels(res.data || []);
+      setHotels(writeCache(cacheKey, res.data || []));
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [province]);
+  }, [province, cacheKey]);
 
   useEffect(() => {
     loadHotels();

@@ -5,7 +5,13 @@ import { useI18n } from "../../i18n";
 import { TourDetailsModal } from "../../components/tours";
 import { DocumentModal } from "../../components/common";
 import { Toast } from "../../components/core";
-import * as XLSX from "xlsx";
+import {
+  hasCache,
+  readCache,
+  writeCache,
+  isExpired,
+  isSupplierActive,
+} from "../../utils";
 import {
   MapPin,
   X,
@@ -22,6 +28,7 @@ import {
   AlertTriangle,
   RotateCcw,
   Star,
+  CalendarDays,
 } from "lucide-react";
 
 // Labels are i18n keys — the header row renders them through t().
@@ -77,11 +84,6 @@ const getPageItems = (current, total) => {
   );
 };
 
-const isExpired = (endDate) => {
-  if (!endDate || endDate === "0000-00-00") return false;
-  return new Date(endDate) < new Date();
-};
-
 const formatDate = (dateString, locale) =>
   new Date(dateString).toLocaleDateString(locale, {
     year: "numeric",
@@ -115,12 +117,14 @@ const getNotesWithExpiry = (tour, t) => {
   return notes;
 };
 
+const CACHE_KEY = "tours";
+
 const TourList = () => {
   const { t, lang } = useI18n();
 
   // ========= State =========
-  const [tours, setTours] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [tours, setTours] = useState(() => readCache(CACHE_KEY) || []);
+  const [loading, setLoading] = useState(() => !hasCache(CACHE_KEY));
   const [loadError, setLoadError] = useState(null);
 
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
@@ -157,6 +161,15 @@ const TourList = () => {
   // Toast
   const [toast, setToast] = useState(null);
 
+  // Bulk date renewal: tick tours, pick new dates, save once
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [bulkDates, setBulkDates] = useState({
+    start_date: "",
+    end_date: "",
+    no_end_date: false,
+  });
+  const [bulkSaving, setBulkSaving] = useState(false);
+
   // ========= Effects =========
   useEffect(() => {
     fetchTours();
@@ -184,10 +197,12 @@ const TourList = () => {
   // ========= Data/Logic =========
   const fetchTours = async () => {
     try {
-      setLoading(true);
+      // A cached list is already on screen: refresh it in place rather than
+      // replacing it with a skeleton.
+      if (!hasCache(CACHE_KEY)) setLoading(true);
       setLoadError(null);
       const data = await toursService.getAllTours();
-      setTours(data);
+      setTours(writeCache(CACHE_KEY, data));
     } catch (error) {
       console.error("Error fetching tours:", error);
       setLoadError(error?.message || t("tour.loadError"));
@@ -196,32 +211,39 @@ const TourList = () => {
     }
   };
 
+  // Tours of a supplier that has been switched off stay in the database (and on
+  // the supplier's own page) but drop out of this list and its filters.
+  const activeTours = useMemo(
+    () => tours.filter((tour) => isSupplierActive(tour.supplier_active)),
+    [tours]
+  );
+
   // Options for the filter dropdowns, derived from the loaded data
   const supplierOptions = useMemo(
     () =>
-      [...new Set(tours.map((t) => t.supplier_name).filter(Boolean))].sort(
+      [...new Set(activeTours.map((t) => t.supplier_name).filter(Boolean))].sort(
         (a, b) => a.localeCompare(b)
       ),
-    [tours]
+    [activeTours]
   );
 
   const destinationOptions = useMemo(
     () =>
-      [...new Set(tours.map((t) => t.destination).filter(Boolean))].sort(
+      [...new Set(activeTours.map((t) => t.destination).filter(Boolean))].sort(
         (a, b) => a.localeCompare(b)
       ),
-    [tours]
+    [activeTours]
   );
 
   const expiredCount = useMemo(
-    () => tours.filter((t) => isExpired(t.end_date)).length,
-    [tours]
+    () => activeTours.filter((t) => isExpired(t.end_date)).length,
+    [activeTours]
   );
 
   const filteredTours = useMemo(() => {
     const searchLower = searchTerm.toLowerCase().trim();
 
-    const filtered = tours.filter((tour) => {
+    const filtered = activeTours.filter((tour) => {
       // Province filter (from sidebar submenu) — by destination
       if (
         activeProvince &&
@@ -282,7 +304,7 @@ const TourList = () => {
 
     return filtered;
   }, [
-    tours,
+    activeTours,
     searchTerm,
     supplierFilter,
     destinationFilter,
@@ -291,6 +313,86 @@ const TourList = () => {
     sortConfig,
     activeProvince,
   ]);
+
+  // Drop ticks on tours a filter change has hidden, so Save never touches a
+  // tour the user can no longer see.
+  useEffect(() => {
+    setSelectedIds((prev) => {
+      if (prev.length === 0) return prev;
+      const visible = new Set(filteredTours.map((tour) => tour.id));
+      const next = prev.filter((id) => visible.has(id));
+      return next.length === prev.length ? prev : next;
+    });
+  }, [filteredTours]);
+
+  const allFilteredSelected =
+    filteredTours.length > 0 && selectedIds.length === filteredTours.length;
+
+  const toggleSelectTour = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  // Header checkbox covers every tour matching the filters, not just this page
+  const toggleSelectAllFiltered = () => {
+    setSelectedIds(
+      allFilteredSelected ? [] : filteredTours.map((tour) => tour.id)
+    );
+  };
+
+  const flashToast = (message) => {
+    setToast(message);
+    setTimeout(() => setToast(null), 2500);
+  };
+
+  const handleBulkDatesSave = async () => {
+    const { start_date, end_date, no_end_date } = bulkDates;
+    if (selectedIds.length === 0) return;
+    if (!no_end_date && !end_date) {
+      flashToast(t("tours.bulkDates.endRequired"));
+      return;
+    }
+    if (!no_end_date) {
+      const byId = new Map(tours.map((tour) => [tour.id, tour]));
+      const clash = selectedIds.some((id) => {
+        const start = start_date || byId.get(id)?.start_date;
+        return start && start !== "0000-00-00" && end_date <= start.slice(0, 10);
+      });
+      if (clash) {
+        flashToast(t("tour.validation.endAfterStart"));
+        return;
+      }
+    }
+
+    setBulkSaving(true);
+    try {
+      await toursService.bulkUpdateDates(selectedIds, bulkDates);
+      const ids = new Set(selectedIds);
+      setTours((prev) =>
+        writeCache(
+          CACHE_KEY,
+          prev.map((tour) =>
+            ids.has(tour.id)
+              ? {
+                  ...tour,
+                  start_date: start_date || tour.start_date,
+                  end_date: no_end_date ? null : end_date,
+                }
+              : tour
+          )
+        )
+      );
+      flashToast(t("tours.bulkDates.saved", { count: selectedIds.length }));
+      setSelectedIds([]);
+      setBulkDates({ start_date: "", end_date: "", no_end_date: false });
+    } catch (error) {
+      console.error("Bulk date update failed:", error);
+      flashToast(error?.message || t("tours.bulkDates.failed"));
+    } finally {
+      setBulkSaving(false);
+    }
+  };
 
   const hasActiveFilters =
     Boolean(searchTerm) ||
@@ -315,7 +417,10 @@ const TourList = () => {
     }));
   };
 
-  const handleExportExcel = () => {
+  // xlsx is ~400 KB parsed: pulled in on demand so the list screen does not pay
+  // for a button most visits never press.
+  const handleExportExcel = async () => {
+    const XLSX = await import("xlsx");
     const locale = lang === "th" ? "th-TH" : "en-US";
     const exportData = filteredTours.map((tour, index) => ({
       [t("common.number")]: index + 1,
@@ -713,6 +818,79 @@ const TourList = () => {
         </div>
       )}
 
+      {/* Bulk date renewal bar */}
+      {selectedIds.length > 0 && (
+        <div className="sticky top-2 z-20 rounded-xl bg-brand-50 px-4 py-3 ring-1 ring-brand-200 shadow-sm text-sm">
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="flex items-center gap-2 font-medium text-brand-900 mr-2 self-center">
+              <CalendarDays className="w-4 h-4 shrink-0" />
+              {t("tours.bulkDates.title", { count: selectedIds.length })}
+            </div>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-gray-600">
+                {t("tour.field.endDate")}
+              </span>
+              <input
+                type="date"
+                value={bulkDates.end_date}
+                disabled={bulkDates.no_end_date}
+                onChange={(e) =>
+                  setBulkDates((prev) => ({ ...prev, end_date: e.target.value }))
+                }
+                className="px-2 py-1.5 border border-gray-300 rounded-lg text-sm bg-white disabled:bg-gray-100 disabled:text-gray-400 focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-gray-600">
+                {t("tour.field.startDate")} ({t("tours.bulkDates.optional")})
+              </span>
+              <input
+                type="date"
+                value={bulkDates.start_date}
+                onChange={(e) =>
+                  setBulkDates((prev) => ({ ...prev, start_date: e.target.value }))
+                }
+                className="px-2 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+              />
+            </label>
+            <label className="flex items-center gap-2 py-2 text-gray-700">
+              <input
+                type="checkbox"
+                checked={bulkDates.no_end_date}
+                onChange={(e) =>
+                  setBulkDates((prev) => ({
+                    ...prev,
+                    no_end_date: e.target.checked,
+                  }))
+                }
+                className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+              />
+              {t("tour.noEndDate")}
+            </label>
+            <div className="flex items-center gap-2 ml-auto">
+              <button
+                onClick={() => setSelectedIds([])}
+                disabled={bulkSaving}
+                className="px-3 py-2 rounded-lg text-sm text-gray-700 bg-white ring-1 ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
+              >
+                {t("common.cancel")}
+              </button>
+              <button
+                onClick={handleBulkDatesSave}
+                disabled={
+                  bulkSaving || (!bulkDates.end_date && !bulkDates.no_end_date)
+                }
+                className="px-4 py-2 rounded-lg text-sm text-white bg-brand-600 hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {bulkSaving
+                  ? t("tours.bulkDates.saving")
+                  : t("tours.bulkDates.save", { count: selectedIds.length })}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* List */}
       {!loadError && (
         <div className="bg-white rounded-xl shadow-sm ring-1 ring-black/5 overflow-hidden">
@@ -729,6 +907,19 @@ const TourList = () => {
                 <table className="min-w-full text-sm">
                   <thead className="text-gray-500">
                     <tr>
+                      <th
+                        scope="col"
+                        className="sticky top-0 z-10 w-0 bg-gray-50 border-b border-gray-200 pl-4 pr-0 py-3"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={allFilteredSelected}
+                          onChange={toggleSelectAllFiltered}
+                          aria-label={t("tours.bulkDates.selectAll")}
+                          title={t("tours.bulkDates.selectAll")}
+                          className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                        />
+                      </th>
                       {columns.map((column) => {
                         const active = sortConfig.key === column.key;
                         const alignRight = column.align === "right";
@@ -796,6 +987,15 @@ const TourList = () => {
                               : "hover:bg-gray-50"
                           }`}
                         >
+                          <td className="w-0 pl-4 pr-0 py-3">
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.includes(tour.id)}
+                              onChange={() => toggleSelectTour(tour.id)}
+                              aria-label={tour.tour_name}
+                              className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                            />
+                          </td>
                           <td className="px-6 py-3 whitespace-nowrap text-gray-900">
                             {startIndex + index + 1}
                           </td>
@@ -870,6 +1070,13 @@ const TourList = () => {
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <div className="flex items-start gap-2">
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.includes(tour.id)}
+                              onChange={() => toggleSelectTour(tour.id)}
+                              aria-label={tour.tour_name}
+                              className="mt-1 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                            />
                             {renderFrequentButton(tour)}
                             <div className="font-medium text-gray-900 leading-5">
                               {tour.tour_name}

@@ -46,13 +46,8 @@ async function apiCall(endpoint, options = {}) {
     },
   };
 
-  console.log("🔗 API Call:", url);
-  console.log("📝 Config:", config);
-
   try {
     const response = await fetch(url, config);
-    console.log("📡 Response Status:", response.status);
-    console.log("📡 Response OK:", response.ok);
 
     if (!response.ok) {
       const data = await response.json();
@@ -88,14 +83,11 @@ async function apiCall(endpoint, options = {}) {
 
       // ✅ If parsing fails but status is 200, assume success
       if (response.status === 200) {
-        console.log("⚠️ Assuming success despite parse error");
         return { success: true, data: null };
       }
 
       throw new Error("Invalid JSON response from server");
     }
-
-    console.log("📊 Response Data:", data);
 
     if (data.success === false) {
       console.error("❌ API Error:", data.error);
@@ -114,7 +106,6 @@ export const authService = {
   // Login
   async login(username, password) {
     try {
-      console.log("🔐 Attempting login for:", username);
       const response = await apiCall("/auth.php", {
         method: "POST",
         body: JSON.stringify({ username, password }),
@@ -137,7 +128,6 @@ export const authService = {
         localStorage.setItem(TOKEN_KEY, response.data.token);
       }
       localStorage.setItem("user", JSON.stringify(userData));
-      console.log("✅ Login successful:", userData);
       return userData;
     } catch (error) {
       console.error("❌ Login failed:", error);
@@ -155,7 +145,6 @@ export const authService = {
       console.warn("Logout call failed, clearing locally anyway:", error.message);
     } finally {
       clearStoredSession();
-      console.log("👋 User logged out");
     }
   },
 
@@ -163,7 +152,6 @@ export const authService = {
   getCurrentUser() {
     const user = localStorage.getItem("user");
     const userData = user ? JSON.parse(user) : null;
-    console.log("👤 Current user:", userData);
     return userData;
   },
 
@@ -192,7 +180,6 @@ export const authService = {
   isAdmin() {
     const user = this.getCurrentUser();
     const isAdminUser = user && user.role === "admin";
-    console.log("🔑 Is admin:", isAdminUser);
     return isAdminUser;
   },
 };
@@ -228,14 +215,8 @@ export const suppliersService = {
   // caller almost always wants one kind; omit it only for a genuinely mixed list.
   async getAllSuppliers(type) {
     try {
-      console.log("🏢 Fetching all suppliers...", type || "all types");
       const response = await apiCall(
         `/suppliers.php${type ? `?type=${encodeURIComponent(type)}` : ""}`
-      );
-      console.log(
-        "✅ Suppliers fetched successfully:",
-        response.data?.length,
-        "items"
       );
       return response.data;
     } catch (error) {
@@ -249,16 +230,10 @@ export const suppliersService = {
   // Search suppliers (for AutoComplete)
   async searchSuppliers(query, type) {
     try {
-      console.log("🔍 Searching suppliers:", query, type || "all types");
       const response = await apiCall(
         `/suppliers.php?search=${encodeURIComponent(query)}${
           type ? `&type=${encodeURIComponent(type)}` : ""
         }`
-      );
-      console.log(
-        "✅ Suppliers search results:",
-        response.data?.length,
-        "items"
       );
       return response.data || [];
     } catch (error) {
@@ -270,12 +245,10 @@ export const suppliersService = {
   // Add new supplier
   async addSupplier(supplierData) {
     try {
-      console.log("➕ Adding new supplier:", supplierData);
       const response = await apiCall("/suppliers.php", {
         method: "POST",
         body: JSON.stringify(supplierData),
       });
-      console.log("✅ Supplier added successfully:", response.data);
       return response.data;
     } catch (error) {
       console.error("❌ Failed to add supplier:", error);
@@ -286,12 +259,10 @@ export const suppliersService = {
   // Update supplier
   async updateSupplier(id, supplierData) {
     try {
-      console.log("🔄 Updating supplier:", id, supplierData);
       const response = await apiCall(`/suppliers.php?id=${id}`, {
         method: "PUT",
         body: JSON.stringify(supplierData),
       });
-      console.log("✅ Supplier updated successfully:", response.data);
       return response.data;
     } catch (error) {
       console.error("❌ Failed to update supplier:", error);
@@ -299,14 +270,26 @@ export const suppliersService = {
     }
   },
 
+  // Switch a supplier on or off without touching its other details
+  async setSupplierActive(id, isActive) {
+    try {
+      const response = await apiCall(`/suppliers.php?id=${id}&action=status`, {
+        method: "PUT",
+        body: JSON.stringify({ is_active: isActive ? 1 : 0 }),
+      });
+      return response.data;
+    } catch (error) {
+      console.error("❌ Failed to update supplier status:", error);
+      throw new Error("An error occurred while updating Supplier status: " + error.message);
+    }
+  },
+
   // Delete supplier
   async deleteSupplier(id) {
     try {
-      console.log("🗑️ Deleting supplier:", id);
       await apiCall(`/suppliers.php?id=${id}`, {
         method: "DELETE",
       });
-      console.log("✅ Supplier deleted successfully");
     } catch (error) {
       console.error("❌ Failed to delete supplier:", error);
       throw new Error("An error occurred while deleting Supplier: " + error.message);
@@ -315,9 +298,7 @@ export const suppliersService = {
 
   async getSupplierById(id) {
     try {
-      console.log("🏢 Fetching supplier by ID:", id);
       const response = await apiCall(`/suppliers.php?id=${id}`);
-      console.log("✅ Supplier fetched successfully:", response.data);
       return response.data;
     } catch (error) {
       console.error("❌ Failed to fetch supplier:", error);
@@ -333,14 +314,8 @@ export const supplierFilesService = {
   // Get files for a supplier
   async getSupplierFiles(supplierId) {
     try {
-      console.log("📂 Fetching files for supplier:", supplierId);
       const response = await apiCall(
         `/supplier-files.php?supplier_id=${supplierId}`
-      );
-      console.log(
-        "✅ Supplier files fetched successfully:",
-        response.data?.length,
-        "items"
       );
       return response.data || [];
     } catch (error) {
@@ -352,11 +327,9 @@ export const supplierFilesService = {
   // Delete a supplier file
   async deleteSupplierFile(fileId) {
     try {
-      console.log("🗑️ Deleting supplier file:", fileId);
       await apiCall(`/supplier-files.php?id=${fileId}`, {
         method: "DELETE",
       });
-      console.log("✅ Supplier file deleted successfully");
     } catch (error) {
       console.error("❌ Failed to delete supplier file:", error);
       throw new Error("An error occurred while deleting the file: " + error.message);
@@ -365,11 +338,9 @@ export const supplierFilesService = {
 
   async getTourFilesByCategory(tourId, category) {
     try {
-      console.log(`📁 Fetching tour files for category: ${category}`);
       const response = await apiCall(
         `/files.php?tour_id=${tourId}&category=${encodeURIComponent(category)}`
       );
-      console.log(`✅ Category files fetched: ${response.data?.length} items`);
       return response.data || [];
     } catch (error) {
       console.error("❌ Failed to fetch category files:", error);
@@ -381,14 +352,10 @@ export const supplierFilesService = {
 
   async getSupplierFilesByCategory(supplierId, category) {
     try {
-      console.log(`📁 Fetching supplier files for category: ${category}`);
       const response = await apiCall(
         `/supplier-files.php?supplier_id=${supplierId}&category=${encodeURIComponent(
           category
         )}`
-      );
-      console.log(
-        `✅ Supplier category files fetched: ${response.data?.length} items`
       );
       return response.data || [];
     } catch (error) {
@@ -408,7 +375,6 @@ export const supplierFilesService = {
     uploadedBy = "Unknown"
   ) {
     try {
-      console.log(`📤 Uploading supplier file to category: ${category}`);
 
       const formData = new FormData();
       formData.append("file", file);
@@ -429,7 +395,6 @@ export const supplierFilesService = {
         throw new Error(result.error || "Upload failed");
       }
 
-      console.log("✅ Supplier file uploaded successfully");
       return result.data;
     } catch (error) {
       console.error("❌ Failed to upload supplier file:", error);
@@ -446,7 +411,7 @@ export const supplierFilesService = {
     const cleanBaseUrl = baseUrl.replace(/\/$/, ""); // Remove trailing slash
     const filePath = `${cleanBaseUrl}/${file.file_path}`;
 
-    console.log("🔗 Generated supplier file URL:", filePath); // Debug log
+ // Debug log
     return filePath;
   },
 };
@@ -456,13 +421,7 @@ export const toursService = {
   // Get all tours (now includes supplier info)
   async getAllTours() {
     try {
-      console.log("🏝️ Fetching all tours...");
       const response = await apiCall("/tours.php");
-      console.log(
-        "✅ Tours fetched successfully:",
-        response.data?.length,
-        "items"
-      );
       return response.data;
     } catch (error) {
       console.error("❌ Failed to fetch tours:", error);
@@ -470,11 +429,23 @@ export const toursService = {
     }
   },
 
+  // Only one supplier's tours. The supplier page used to pull every tour in the
+  // system and filter in the browser; the server does it now.
+  async getToursBySupplier(supplierId) {
+    try {
+      const response = await apiCall(
+        `/tours.php?supplier_id=${encodeURIComponent(supplierId)}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("❌ Failed to fetch supplier tours:", error);
+      throw new Error("An error occurred while loading tours: " + error.message);
+    }
+  },
+
   async getTourById(id) {
     try {
-      console.log("🏝️ Fetching tour by ID:", id);
       const response = await apiCall(`/tours.php?id=${id}`);
-      console.log("✅ Tour fetched successfully:", response.data);
       return response.data;
     } catch (error) {
       console.error("❌ Failed to fetch tour:", error);
@@ -491,13 +462,11 @@ export const toursService = {
         updated_by: user?.username || "Unknown",
       };
 
-      console.log("➕ Adding new tour(s):", dataWithUser);
       const response = await apiCall("/tours.php", {
         method: "POST",
         body: JSON.stringify(dataWithUser),
       });
 
-      console.log("✅ Tour(s) added successfully:", response.data);
       return response.data;
     } catch (error) {
       console.error("❌ Failed to add tour(s):", error);
@@ -519,13 +488,11 @@ export const toursService = {
         updated_by: user?.username || "Unknown",
       };
 
-      console.log("🔄 Updating tour:", id, dataWithUser);
       const response = await apiCall(`/tours.php?id=${id}`, {
         method: "PUT",
         body: JSON.stringify(dataWithUser),
       });
 
-      console.log("✅ Tour updated successfully:", response.data);
       return response.data;
     } catch (error) {
       console.error("❌ Failed to update tour:", error);
@@ -535,6 +502,22 @@ export const toursService = {
 
   // Pin / unpin a tour as one the office sells often. Writes only that one
   // column, so it is safe to call from the list without loading the whole tour.
+  // Set start/end dates on many tours in one request
+  async bulkUpdateDates(ids, { start_date, end_date, no_end_date }) {
+    const user = authService.getCurrentUser();
+    const response = await apiCall("/tours.php?action=bulk_dates", {
+      method: "PUT",
+      body: JSON.stringify({
+        ids,
+        start_date: start_date || null,
+        end_date: no_end_date ? null : end_date,
+        no_end_date: no_end_date ? 1 : 0,
+        updated_by: user?.username || "Unknown",
+      }),
+    });
+    return response;
+  },
+
   async setFrequent(id, isFrequent) {
     try {
       const response = await apiCall("/tours.php?action=toggle_frequent", {
@@ -553,11 +536,9 @@ export const toursService = {
   // Delete tour
   async deleteTour(id) {
     try {
-      console.log("🗑️ Deleting tour:", id);
       await apiCall(`/tours.php?id=${id}`, {
         method: "DELETE",
       });
-      console.log("✅ Tour deleted successfully");
     } catch (error) {
       console.error("❌ Failed to delete tour:", error);
       throw new Error("An error occurred while deleting the tour: " + error.message);
@@ -570,13 +551,7 @@ export const usersService = {
   // Get all users
   async getAllUsers() {
     try {
-      console.log("👥 Fetching all users...");
       const response = await apiCall("/users.php");
-      console.log(
-        "✅ Users fetched successfully:",
-        response.data?.length,
-        "items"
-      );
       return response.data;
     } catch (error) {
       console.error("❌ Failed to fetch users:", error);
@@ -587,12 +562,10 @@ export const usersService = {
   // Add new user
   async addUser(userData) {
     try {
-      console.log("👤➕ Adding new user:", userData);
       const response = await apiCall("/users.php", {
         method: "POST",
         body: JSON.stringify(userData),
       });
-      console.log("✅ User added successfully:", response.data);
       return response.data;
     } catch (error) {
       console.error("❌ Failed to add user:", error);
@@ -603,12 +576,10 @@ export const usersService = {
   // Update user
   async updateUser(id, userData) {
     try {
-      console.log("👤🔄 Updating user:", id, userData);
       const response = await apiCall(`/users.php?id=${id}`, {
         method: "PUT",
         body: JSON.stringify(userData),
       });
-      console.log("✅ User updated successfully:", response.data);
       return response.data;
     } catch (error) {
       console.error("❌ Failed to update user:", error);
@@ -619,11 +590,9 @@ export const usersService = {
   // Delete user
   async deleteUser(id) {
     try {
-      console.log("👤🗑️ Deleting user:", id);
       await apiCall(`/users.php?id=${id}`, {
         method: "DELETE",
       });
-      console.log("✅ User deleted successfully");
     } catch (error) {
       console.error("❌ Failed to delete user:", error);
       throw new Error("An error occurred while deleting the user: " + error.message);
@@ -636,13 +605,7 @@ export const filesService = {
   // Get files for a tour
   async getTourFiles(tourId) {
     try {
-      console.log("📂 Fetching files for tour:", tourId);
       const response = await apiCall(`/files.php?tour_id=${tourId}`);
-      console.log(
-        "✅ Files fetched successfully:",
-        response.data?.length,
-        "items"
-      );
       return response.data || [];
     } catch (error) {
       console.error("❌ Failed to fetch files:", error);
@@ -658,7 +621,6 @@ export const filesService = {
     uploadedBy = "Unknown"
   ) {
     try {
-      console.log(`📤 Uploading tour file to category: ${category}`);
 
       const formData = new FormData();
       formData.append("file", file);
@@ -678,7 +640,6 @@ export const filesService = {
         throw new Error(result.error || "Upload failed");
       }
 
-      console.log("✅ Tour file uploaded successfully");
       return result.data;
     } catch (error) {
       console.error("❌ Failed to upload tour file:", error);
@@ -688,11 +649,9 @@ export const filesService = {
   // Delete a file
   async deleteFile(fileId) {
     try {
-      console.log("🗑️ Deleting file:", fileId);
       await apiCall(`/files.php?id=${fileId}`, {
         method: "DELETE",
       });
-      console.log("✅ File deleted successfully");
     } catch (error) {
       console.error("❌ Failed to delete file:", error);
       throw new Error("An error occurred while deleting the file: " + error.message);
@@ -709,14 +668,8 @@ export const filesService = {
   },
   async searchToursWithGallery(searchTerm) {
     try {
-      console.log("🔍 Searching tours with gallery:", searchTerm);
       const response = await apiCall(
         `/tours.php?search_gallery=${encodeURIComponent(searchTerm)}`
-      );
-      console.log(
-        "✅ Tours with gallery found:",
-        response.data?.length,
-        "items"
       );
       return response.data || [];
     } catch (error) {
@@ -727,12 +680,6 @@ export const filesService = {
 
   async shareGalleryFiles(sourceTourId, targetTourId) {
     try {
-      console.log(
-        "🔗 Sharing gallery files from",
-        sourceTourId,
-        "to",
-        targetTourId
-      );
       const response = await apiCall("/files.php?action=share_gallery", {
         method: "PUT",
         body: JSON.stringify({
@@ -740,11 +687,6 @@ export const filesService = {
           target_tour_id: targetTourId,
         }),
       });
-      console.log(
-        "✅ Gallery files shared successfully:",
-        response.shared_count,
-        "files"
-      );
       return response;
     } catch (error) {
       console.error("❌ Failed to share gallery files:", error);
@@ -754,12 +696,6 @@ export const filesService = {
 
   async unshareGalleryFiles(sourceTourId, targetTourId) {
     try {
-      console.log(
-        "🔗 Unsharing gallery files from",
-        sourceTourId,
-        "to",
-        targetTourId
-      );
       const response = await apiCall("/files.php?action=unshare_gallery", {
         method: "PUT",
         body: JSON.stringify({
@@ -767,11 +703,6 @@ export const filesService = {
           target_tour_id: targetTourId,
         }),
       });
-      console.log(
-        "✅ Gallery files unshared successfully:",
-        response.unshared_count,
-        "files"
-      );
       return response;
     } catch (error) {
       console.error("❌ Failed to unshare gallery files:", error);
@@ -783,12 +714,6 @@ export const filesService = {
   // Unshare single file
   async unshareSingleFile(fileId, targetTourId) {
     try {
-      console.log(
-        "🔗 Unsharing single file:",
-        fileId,
-        "from tour:",
-        targetTourId
-      );
       const response = await apiCall("/files.php?action=unshare_single_file", {
         method: "PUT",
         body: JSON.stringify({
@@ -796,7 +721,6 @@ export const filesService = {
           target_tour_id: targetTourId,
         }),
       });
-      console.log("✅ Single file unshared successfully");
       return response;
     } catch (error) {
       console.error("❌ Failed to unshare single file:", error);
@@ -808,11 +732,8 @@ export const filesService = {
 // Test API connection
 export const testConnection = async () => {
   try {
-    console.log("🔍 Testing API connection...");
-    console.log("🌐 API Base URL:", API_BASE_URL);
 
     await apiCall("/tours.php");
-    console.log("✅ API connection successful");
     return true;
   } catch (error) {
     console.error("❌ API connection failed:", error.message);
@@ -829,13 +750,11 @@ export const autocompleteService = {
     }
 
     try {
-      console.log(`🔍 Fetching autocomplete for ${type}:`, query);
       const response = await apiCall(
         `/autocomplete.php?type=${encodeURIComponent(
           type
         )}&query=${encodeURIComponent(query)}`
       );
-      console.log("✅ Autocomplete results:", response.data?.length, "items");
       return response.data || [];
     } catch (error) {
       console.error("❌ Failed to fetch autocomplete:", error);
@@ -849,13 +768,7 @@ export const packageToursService = {
   // Get all package tours
   async getAllPackages() {
     try {
-      console.log("📦 Fetching all package tours...");
       const response = await apiCall("/packages.php");
-      console.log(
-        "✅ Package tours fetched successfully:",
-        response.data?.length,
-        "items"
-      );
       return response.data;
     } catch (error) {
       console.error("❌ Failed to fetch package tours:", error);
@@ -868,9 +781,7 @@ export const packageToursService = {
   // Get package tour by ID
   async getPackageById(id) {
     try {
-      console.log("📦 Fetching package tour by ID:", id);
       const response = await apiCall(`/packages.php?id=${id}`);
-      console.log("✅ Package tour fetched successfully:", response.data);
       return response.data;
     } catch (error) {
       console.error("❌ Failed to fetch package tour:", error);
@@ -889,13 +800,11 @@ export const packageToursService = {
         created_by: user?.id || null,
       };
 
-      console.log("➕ Creating new package tour:", dataWithUser);
       const response = await apiCall("/packages.php", {
         method: "POST",
         body: JSON.stringify(dataWithUser),
       });
 
-      console.log("✅ Package tour created successfully:", response.data);
       return response.data;
     } catch (error) {
       console.error("❌ Failed to create package tour:", error);
@@ -908,13 +817,11 @@ export const packageToursService = {
   // Update package tour
   async updatePackage(id, packageData) {
     try {
-      console.log("🔄 Updating package tour:", id, packageData);
       const response = await apiCall(`/packages.php?id=${id}`, {
         method: "PUT",
         body: JSON.stringify(packageData),
       });
 
-      console.log("✅ Package tour updated successfully:", response.data);
       return response.data;
     } catch (error) {
       console.error("❌ Failed to update package tour:", error);
@@ -927,11 +834,9 @@ export const packageToursService = {
   // Delete package tour
   async deletePackage(id) {
     try {
-      console.log("🗑️ Deleting package tour:", id);
       await apiCall(`/packages.php?id=${id}`, {
         method: "DELETE",
       });
-      console.log("✅ Package tour deleted successfully");
     } catch (error) {
       console.error("❌ Failed to delete package tour:", error);
       throw new Error(
