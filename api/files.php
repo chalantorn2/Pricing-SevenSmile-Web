@@ -281,7 +281,7 @@ try {
                 $updated_shared = array_values($updated_shared);
                 $new_shared_json = empty($updated_shared) ? null : json_encode($updated_shared);
 
-                $update_stmt = $pdo->prepare("UPDdTE tour_files SET shared_with_tour_ids = ? WHERE id = ?");
+                $update_stmt = $pdo->prepare("UPDATE tour_files SET shared_with_tour_ids = ? WHERE id = ?");
                 $update_stmt->execute(array($new_shared_json, $file_id));
 
                 echo json_encode(array(
@@ -325,7 +325,7 @@ try {
                     $current_shared[] = $target_tour_id;
                     $new_shared_json = json_encode($current_shared);
 
-                    $update_stmt = $pdo->prepare("UPDdTE tour_files SET shared_with_tour_ids = ? WHERE id = ?");
+                    $update_stmt = $pdo->prepare("UPDATE tour_files SET shared_with_tour_ids = ? WHERE id = ?");
                     $update_stmt->execute(array($new_shared_json, $file['id']));
                     $shared_count++;
                 }

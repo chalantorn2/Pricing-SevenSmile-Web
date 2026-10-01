@@ -10,6 +10,7 @@ try {
               s.id,
               s.name,
               s.type,
+              s.is_active,
               s.address,
               s.phone,
               s.phone_2,
@@ -41,6 +42,13 @@ try {
     if (isset($_GET['type']) && in_array($_GET['type'], array('tour', 'transfer'), true)) {
         $where[] = "s.type = ?";
         $params[] = $_GET['type'];
+    }
+
+    // Omit `active` to get both: a switched-off supplier keeps its history, so a
+    // consumer mirroring this data should see it and hide it on its own side.
+    if (isset($_GET['active']) && $_GET['active'] !== '') {
+        $where[] = "s.is_active = ?";
+        $params[] = (int) (!!$_GET['active']);
     }
 
     if (count($where) > 0) {

@@ -75,6 +75,7 @@ $TOUR_COLUMNS = "
               t.created_at,
               t.updated_at,
               sa.name AS supplier_name,
+              sa.is_active AS supplier_active,
               sa.address,
               sa.phone,
               sa.phone_2,

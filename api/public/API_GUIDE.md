@@ -173,6 +173,11 @@ GET /api/public/suppliers.php
 | `id` | `?id=7` | One supplier |
 | `search` | `?search=orchid` | Match supplier name |
 | `type` | `?type=transfer` | `tour` or `transfer` — these are different companies |
+| `active` | `?active=1` | `1` in use, `0` switched off. Omit to get both |
+
+`is_active` is `0` for a supplier the office no longer uses. Its tours and files are
+kept, so hide it on your side rather than deleting it. Every tour from `tours.php`
+also carries `supplier_active` with the same value.
 
 Each supplier includes a `files` array. Every file has a ready-to-use `file_url`.
 
@@ -327,6 +332,67 @@ Notes for mirroring:
 - `images` and `room_types` carry no stable ids — replace them per hotel on each pull.
 - `rates` and `notices` do carry our ids; reuse them as primary keys to keep identity.
 - Use `?since=` for routine pulls and a full pull when you need to catch deletions.
+
+### 6. Restaurants — `restaurants.php`
+
+Same shape and rules as `hotels.php`: paginated list, or one row by `?id=` / `?slug=`.
+JSON columns (`facilities`, `images`, `menu_types`) come back as arrays, and each
+restaurant carries a `rates` array of NET prices per set menu and period.
+
+```
+GET /api/public/restaurants.php
+```
+
+| Param | Example | Meaning |
+|---|---|---|
+| `id` / `slug` | `?id=3` | One restaurant (`data` is an object, not a list) |
+| `destination` | `?destination=Phuket` | Partial match |
+| `cuisine` | `?cuisine=Seafood` | Partial match |
+| `search` | `?search=kata` | Name, destination, cuisine, short description |
+| `featured` / `active` | `?active=1` | Omit `active` to get both |
+| `since` | `?since=2026-09-01` | Changed on/after that date |
+| `page` / `limit` | `?limit=50` | Default 100, max 200 |
+| `sort_by` / `sort_order` | `?sort_by=name&sort_order=ASC` | `id`, `name`, `rating`, `updated_at`, `created_at` |
+
+A rate row: `menu_name`, `period_label`, `period_start`, `period_end`, `price`,
+`price_unit` (`per_person` / `per_set` / `per_table`), `min_pax`, `currency`, `note`,
+`is_active`.
+
+### 7. Transfers — `transfers.php`
+
+The transfer price matrix. Routes are shared by every supplier; only the price
+differs, so every price row names its supplier and vehicle.
+
+```
+GET /api/public/transfers.php
+```
+
+`data` is an object, not a list:
+
+```json
+{
+  "locations": [{ "id": 1, "name": "Phuket Airport", "province": "Phuket", "is_active": "1" }],
+  "vehicles":  [{ "id": 1, "name": "Sedan", "max_passengers": "3", "max_luggage": "2" }],
+  "routes": [{
+    "id": 10, "category": "airport_transfer", "label": "Phuket Airport - Patong",
+    "origin_id": 1, "origin_name": "Phuket Airport", "origin_province": "Phuket",
+    "destination_id": 4, "destination_name": "Patong", "destination_province": "Phuket",
+    "note": "",
+    "prices": [{ "supplier_id": 12, "supplier_name": "...", "supplier_active": "1",
+                 "vehicle_id": 1, "vehicle_name": "Sedan", "price": 800, "currency": "THB" }]
+  }]
+}
+```
+
+| Param | Example | Meaning |
+|---|---|---|
+| `province` | `?province=Krabi` | Routes with either end in that province |
+| `category` | `?category=airport_transfer` | Route category |
+| `supplier_id` | `?supplier_id=12` | Only that supplier's prices; routes it does not price are dropped |
+| `active` | `?active=1` | Applies to routes, locations and vehicles |
+| `since` | `?since=2026-09-01` | Routes whose row or any price changed on/after that date |
+
+`price` is a NET rate. Store it, never show it to customers.
 
 ---
 
